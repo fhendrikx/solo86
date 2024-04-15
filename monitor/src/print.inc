@@ -19,7 +19,7 @@ print_str:
     lodsb
     or al,al            ; are we done?
     jz .exit
-    out 8h,al
+    out port_uart,al
     jmp .loop
 
 .exit:
@@ -35,7 +35,7 @@ print_str:
 ;======================================================================
 
 print_chr:
-    out 8h,al
+    out port_uart,al
     ret
 
 ;======================================================================
@@ -58,11 +58,11 @@ print_hex:
     cmp al,9
     jg .letter
     add al,30h          ; '0'
-    call print_chr
+    out port_uart,al
     ret
 
 .letter:
     add al,37h          ; 'A' - 10
-    call print_chr
+    out port_uart,al
     ret
 
