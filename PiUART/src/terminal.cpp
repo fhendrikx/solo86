@@ -3,7 +3,7 @@
 // there is a typo in the c++ class wrapper and a dependany on strings.h
 // which doesn't exist so undef __cplusplus rather than edit ssfn.h
 #undef __cplusplus
-#include "ssfn.h"
+#include "scalable-font2/ssfn.h"
 
 #include "fonts/u_vga16.h" // font_small
 #include "fonts/TerminusBold24x12.h" // font_medium
