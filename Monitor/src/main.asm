@@ -56,6 +56,8 @@ start:
     mov ax,dseg
     mov ds,ax
 
+    sti
+
 
 ; stage 1
 .start_test:
