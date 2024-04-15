@@ -1,0 +1,34 @@
+#ifndef COMMON_H
+#define COMMON_H
+
+#include <circle/koptions.h>
+#include <circle/logger.h>
+
+#define VERSION "PiUART v1.0"
+
+#define NULL 0
+
+#define TELNET_PORT 23
+#define RAW_PORT 24
+
+enum TCPMode { telnet, raw };
+
+#if DEPTH == 8
+typedef u8 TPixel;
+#elif DEPTH == 16
+typedef u16 TPixel;
+#else
+#error Bad DEPTH
+#endif
+
+// the system logger writes ALL messages to an internal log regardless of the loglevel
+// this is slow, too slow for timing critcal regions so we skip logging altogether
+// based on the loglevel
+#ifdef NDEBUG
+#define klog(level, ...) ((void) 0)
+#else
+#define klog(level, ...) if (level <= CKernelOptions::Get()->GetLogLevel()) \
+	CLogger::Get()->Write(From, level, __VA_ARGS__)   
+#endif
+
+#endif

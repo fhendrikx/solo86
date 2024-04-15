@@ -1,0 +1,222 @@
+#ifndef KERNEL_H
+#define KERNEL_H
+
+#include <circle/machineinfo.h>
+#include <circle/koptions.h>
+#include <circle/devicenameservice.h>
+#include <circle/bcmframebuffer.h>
+#include <circle/exceptionhandler.h>
+#include <circle/interrupt.h>
+#include <circle/timer.h>
+#include <circle/logger.h>
+#include <circle/types.h>
+#include <circle/multicore.h>
+#include <circle/memory.h>
+#include <circle/util.h>
+#include <circle/memio.h>
+#include <circle/usb/usbhcidevice.h>
+#include <circle/sched/scheduler.h>
+#include <circle/net/netsubsystem.h>
+#include <display/ssd1306device.h>
+#include <SDCard/emmc.h>
+#include <fatfs/ff.h>
+#include <wlan/bcm4343.h>
+#include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
+
+#include "common.h"
+#include "i2clogger.h"
+#include "ringbuf.h"
+#include "terminal.h"
+
+
+/*
+  GPIO 0 PWAIT (output)
+  GPIO 1 PEVENT
+  GPIO 2 SDA
+  GPIO 3 SCL
+  GPIO 18 Interrupt
+  GPIO 19 PRDWR
+
+  PRDWR  high == read, low == write
+*/
+
+#define PWAIT 0x1
+#define PEVENT 0x2
+#define PRDWR 0x80000
+
+#define DATA_MASK 0x0ff00000
+
+// see include/circle/bcm2835.h
+// GPIO Function Select
+// 3 bits per GPIO, 000 = input, 001 = output
+// GPIO 0-9
+#define ARM_GPIO_GPFSEL0        (ARM_GPIO_BASE + 0x00)
+// GPIO 10-19
+#define ARM_GPIO_GPFSEL1        (ARM_GPIO_BASE + 0x04)
+// GPIO 20-29
+#define ARM_GPIO_GPFSEL2        (ARM_GPIO_BASE + 0x08)
+
+#define MODE_CON 0
+#define MODE_160x100 1
+#define MODE_160x100_DB 2
+
+// ACIA registers
+#define ACIA_CONTROL 0
+#define ACIA_DATA 1
+// video control registers
+#define VC_MODE 2
+#define VC_FB_SWAP 3
+
+#define ACIA_RECEIVE_EMPTY 0
+#define ACIA_RECEIVE_FULL 1
+#define ACIA_RTS_PAUSE 0x2
+#define ACIA_RECV_INTERRUPT_IDLE 0
+#define ACIA_RECV_INTERRUPT_ACTIVE 0x80
+#define ACIA_RECV_INTERRUPT_DISABLED 0
+#define ACIA_RECV_INTERRUPT_ENABLED 1
+
+// OLED I2C display
+#define LCD_HEIGHT 32
+#define LCD_WIDTH 128
+#define LCD_I2C_ADDR 0x3C
+
+// multicore stuff
+#define CORE_MAIN 0
+#define CORE_DISPLAY 1
+#define CORE_GPIO 2
+
+#define RAM_SIZE 16384
+
+#define RING_BUF_SIZE 16384
+
+#define NETWORK_DELAY_US 30000 // 30 ms
+#define NETWORK_DELAY_BYTES 132 // one xmodem packet
+
+class CKernel : public CMultiCoreSupport {
+public:
+    CKernel(CMemorySystem *pMemorySystem);
+    ~CKernel();
+
+    bool Initialize();
+    void Run(unsigned nCore);
+        
+private:
+    // Cores
+    void GPIO();
+    void Display();
+    void Main();
+    
+    // Helper functions
+    bool DeferredInitialize();
+    void UpdateMode160x100(u8 *pRam);
+    bool InitFB(unsigned nWidth, unsigned nHeight);
+    bool ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth, unsigned nTargetHeight);
+    void UpdateFB();
+
+    inline u32 BusIORead(u32 address);
+    inline void BusIOWrite(u32 address, u8 data);
+    void ACIAStateDump();
+    
+    void GPIOInit();
+    inline u32 GPIORead();
+    inline void GPIOPWaitReady();
+    inline void GPIOPWaitBusy();
+    inline void GPIOInterruptRaise();
+    inline void GPIOInterruptRelease();
+    inline void GPIODataOutput(u32 data);
+    inline void GPIODataInput();
+
+    // Command line options ("cmdline.txt")
+    CKernelOptions m_CmdLine;
+
+    // needed by various Cirle internal functions
+    CDeviceNameService m_DeviceNameService;
+
+    // allow CPU to run at full speed with thermal throttling
+    CCPUThrottle m_CPUThrottle;
+
+    #ifndef NDEBUG
+    // handle exceptions more elegantly
+    CExceptionHandler m_ExceptionHandler;
+    #endif
+    
+    // make interrupts work
+    CInterruptSystem m_InterruptSystem;
+
+    // system timer
+    CTimer m_Timer;
+
+    #ifndef NDEBUG
+    // system logger
+    CLogger m_Logger;
+    #endif
+    
+    // I2C master
+    CI2CMaster m_I2C;
+
+    #ifndef NDEBUG
+    // I2C Logger
+    CI2CLogger m_I2CLogger;
+    #endif
+
+    // Simple multi-tasking that runs on Core 0
+    CScheduler m_Scheduler;
+    
+    // HDMI display
+    CBcmFrameBuffer *m_pFrameBuffer;
+    TPixel *m_pBuffer;
+    TPixel *m_pBuffer0;
+    TPixel *m_pBuffer1;
+    bool m_bBufferSwapped;
+
+    // Terminal emulator
+    CTerminal m_Terminal;
+  
+    // OLED/LCD display
+    CSSD1306Device m_LCD;
+
+    // USB magic
+    CUSBHCIDevice m_USBHCI;
+
+    // Bits to read the WPA Supplicant config file from the SD card
+    CEMMCDevice m_EMMC;
+    FATFS m_FileSystem;
+
+    // WLAN/Networking bits
+    CBcm4343Device m_WLAN;
+    CNetSubSystem m_Net;
+    CWPASupplicant m_WPASupplicant;
+    
+    // ring buffers
+    CRingBuf m_ToSerial; // data for the ACIA to output
+    CRingBuf m_ToTerminal; // data for the terminal to display
+    CRingBuf m_ToNetwork; // data for the network to send
+    
+    unsigned m_nLogLevel;
+    u8 m_pRam[RAM_SIZE * 2];
+
+    u8 *m_pBusRam;
+    u8 *m_pDisRam;
+    volatile u8 m_nMode;
+    u8 m_nPrevMode;
+    volatile u8 m_nReadyForSwap;
+
+    u32 m_nAciaState;
+    u32 m_nAciaStateCounterDivide;
+    u32 m_nAciaStateWordSelect;
+    u32 m_nAciaStateTransmitControl;
+    u32 m_nAciaStateReceiveInterrupt;
+
+    u32 m_nAciaReceiveDataRegisterFull;
+    u32 m_nAciaReceiveDataRegister;
+    u32 m_nAciaInterruptRequest;
+
+    unsigned m_nScreenWidth;
+    unsigned m_nScreenHeight;
+    unsigned m_nScreenPitch;
+
+    u8 m_nTestPort;
+    
+};
+
+#endif

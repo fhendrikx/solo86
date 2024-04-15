@@ -1,0 +1,7 @@
+# create font with only 20->7E chars (smaller)
+sfnconv -r U+0020 U+007E unifont.sfn -U console.sfn
+./bin_to_h.pl console.sfn > console.h
+
+# convert vector font to bitmap, but the result is ugly, stick with bitmap fonts 
+sfnconv -r U+0000 U+00FF -B 28 conthrax-sb.otf -U conthrax.sfn
+

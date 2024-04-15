@@ -1,0 +1,44 @@
+# force 32bit mode
+arm_64bit=0
+
+# force cut-down boot, faster (-0.3s)
+gpu_mem=16
+
+disable_overscan=1
+
+# VGA 640x480
+#hdmi_group=1
+#hdmi_mode=1
+
+# 8" LCD, native res 1024x768
+[EDID=DWE-VGA]
+# 1024x768@60Hz
+#hdmi_group=2
+#hdmi_mode=16
+
+# 10" LCD, native res 2048x1536
+[EDID=QJF-HDMI]
+# 1024x768@60Hz
+hdmi_group=2
+hdmi_mode=16
+
+[ALL]
+
+# limit the framebuffer
+#max_framebuffer_width=1024
+#max_framebuffer_height=768
+
+# encourage the Pi to boot as quickly as possible
+bootcode_delay=0
+boot_delay=0
+
+# hide the splash screen
+disable_splash=1
+
+# prevent the firmware from doing an I2C probe on GPIO 0,1
+force_eeprom_read=0
+disable_poe_fan=1
+
+# set initial GPIO state (input, no pull)
+gpio=0-27=ip,np
+
