@@ -9,7 +9,7 @@ cpu 8086
 %include "delay.inc"
 %include "led.inc"
 %include "macro.inc"
-%include "print.inc"
+%include "stdio.inc"
 
 ;======================================================================
 ; defines
@@ -19,8 +19,9 @@ cseg        equ 0F000h
 dseg        equ 01000h
 sseg        equ 07000h
 
-port_led    equ 08h
-port_uart   equ 16h
+leds_data   equ 08h
+uart_data   equ 16h
+uart_ctrl   equ 18h
 
 org         START
 

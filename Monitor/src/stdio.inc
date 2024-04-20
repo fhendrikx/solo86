@@ -3,10 +3,21 @@
 ;======================================================================
 
 ;======================================================================
+; print a single character in AL
+;======================================================================
+
+print_chr:
+putc:
+    out uart_data,al
+    ret
+
+
+;======================================================================
 ; print an ASCIIZ string as CS:SI to UART
 ;======================================================================
 
 print_str:
+puts:
     pushf
     push ax
     push bx
@@ -19,7 +30,7 @@ print_str:
     lodsb
     or al,al            ; are we done?
     jz .exit
-    out port_uart,al
+    out uart_data,al
     jmp .loop
 
 .exit:
@@ -30,13 +41,6 @@ print_str:
     popf
     ret
 
-;======================================================================
-; print a single character in AL
-;======================================================================
-
-print_chr:
-    out port_uart,al
-    ret
 
 ;======================================================================
 ; print a hex representation of the integer value in AL
@@ -58,11 +62,30 @@ print_hex:
     cmp al,9
     jg .letter
     add al,30h          ; '0'
-    out port_uart,al
+    out uart_data,al
     ret
 
 .letter:
     add al,37h          ; 'A' - 10
-    out port_uart,al
+    out uart_data,al
+    ret
+
+
+;======================================================================
+; read a single character into AL
+;======================================================================
+
+get_chr:
+getc:
+    in al,uart_data     ; read character
+    ret
+
+
+;======================================================================
+; are there any characters waiting?
+;======================================================================
+
+has_chr:
+    in al,uart_ctrl     ; any characters?
     ret
 
