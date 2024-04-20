@@ -1,0 +1,104 @@
+#!/usr/bin/perl -w
+######################################################################
+# hex2bin - convert intel hex to binary
+# Ferry Hendrikx, May 2024
+######################################################################
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+
+######################################################################
+# functions
+######################################################################
+
+sub checksum
+{
+    my $data    = shift;
+    my $total   = 0;
+
+    foreach my $val (unpack("(A2)*", $data))
+    {
+        $val = hex $val;
+        $total += $val;
+    }
+
+    return ((-1 * $total) & 0xFF);
+}
+
+sub print_line
+{
+    my $out     = shift;
+    my $txt     = shift;
+
+    my ($len,$type,$data,$sum) = $txt =~ /^:([0-9A-F]{2}).{4}(\d{2})(.*)([0-9A-F]{2})$/i;
+
+    $len        = hex $len;
+    $type       = hex $type;
+    $sum        = hex $sum;
+
+    # we're only concerned with records of type 0x00
+
+    if ($type == 0)
+    {
+        printf $out "%s", pack("H".$len*2, $data);
+    }
+}
+
+sub usage
+{
+    print "usage: hex2bin --file=<file> --dest=<dest>\n\n";
+
+    print "  hex2bin --file=image.hex --dest=image.rom\n";
+
+    exit (0);
+}
+
+
+######################################################################
+# main
+######################################################################
+
+my $file;
+my $dest;
+
+GetOptions(
+    "file=s"        => \$file,
+    "dest=s"        => \$dest,
+);
+
+
+# sanity check
+
+if (! $file)
+{
+    usage();
+}
+
+if (! $dest)
+{
+    usage();
+}
+
+
+# open output
+
+open (my $out, ">", "$dest") || die "unable to open file";
+binmode($out);
+
+
+# process file
+
+open (my $fh, "<", "$file") || die "unable to open file";
+
+while (!eof($fh))
+{
+    my $txt = readline($fh);
+
+    print_line($out, $txt);
+}
+
+close ($fh);
+close ($out);

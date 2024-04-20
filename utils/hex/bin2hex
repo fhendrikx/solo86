@@ -1,0 +1,153 @@
+#!/usr/bin/perl -w
+######################################################################
+# bin2hex - convert binary to intel hex
+# Ferry Hendrikx, May 2024
+######################################################################
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+
+######################################################################
+# functions
+######################################################################
+
+sub checksum
+{
+    my $data    = shift;
+    my $total   = 0;
+
+    foreach my $val (unpack("(A2)*", $data))
+    {
+        $val = hex $val;
+        $total += $val;
+    }
+
+    return ((-1 * $total) & 0xFF);
+}
+
+sub print_line
+{
+    my $data    = shift;
+
+    # :<data><checksum>
+
+    printf(":%s%02X\n", $data, checksum($data));
+}
+
+sub print_data
+{
+    my $offs    = shift;
+    my $bin     = shift;
+
+    my $len     = length($bin);
+
+    # byte count, address, type (00), data
+
+    print_line(sprintf("%02X%04X00%s", $len, $offs, unpack("H".$len*2, $bin)));
+}
+
+sub print_segment
+{
+    my $seg     = shift;
+
+    # byte count, address, type (02), segment
+
+    print_line(sprintf("%02X%04X02%s", 2, 0, $seg));
+}
+
+sub print_start
+{
+    my $cs      = shift;
+    my $ip      = shift;
+
+    # byte count, address, type (03), CS, IP
+
+    print_line(sprintf("%02X%04X03%04s%04s", 4, 0, $cs, $ip));
+}
+
+sub print_eof
+{
+    # byte count, address, type (01)
+
+    print_line(sprintf("%02X%04X01", 0, 0));
+}
+
+sub usage
+{
+    print "usage: bin2hex --file=<file> [ --seg=segment ] [ --start=CS:IP ]\n\n";
+
+    print "  bin2hex --file=image.rom\n";
+    print "  bin2hex --file=image.rom --seg=F000\n";
+    print "  bin2hex --file=image.rom --seg=F000 --start=F000:FFF0\n";
+
+    exit (0);
+}
+
+
+######################################################################
+# main
+######################################################################
+
+my $file;
+my $seg;
+my $addr;
+
+GetOptions(
+    "file=s"        => \$file,
+    "seg=s"         => \$seg,
+    "start=s"       => \$addr,
+);
+
+
+# sanity check
+
+if (! $file)
+{
+    usage();
+}
+
+
+# print segment
+
+if ($seg)
+{
+    print_segment($seg);
+}
+
+
+# print address (CS:IP)
+
+if ($addr)
+{
+    my ($cs,$ip) = $addr =~ /([0-9A-F]{4})\:([0-9A-F]{4})/i;
+
+    print_start($cs, $ip);
+}
+
+
+# process file
+
+my $offset  = 0;
+
+open (my $fh, "<", "$file") || die "unable to open file";
+binmode($fh);
+while (!eof($fh))
+{
+    my $bin;
+    my $ret = read($fh, $bin, 16);
+
+    if ($ret)
+    {
+        print_data($offset, $bin);
+
+        $offset += 16;
+    }
+}
+
+close ($fh);
+
+print_eof();
+
