@@ -26,6 +26,7 @@ puts:
     push cs
     pop ds              ; CS => DS
     cld
+
 .loop:
     lodsb
     or al,al            ; are we done?

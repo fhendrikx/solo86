@@ -7,9 +7,9 @@ cpu 8086
 
 %include "config.inc"
 %include "delay.inc"
-%include "led.inc"
+%include "leds.inc"
 %include "macro.inc"
-%include "stdio.inc"
+%include "uart.inc"
 
 ;======================================================================
 ; defines
