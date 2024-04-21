@@ -7,9 +7,12 @@ cpu 8086
 
 %include "config.inc"
 %include "delay.inc"
+%include "intel.inc"
 %include "leds.inc"
 %include "macro.inc"
+%include "messages.inc"
 %include "uart.inc"
+
 
 ;======================================================================
 ; defines
@@ -48,53 +51,30 @@ start:
     mov si,interrupts
     mov ax,cseg
     mov cx,32
+
 .copy:
     movsw               ; off (copied from table)
     stosw               ; seg (AX)
     loop .copy
 
-; initialise DS
+; initialise DS/ES
     mov ax,dseg
     mov ds,ax
+    mov es,ax
 
     sti
 
+; welcome
+    mov si,mesg_welcome
+    call print_str
+    mov si,mesg_upload
+    call print_str
 
-; stage 1
-.start_test:
-    mov al,1
-    call set_leds
-    mov ax,2000
-    call delay_ms
+; read intel hex file
+    mov di,0
+    call read_hex_file
 
-    int 3
-
-
-; stage 2
-    mov al,2
-    call set_leds
-    mov ax,2000
-    call delay_ms
-
-    int 3
-
-
-; stage 3
-    mov al,4
-    call set_leds
-    mov ax,2000
-    call delay_ms
-
-    mov bh,8
-    mov al,0
-    div bh              ; div by zero
-
-
-; finish
-    mov al,0
-    call set_leds
-    jmp .start_test
-
+; TODO prove data at ES:DI is valid
 
 halt:
     hlt
@@ -105,11 +85,7 @@ halt:
 ; intr_debug
 ;======================================================================
 
-int_debug:
-    push ax
-    mov al,11110000b
-    call set_leds
-    pop ax
+int_dummy:
     iret
 
 
@@ -120,38 +96,38 @@ int_debug:
 setloc 0FF00h
 
 interrupts:
-    dw int_debug        ; 00 - divide by zero
-    dw int_debug        ; 01 - single step
-    dw int_debug        ; 02 - NMI
-    dw int_debug        ; 03 - breakpoint
-    dw int_debug        ; 04 - INTO overflow
-    dw int_debug        ; 05 - BOUND range
-    dw int_debug        ; 06 - invalid opcode
-    dw int_debug        ; 07 - extension not available
-    dw int_debug        ; 08 - interrupt table too small
-    dw int_debug        ; 09 - segment overrun
-    dw int_debug        ; 0A - reserved
-    dw int_debug        ; 0B - reserved
-    dw int_debug        ; 0C - reserved
-    dw int_debug        ; 0D - reserved
-    dw int_debug        ; 0E - reserved
-    dw int_debug        ; 0F - reserved
-    dw int_debug        ; 10 - extension error
-    dw int_debug        ; 11 - reserved
-    dw int_debug        ; 12 - reserved
-    dw int_debug        ; 13 - reserved
-    dw int_debug        ; 14 - reserved
-    dw int_debug        ; 15 - reserved
-    dw int_debug        ; 16 - reserved
-    dw int_debug        ; 17 - reserved
-    dw int_debug        ; 18 - reserved
-    dw int_debug        ; 19 - reserved
-    dw int_debug        ; 1A - reserved
-    dw int_debug        ; 1B - reserved
-    dw int_debug        ; 1C - reserved
-    dw int_debug        ; 1D - reserved
-    dw int_debug        ; 1E - reserved
-    dw int_debug        ; 1F - reserved
+    dw int_dummy        ; 00 - divide by zero
+    dw int_dummy        ; 01 - single step
+    dw int_dummy        ; 02 - NMI
+    dw int_dummy        ; 03 - breakpoint
+    dw int_dummy        ; 04 - INTO overflow
+    dw int_dummy        ; 05 - BOUND range
+    dw int_dummy        ; 06 - invalid opcode
+    dw int_dummy        ; 07 - extension not available
+    dw int_dummy        ; 08 - interrupt table too small
+    dw int_dummy        ; 09 - segment overrun
+    dw int_dummy        ; 0A - reserved
+    dw int_dummy        ; 0B - reserved
+    dw int_dummy        ; 0C - reserved
+    dw int_dummy        ; 0D - reserved
+    dw int_dummy        ; 0E - reserved
+    dw int_dummy        ; 0F - reserved
+    dw int_dummy        ; 10 - extension error
+    dw int_dummy        ; 11 - reserved
+    dw int_dummy        ; 12 - reserved
+    dw int_dummy        ; 13 - reserved
+    dw int_dummy        ; 14 - reserved
+    dw int_dummy        ; 15 - reserved
+    dw int_dummy        ; 16 - reserved
+    dw int_dummy        ; 17 - reserved
+    dw int_dummy        ; 18 - reserved
+    dw int_dummy        ; 19 - reserved
+    dw int_dummy        ; 1A - reserved
+    dw int_dummy        ; 1B - reserved
+    dw int_dummy        ; 1C - reserved
+    dw int_dummy        ; 1D - reserved
+    dw int_dummy        ; 1E - reserved
+    dw int_dummy        ; 1F - reserved
 
 
 ;======================================================================
