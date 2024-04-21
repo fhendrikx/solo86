@@ -3,7 +3,7 @@
 ;======================================================================
 
 ;======================================================================
-; print a single character in AL
+; print a char in AL to the UART
 ;======================================================================
 
 print_chr:
@@ -13,18 +13,38 @@ putc:
 
 
 ;======================================================================
-; print an ASCIIZ string as CS:SI to UART
+; read a char into AL from the UART (blocking)
+;======================================================================
+
+read_chr:
+getc:
+    in al,uart_ctrl     ; any characters?
+    cmp al,0
+    jz read_chr
+    in al,uart_data     ; read character
+    ret
+
+
+;======================================================================
+; are there any bytes waiting?
+;======================================================================
+
+read_ready:
+    in al,uart_ctrl     ; any bytes?
+    ret
+
+
+;======================================================================
+; print an ASCIIZ string at CS:SI to the UART
 ;======================================================================
 
 print_str:
 puts:
-    pushf
     push ax
-    push bx
     push si
     push ds
-    push cs
-    pop ds              ; CS => DS
+    push cs             ; CS => DS
+    pop ds
     cld
 
 .loop:
@@ -37,14 +57,42 @@ puts:
 .exit:
     pop ds
     pop si
-    pop bx
     pop ax
-    popf
     ret
 
 
 ;======================================================================
-; print a hex representation of the integer value in AL
+; read an ASCIIZ string into ES:DI from the UART (blocking)
+;======================================================================
+
+read_str:
+gets:
+    push ax
+    push di
+    push es
+    cld
+
+.loop:
+    in al,uart_ctrl     ; any characters?
+    cmp al,0
+    jz .loop
+    in al,uart_data     ; read character
+    stosb
+    cmp al,10           ; are we done?
+    jz .exit
+    jmp .loop
+
+.exit:
+    mov al,0            ; terminator
+    stosb
+    pop es
+    pop di
+    pop ax
+    ret
+
+
+;======================================================================
+; print AL as 2 hex characters to the UART
 ;======================================================================
 
 print_hex:
@@ -73,20 +121,31 @@ print_hex:
 
 
 ;======================================================================
-; read a single character into AL
+; read 2 hex characters into AL from the UART (blocking)
 ;======================================================================
 
-get_chr:
-getc:
-    in al,uart_data     ; read character
+read_hex:
+    call .nibble
+    mov ah,al
+    shl ah,1            ; shl al,4 not possible
+    shl ah,1
+    shl ah,1
+    shl ah,1
+    call .nibble
+    or al,ah
     ret
 
-
-;======================================================================
-; are there any characters waiting?
-;======================================================================
-
-has_chr:
+.nibble:
     in al,uart_ctrl     ; any characters?
+    cmp al,0
+    jz .nibble
+    in al,uart_data     ; read character
+    cmp al,41h
+    jae .letter
+    sub al,30h          ; '0'
+    ret
+
+.letter:
+    sub al,37h          ; 'A' - 10
     ret
 
