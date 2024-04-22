@@ -74,6 +74,9 @@ start:
     mov di,0
     call read_hex_file
 
+    mov si,mesg_upload_done
+    call print_str
+
 ; TODO prove data at ES:DI is valid
 
 halt:
