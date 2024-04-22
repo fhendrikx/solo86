@@ -5,7 +5,7 @@
 
 cpu 8086
 
-%include "config.inc"
+%include "defines.inc"
 %include "delay.inc"
 %include "intel.inc"
 %include "leds.inc"
