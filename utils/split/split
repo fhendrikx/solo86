@@ -1,0 +1,98 @@
+#!/usr/bin/perl -w
+######################################################################
+# split - split file into multiple parts
+# Ferry Hendrikx, April 2024
+######################################################################
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+
+######################################################################
+# functions
+######################################################################
+
+sub usage
+{
+    print "usage: split --file=<file> [ --count=<number> ] [ --size=<bytes> ]\n\n";
+
+    print "  split --file=image.rom\n";
+    print "  split --file=image.rom --count=2\n";
+    print "  split --file=image.rom --count=2 --size=1\n";
+
+    exit (0);
+}
+
+
+######################################################################
+# main
+######################################################################
+
+my $file;
+my $cntr            = 2;
+my $size            = 1;
+
+GetOptions(
+    "file=s"        => \$file,
+    "count=i"       => \$cntr,
+    "size=i"        => \$size,
+);
+
+
+# sanity check
+
+if (! $file)
+{
+    usage();
+}
+
+my $base            = substr($file, 0, (index($file, ".") > 0 ? index($file, ".") : length($file)));
+
+
+# open input
+
+my $inp;
+
+open ($inp, "<", "$file") || die "error: $!\n";
+
+
+# open outputs
+
+my @out;
+
+for (my $i = 0; $i < $cntr; $i++)
+{
+    open ($out[$i], ">", "$base.$i") || die "error: $!\n";
+}
+
+
+my $data;
+my $quit = 0;
+
+while (! $quit)
+{
+    for (my $i = 0; $i < $cntr; $i++)
+    {
+        if (eof($inp))
+        {
+            $quit = 1;
+        }
+
+        if (! $quit)
+        {
+            read($inp, $data, $size);
+
+            print { $out[$i] } $data;
+        }
+    }
+}
+
+close $inp;
+
+for (my $i = 0; $i < $cntr; $i++)
+{
+    close ($out[$i]);
+}
+
