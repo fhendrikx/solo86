@@ -5,28 +5,27 @@
 
 cpu 8086
 
-%include "defines.inc"
-%include "delay.inc"
-%include "intel.inc"
-%include "leds.inc"
+org 0F000h
+
+
+;======================================================================
+; includes
+;======================================================================
+
 %include "macro.inc"
-%include "messages.inc"
-%include "uart.inc"
 
 
 ;======================================================================
 ; defines
 ;======================================================================
 
-cseg        equ 0F000h
-dseg        equ 01000h
-sseg        equ 07000h
+cseg                equ 0F000h
+dseg                equ 01000h
+sseg                equ 07000h
 
-leds_data   equ 08h
-uart_ctrl   equ 20h
-uart_data   equ 22h
-
-org         START
+leds_data           equ 08h
+uart_ctrl           equ 20h
+uart_data           equ 22h
 
 
 ;======================================================================
@@ -34,13 +33,13 @@ org         START
 ;======================================================================
 
 start:
+    cli
+    cld
+
 ; initialise SS/SP
     mov ax,sseg
     mov ss,ax
     mov sp,0FFFFh
-
-    cli
-    cld
 
 ; initialise interrupts
     push cs
@@ -67,21 +66,36 @@ start:
 ; welcome
     mov si,mesg_welcome
     call print_str
+
     mov si,mesg_upload
     call print_str
 
 ; read intel hex file
-    mov di,0
     call read_hex_file
 
     mov si,mesg_upload_done
     call print_str
 
-; TODO prove data at ES:DI is valid
+
+;    xor ax,ax
+;    mov ds,ax
+;    mov es,ax
+;    jmp cseg:start
 
 halt:
     hlt
     jmp halt
+
+
+;======================================================================
+; includes
+;======================================================================
+
+%include "delay.inc"
+%include "intel.inc"
+%include "leds.inc"
+%include "messages.inc"
+%include "stdio.inc"
 
 
 ;======================================================================
@@ -105,10 +119,8 @@ int_pi:
 
 
 ;======================================================================
-; interrupts
+; interrupt offsets
 ;======================================================================
-
-setloc 0FF00h
 
 interrupts:
     dw int_dummy        ; 00 - divide by zero
@@ -151,16 +163,18 @@ interrupts_end:
 ; reset code (called on CPU reset)
 ;======================================================================
 
-setloc 0FFF0h
+; setloc 0FFF0h
+
+TIMES 64*1024-16-($-$$) db 0xFF
+
 
 reset:
     jmp cseg:start
 
-
-setloc 0FFF5h
-    db BUILD
-
-setloc 0FFFEh
-    db VERSION
-    db 0FFh
+; setloc 0FFF5h
+;    db __?DATE_NUM?__
+;;
+;;setloc 0FFFEh
+;;    db 0FFh
+;;    db 0FFh
 

@@ -4,7 +4,7 @@
 
 ;======================================================================
 ; read intel hex file records until we get an EOF record
-; the decoded file is written to ES:DI
+; the decoded file is written to ES (DI always reset to 0)
 ;======================================================================
 
 read_hex_file:
@@ -12,6 +12,7 @@ read_hex_file:
     push bx
     push di
     push es
+    xor di,di
 
 .find_record:
     call read_chr
@@ -43,20 +44,20 @@ read_hex_file:
 
 .rec_segment:
     call read_hex       ; get segment
-    mov bh,al
+    ;stosb
     call read_hex       ; get segment
-    mov bl,al
+    ;stosb
     jmp .find_record
 
 .rec_start:
     call read_hex       ; get CS
-    mov bh,al
+    ;stosb
     call read_hex       ; get CS
-    mov bl,al
+    ;stosb
     call read_hex       ; get IP
-    mov bh,al
+    ;stosb
     call read_hex       ; get IP
-    mov bl,al
+    ;stosb
     jmp .find_record
 
 .exit:
