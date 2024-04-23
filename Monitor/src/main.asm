@@ -25,7 +25,7 @@ sseg        equ 07000h
 leds_data   equ 08h
 uart_ctrl   equ 20h
 uart_data   equ 22h
-    
+
 org         START
 
 
@@ -94,15 +94,16 @@ int_dummy:
 int_pi:
 
     push ax
-    
+
     in al,uart_data
     out leds_data,al
     out uart_data,al
-    
+
     pop ax
-    
+
     iret
-    
+
+
 ;======================================================================
 ; interrupts
 ;======================================================================
@@ -142,9 +143,10 @@ interrupts:
     dw int_dummy        ; 1D - reserved
     dw int_dummy        ; 1E - reserved
     dw int_dummy        ; 1F - reserved
-    dw int_pi		; 20 - user
-interrupts_end:	
-    
+    dw int_pi           ; 20 - user
+interrupts_end:
+
+
 ;======================================================================
 ; reset code (called on CPU reset)
 ;======================================================================
