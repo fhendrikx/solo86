@@ -16,7 +16,7 @@ STB_SRC = stub.asm
 all: $(MON_BIN) $(STB_BIN)
 
 clean:
-	rm -f *.bin *.lst
+	rm -f *.bin *.lst *.rom
 
 $(MON_BIN): $(MON_SRC)
 	$(AS) $(MON_SRC) -O9 -f bin -o $(MON_BIN)
