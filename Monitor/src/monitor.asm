@@ -5,7 +5,7 @@
 
 cpu 8086
 
-org 0F000h
+org 0
 
 
 ;======================================================================
@@ -19,13 +19,13 @@ org 0F000h
 ; defines
 ;======================================================================
 
-cseg                equ 0F000h
-dseg                equ 01000h
-sseg                equ 07000h
+cseg            equ 0F000h
+dseg            equ 01000h
+sseg            equ 07000h
 
-leds_data           equ 08h
-uart_ctrl           equ 20h
-uart_data           equ 22h
+leds_data       equ 08h
+uart_ctrl       equ 20h
+uart_data       equ 22h
 
 
 ;======================================================================
@@ -64,18 +64,13 @@ start:
     sti
 
 ; welcome
-    mov si,mesg_welcome
-    call print_str
-
-    mov si,mesg_upload
-    call print_str
+    print mesg_welcome
+    print mesg_upload
 
 ; read intel hex file
     call read_hex_file
 
-    mov si,mesg_upload_done
-    call print_str
-
+    print mesg_upload_done
 
 ;    xor ax,ax
 ;    mov ds,ax
@@ -163,18 +158,11 @@ interrupts_end:
 ; reset code (called on CPU reset)
 ;======================================================================
 
-; setloc 0FFF0h
-
-TIMES 64*1024-16-($-$$) db 0xFF
-
+TIMES 64*1024-16-($-$$) db 0FFh
 
 reset:
     jmp cseg:start
 
-; setloc 0FFF5h
-;    db __?DATE_NUM?__
-;;
-;;setloc 0FFFEh
-;;    db 0FFh
-;;    db 0FFh
+    db 0
+    db __DATE__
 
