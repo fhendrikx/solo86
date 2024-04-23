@@ -144,13 +144,14 @@ architecture rtl of Control286 is
   signal event_start          : std_logic;
   signal piuart_wait_n        : std_logic;
   signal inta_cycle           : std_logic;
+  signal rom_ram_sw           : std_logic;
 
   signal irq0_latch           : std_logic;
   signal pint_latch           : std_logic;
 
   signal wait_states          : integer range 0 to 3;
   
-  type t_ctrl_state is (TS1, TS2, TC1, TC2, ERROR_S);
+  type t_ctrl_state is (INIT, TS1, TS2, TC1, TC2, ERROR_S);
   signal ctrl_state           : t_ctrl_state;
 
   type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
@@ -187,6 +188,7 @@ begin
   o_prdwr <= '1' when o_iord_n = '0' else '0';
   
 
+  -- edge triggered interrupt latches
   proc_irq0_latch: process(i_irq0_n, i_reset_n, clear_int) is
   begin
     
@@ -362,12 +364,13 @@ begin
     if i_reset_n = '0' then
 
       -- initial signal state
-      ctrl_state <= TS1;
+      ctrl_state <= INIT;
       wait_states <= 0;
       clear_int <= NONE;
 
       event_start <= '0';
-      inta_cycle <= '0';      
+      inta_cycle <= '0';
+      rom_ram_sw <= '0';
       
       -- initial output pin state
       o_warning <= '0';
@@ -394,6 +397,13 @@ begin
     elsif falling_edge(i_clk) then
 
       case ctrl_state is
+
+        --
+        when INIT =>
+        
+          ctrl_state <= TS1;
+
+          rom_ram_sw <= i_jp1;
 
         --
         when TS1 =>
@@ -445,7 +455,7 @@ begin
               o_ale <= '1';
               o_addr_high <= i_addr_high;
 
-              if (i_addr_high and "1000") = "1000" then
+              if (i_addr_high and "1000") = "1000" and rom_ram_sw = '0' then
                 -- reading from ROM, enable the ROM chips
                 o_rom_ce_n <= '0';
 
@@ -546,7 +556,7 @@ begin
 
             -- output enable (OE) the memory chips (e.g. tell them to put a
             -- value on the data bus)
-            if (i_addr_high and "1000") = "1000" then
+            if (i_addr_high and "1000") = "1000" and rom_ram_sw = '0' then
               -- reading from ROM
 
               o_rom_oe_n <= '0';
