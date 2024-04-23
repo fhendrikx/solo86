@@ -72,9 +72,6 @@ entity Control286 is
 
     );
 
-  constant clock_hz         : integer := 40000000;
-  constant ticks_wrap       : integer := (clock_hz / 200) - 1; -- 100 Hz ticks
-
   constant led_latch_addr   : unsigned(7 downto 0) := x"08";
   constant piuart_addr      : unsigned(7 downto 0) := x"20"; -- 0x20->3F
   constant piuart_mask      : unsigned(7 downto 0) := "11100000";
@@ -146,16 +143,21 @@ architecture rtl of Control286 is
   signal iorq_n               : std_logic;
   signal event_start          : std_logic;
   signal piuart_wait_n        : std_logic;
-  
-  --signal ticks_count          : integer range 0 to ticks_wrap;
+  signal inta_cycle           : std_logic;
 
+  signal irq0_latch           : std_logic;
+  signal pint_latch           : std_logic;
+
+  signal wait_states          : integer range 0 to 3;
+  
   type t_ctrl_state is (TS1, TS2, TC1, TC2, ERROR_S);
   signal ctrl_state           : t_ctrl_state;
 
-  signal wait_states          : integer range 0 to 3;
-
   type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
   signal piuart_state         : t_piuart_state;
+
+  type t_clear_int is (NONE, IRQ0, PINT);
+  signal clear_int            : t_clear_int;
   
 
 begin
@@ -167,10 +169,9 @@ begin
 
   -- interrupt outputs
   o_nmi <= '0';
-  o_intr <= '0';
-
-  -- data bus
-  io_data <= "ZZZZZZZZ";
+  
+  o_intr <= '1' when irq0_latch = '1' or pint_latch = '1'
+            else '0';
 
   -- expansion slot clock
   o_clkout <= i_clk;
@@ -182,15 +183,40 @@ begin
   iorq_n <= '1' when o_iowr_n = '1' and o_iord_n = '1'
             else '0';
   
-  -- PiUART event start
-  event_start <= '1' when iorq_n = '0' and
-                 ((i_addr_low and piuart_mask) = piuart_addr)
-                 else '0';
-
   -- PiUART read/write control
-
   o_prdwr <= '1' when o_iord_n = '0' else '0';
+  
 
+  proc_irq0_latch: process(i_irq0_n, i_reset_n, clear_int) is
+  begin
+    
+    if i_reset_n = '0' or clear_int = IRQ0 then
+
+      irq0_latch <= '0';
+
+    elsif falling_edge(i_irq0_n) then
+      
+      irq0_latch <= '1';
+
+    end if;
+
+  end process;
+
+  
+  proc_pint_latch: process(i_pint_n, i_reset_n, clear_int) is
+  begin
+    
+    if i_reset_n = '0' or clear_int = PINT then
+
+      pint_latch <= '0';
+
+    elsif falling_edge(i_pint_n) then
+      
+      pint_latch <= '1';
+
+    end if;
+
+  end process;
 
   
   -- the 74HCT273 clk pulse min width ~25ns
@@ -284,7 +310,6 @@ begin
         o_pevent <= '0';
         o_pdata_en_n <= i_pwait;
         piuart_wait_n <= '1';
-
         
       when WAIT_FOR_PI_READY =>
 
@@ -307,33 +332,6 @@ begin
     end case;
     
   end process;
-
-  
-  -- count clock pulses until we reach ticks_wrap
-  -- for now outputting this via pin o_clkout
-  -- change this to an internal register to trigger an interrupt
-  -- when interrupt handling is added
-  -- TODO, add enable ticks option
-  -- proc_ticks: process(i_clk, i_reset_n) is
-  -- begin
-
-  --   if i_reset_n = '0' then
-      
-  --     ticks_count <= 0;
-  --     o_clkout <= '0';
-      
-  --   elsif rising_edge(i_clk) then
-      
-  --     if ticks_count = ticks_wrap then
-  --       ticks_count <= 0;
-  --       o_clkout <= not o_clkout;
-  --     else
-  --       ticks_count <= ticks_count + 1;
-  --     end if;
-
-  --   end if;
-
-  -- end process;
 
   
   --
@@ -362,8 +360,14 @@ begin
   begin
 
     if i_reset_n = '0' then
-      
+
+      -- initial signal state
       ctrl_state <= TS1;
+      wait_states <= 0;
+      clear_int <= NONE;
+
+      event_start <= '0';
+      inta_cycle <= '0';      
       
       -- initial output pin state
       o_warning <= '0';
@@ -385,8 +389,8 @@ begin
       o_memwr_n <= '1';
       o_iowr_n <= '1';
       
-      wait_states <= 0;
-      
+      io_data <= "ZZZZZZZZ";
+
     elsif falling_edge(i_clk) then
 
       case ctrl_state is
@@ -406,8 +410,10 @@ begin
             if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '0' then
               -- Interrupt Ack
 
-              -- TODO, error for now
-              ctrl_state <= ERROR_S;
+              ctrl_state <= TS2;
+
+              -- toggle the cycle count
+              inta_cycle <= not inta_cycle;
               
             elsif i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
               -- IO Read
@@ -474,8 +480,31 @@ begin
           -- the latched address bus and data bus should now have stable values
           -- enable the expansion slot IORD/IOWR/MEMRD/MEMWR pins
           -- set the number of wait states to add
+
+          if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '0' then
+            -- Interrupt Ack
+
+            wait_states <= 1;
+
+            -- only output the interrupt vector on the second cycle
+            if inta_cycle = '0' then
+
+              if irq0_latch = '1' then
+              
+                io_data <= "00100000";
+                clear_int <= IRQ0;
+
+              elsif pint_latch = '1' then
+                
+                io_data <= "00100011";
+                clear_int <= PINT;
+
+              end if;
+              
+            end if;
+
           
-          if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
+          elsif i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
             -- IO Read
 
             -- only signal even numbered I/O requests
@@ -484,6 +513,12 @@ begin
               -- we need at least one wait state to allow peripherals time to
               -- assert wait if they need it
               wait_states <= 1;
+
+              -- PiUART
+              if (i_addr_low and piuart_mask) = piuart_addr then
+                event_start <= '1';
+              end if;
+              
             end if;
             
           elsif i_m_io = '0' and i_s1_n = '1' and i_s0_n = '0' then
@@ -495,8 +530,14 @@ begin
               -- we need at least one wait state to allow peripherals time to
               -- assert wait if they need it
               wait_states <= 1;
+
+              -- PiUART
+              if (i_addr_low and piuart_mask) = piuart_addr then
+                event_start <= '1';
+              end if;
+              
             end if;
-            
+
           elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
             -- Mem Read
 
@@ -551,6 +592,10 @@ begin
           
           ctrl_state <= TC2;
 
+          event_start <= '0';
+
+          clear_int <= NONE;
+
           if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then
             -- no reason to wait, set the ready signal
 
@@ -597,7 +642,9 @@ begin
             o_iord_n <= '1';
             o_memwr_n <= '1';
             o_iowr_n <= '1';
-              
+
+            io_data <= "ZZZZZZZZ";
+
           end if;
 
         --
