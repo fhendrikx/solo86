@@ -60,20 +60,15 @@
 #define MODE_160x100 1
 #define MODE_160x100_DB 2
 
-// ACIA registers
-#define ACIA_CONTROL 0
-#define ACIA_DATA 1
+// UART registers
+#define UART_CONTROL 0
+#define UART_DATA 1
 // video control registers
 #define VC_MODE 2
 #define VC_FB_SWAP 3
 
-#define ACIA_RECEIVE_EMPTY 0
-#define ACIA_RECEIVE_FULL 1
-#define ACIA_RTS_PAUSE 0x2
-#define ACIA_RECV_INTERRUPT_IDLE 0
-#define ACIA_RECV_INTERRUPT_ACTIVE 0x80
-#define ACIA_RECV_INTERRUPT_DISABLED 0
-#define ACIA_RECV_INTERRUPT_ENABLED 1
+// UART bitmaps
+#define UART_INT_ENABLE 0x1
 
 // OLED I2C display
 #define LCD_HEIGHT 32
@@ -115,7 +110,6 @@ private:
 
     inline u32 BusIORead(u32 address);
     inline void BusIOWrite(u32 address, u8 data);
-    void ACIAStateDump();
     
     void GPIOInit();
     inline u32 GPIORead();
@@ -123,6 +117,7 @@ private:
     inline void GPIOPWaitBusy();
     inline void GPIOInterruptRaise();
     inline void GPIOInterruptRelease();
+    inline void GPIOBreakReset();
     inline void GPIODataOutput(u32 data);
     inline void GPIODataInput();
 
@@ -188,7 +183,7 @@ private:
     CWPASupplicant m_WPASupplicant;
     
     // ring buffers
-    CRingBuf m_ToSerial; // data for the ACIA to output
+    CRingBuf m_ToSerial; // data for the UART to output
     CRingBuf m_ToTerminal; // data for the terminal to display
     CRingBuf m_ToNetwork; // data for the network to send
     
@@ -201,16 +196,9 @@ private:
     u8 m_nPrevMode;
     volatile u8 m_nReadyForSwap;
 
-    u32 m_nAciaState;
-    u32 m_nAciaStateCounterDivide;
-    u32 m_nAciaStateWordSelect;
-    u32 m_nAciaStateTransmitControl;
-    u32 m_nAciaStateReceiveInterrupt;
-
-    u32 m_nAciaReceiveDataRegisterFull;
-    u32 m_nAciaReceiveDataRegister;
-    u32 m_nAciaInterruptRequest;
-
+    bool m_bUartIntEnable;
+    bool m_bUartIntActive;
+    
     unsigned m_nScreenWidth;
     unsigned m_nScreenHeight;
     unsigned m_nScreenPitch;

@@ -2,6 +2,7 @@
 
 #include <circle/sched/scheduler.h>
 #include <circle/net/in.h>
+#include <circle/memio.h>
 
 static const telnet_telopt_t my_telopts[] = {
     { TELNET_TELOPT_ECHO,      TELNET_WILL, TELNET_DO },   // I don't think this is necessary
@@ -144,10 +145,20 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
     case TELNET_EV_IAC:
 
-	klog(LogNotice, "TelnetEventCB TELNET_EV_IAC cmd = 0x%x", ev->iac.cmd);
+	klog(LogDebug, "TelnetEventCB TELNET_EV_IAC cmd = 0x%x", ev->iac.cmd);
 	
-        if (ev->iac.cmd == 0xf3)
+        if (ev->iac.cmd == 0xf3) {
 	    klog(LogNotice, "TelnetEventCB BREAK received");
+
+	    // This might be dodgy, using the main thread to update the GPIO registers
+	    // that are also being updated by the GPIO thread
+	    
+	    //GPIOBreakReset();
+	    write32(ARM_GPIO_GPSET0, 1 << 16);
+	    CTimer::SimpleMsDelay(100);
+	    write32(ARM_GPIO_GPCLR0, 1 << 16);
+	    
+	}
             
         break;
         

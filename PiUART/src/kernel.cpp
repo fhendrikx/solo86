@@ -46,16 +46,9 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_nPrevMode = MODE_CON;
     m_nReadyForSwap = 1;
 
-    m_nAciaState = 0xffffffff; // invalid initial state
-    m_nAciaStateCounterDivide = 0;
-    m_nAciaStateWordSelect = 0;
-    m_nAciaStateTransmitControl = 0;
-    m_nAciaStateReceiveInterrupt = 0;
-
-    m_nAciaReceiveDataRegisterFull = 0;
-    m_nAciaReceiveDataRegister = 0;
-    m_nAciaInterruptRequest = 0;
-
+    m_bUartIntEnable = false;
+    m_bUartIntActive = false;
+    
     memset(m_pRam, 0, RAM_SIZE * 2);
     m_pBusRam = m_pRam;
     m_pDisRam = &m_pRam[RAM_SIZE];
@@ -306,31 +299,16 @@ void CKernel::GPIO() {
     
     // main GPIO loop
     while (true) {
-
-	// copy a char into the receive buffer
-	if (m_nAciaReceiveDataRegisterFull == ACIA_RECEIVE_EMPTY and
-	    m_ToSerial.GetCount() > 0 and
-	    m_nAciaStateTransmitControl != ACIA_RTS_PAUSE) {
-
-	    m_nAciaReceiveDataRegisterFull = ACIA_RECEIVE_FULL;
-	    m_ToSerial.Lock();
-	    m_nAciaReceiveDataRegister = m_ToSerial.RemoveChar();
-	    m_ToSerial.Unlock();
-
-	    //klog(LogNotice, "%x", m_nAciaReceiveDataRegister);
-
-	}
-
-	// raise an interrupt if necessary
-	if (m_nAciaReceiveDataRegisterFull == ACIA_RECEIVE_FULL and
-	    m_nAciaStateReceiveInterrupt == ACIA_RECV_INTERRUPT_ENABLED and
-	    m_nAciaInterruptRequest == ACIA_RECV_INTERRUPT_IDLE) {
-	    
-	    m_nAciaInterruptRequest = ACIA_RECV_INTERRUPT_ACTIVE;
-	    GPIOInterruptRaise();
-
-	}
 	
+	// raise an interrupt if necessary
+	if (m_bUartIntEnable and not m_bUartIntActive and
+	    m_ToSerial.GetCount() > 0) {
+
+	    m_bUartIntActive = true;
+	    GPIOInterruptRaise();
+	    
+	}
+
 	// check for an event
 	u32 pins = GPIORead();
 	
@@ -440,7 +418,7 @@ void CKernel::Main() {
 
     /*
       The network stack sends data as soon as it's written.
-      Given the speed of the ACIA writes from the bus this results in
+      Given the speed of the UART writes from the bus this results in
       a stream of 1 byte packets being sent.
       Instead wait a bit before sending so we can accumulate more data.
     */
@@ -666,30 +644,27 @@ u32 CKernel::BusIORead(u32 address) {
 
     switch(address) {
 	
-    case ACIA_CONTROL:
-	// read ACIA control register
-	if (m_nAciaStateCounterDivide == 0x3)
-	    // master reset
-	    data = 0;
-	else
-	    // business as usual
-	    data = 0x2 | m_nAciaReceiveDataRegisterFull | m_nAciaInterruptRequest;
-	    
+    case UART_CONTROL:
+	// read UART control register
+
+	// return 0x1 if there are bytes waiting
+	data = m_ToSerial.GetCount() > 0;
+	
 	break;
 	    
-    case ACIA_DATA:
-	// read ACIA data register
-	if (m_nAciaReceiveDataRegisterFull == ACIA_RECEIVE_EMPTY)
-	    klog(LogWarning, "ACIA Warning, empty read");
-	    
-	data = m_nAciaReceiveDataRegister;
-	m_nAciaReceiveDataRegisterFull = ACIA_RECEIVE_EMPTY;
+    case UART_DATA:
+	// read UART data register
 
-	if (m_nAciaInterruptRequest == ACIA_RECV_INTERRUPT_ACTIVE) {
-	    m_nAciaInterruptRequest = ACIA_RECV_INTERRUPT_IDLE;
+	m_ToSerial.Lock();
+	data = m_ToSerial.RemoveChar();
+	m_ToSerial.Unlock();
+
+	if (m_bUartIntActive) {
+	    m_bUartIntActive = false;
 	    GPIOInterruptRelease();
-	}
 
+	}
+	
 	break;
 	
     case VC_MODE:
@@ -716,28 +691,15 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
-    case ACIA_CONTROL:
-	// write ACIA control register
-	if (m_nAciaState != data) {
-	    // state has change, update components
-	    m_nAciaState = data;
-	    m_nAciaStateCounterDivide = m_nAciaState & 0x3; // first two bits
-	    m_nAciaStateWordSelect = (m_nAciaState >> 2) & 0x7; // next three bits
-	    m_nAciaStateTransmitControl = (m_nAciaState >> 5) & 0x3; // next two bits
-	    m_nAciaStateReceiveInterrupt =  m_nAciaState >> 7; // last bit
-	    
-	    klog(LogDebug, "AciaState = 0x%x", m_nAciaState);
+    case UART_CONTROL:
+	// write UART control register
 
-#ifndef NDEBUG
-	    ACIAStateDump();
-#endif
-		
-	}
+	m_bUartIntEnable = data & UART_INT_ENABLE;
 	
 	break;
 	    
-    case ACIA_DATA:
-	// write ACIA data register
+    case UART_DATA:
+	// write UART data register
 	m_ToTerminal.Lock();
 	m_ToTerminal.AddChar(data);
 	m_ToTerminal.Unlock();
@@ -784,81 +746,6 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
 }
 
-void CKernel::ACIAStateDump() {
-
-    switch(m_nAciaStateCounterDivide) {
-    case 0:
-	klog(LogDebug, "AciaStateCounterDivide = 1");
-	break;
-		    
-    case 1:
-	klog(LogDebug, "AciaStateCounterDivide = 16");
-	break;
-		    
-    case 2:
-	klog(LogDebug, "AciaStateCounterDivide = 64");
-	break;
-		    
-    case 3:
-	klog(LogDebug, "AciaStateCounterDivide = Master Reset");
-	break;
-    }
-		
-    switch(m_nAciaStateWordSelect) {
-    case 0:
-	klog(LogDebug, "AciaStateWordSelect = 7E2");
-	break;
-		    
-    case 1:
-	klog(LogDebug, "AciaStateWordSelect = 7O2");
-	break;
-		    
-    case 2:
-	klog(LogDebug, "AciaStateWordSelect = 7E1");
-	break;
-		    
-    case 3:
-	klog(LogDebug, "AciaStateWordSelect = 7O1");
-	break;
-		    
-    case 4:
-	klog(LogDebug, "AciaStateWordSelect = 8N2");
-	break;
-		    
-    case 5:
-	klog(LogDebug, "AciaStateWordSelect = 8N1");
-	break;
-		    
-    case 6:
-	klog(LogDebug, "AciaStateWordSelect = 8E1");
-	break;
-		    
-    case 7:
-	klog(LogDebug, "AciaStateWordSelect = 8O1");
-	break;
-    }
-		
-    switch(m_nAciaStateTransmitControl) {
-    case 0:
-	klog(LogDebug, "AciaStateTransmitControl = RTS low, TR Int Dis");
-	break;
-		    
-    case 1:
-	klog(LogDebug, "AciaStateTransmitControl = RTS low, TR Int En");
-	break;
-		    
-    case 2:
-	klog(LogDebug, "AciaStateTransmitControl = RTS high, TR Int Dis");
-	break;
-		    
-    case 3:
-	klog(LogDebug, "AciaStateTransmitControl = RTS low, TR Break TR, Int Dis");
-	break;
-    }
-		
-    klog(LogDebug, "AciaStateReceiveInterrupt = %u", m_nAciaStateReceiveInterrupt);
-		
-}
 
 void CKernel::GPIOInit() {
 
@@ -870,23 +757,23 @@ void CKernel::GPIOInit() {
     
     // set GPIO pin mode
     write32(ARM_GPIO_GPFSEL0, 0x901); // GPIO 0 output (PWAIT), GPIO 1,4-9 input, GPIO 2,3 I2C
-    write32(ARM_GPIO_GPFSEL1, 0x0); // GPIO 10-19 input
+    write32(ARM_GPIO_GPFSEL1, 0x1040000); // GPIO 10-15, 17, 19 input, GPIO 16, 18 output
     write32(ARM_GPIO_GPFSEL2, 0x8000000); // GPIO 20-28 input, GPIO 29 output (ActLED)
     
     // disable GPIO pullups (see CGPIOPin::SetPullMode), only works for Pi <= 3
     // also see bcm2835-peripherals.pdf page 101
     // there are physical pullups on the I2C pins, so safe to disable here
-    write32 (ARM_GPIO_GPPUD, 0); // pullups off
+    write32(ARM_GPIO_GPPUD, 0); // pullups off
     CTimer::SimpleusDelay(5);
-    write32 (ARM_GPIO_GPPUDCLK0, 0xfffffff); // GPIO 0-27 
+    write32(ARM_GPIO_GPPUDCLK0, 0xfffffff); // GPIO 0-27 
     CTimer::SimpleusDelay(5);
-    write32 (ARM_GPIO_GPPUD, 0);
-    write32 (ARM_GPIO_GPPUDCLK0, 0);	
+    write32(ARM_GPIO_GPPUD, 0);
+    write32(ARM_GPIO_GPPUDCLK0, 0);	
 
     // mess with slew rates and drive strength (GPIO 0-27)
     // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#gpio-pads-control
     // 2mA drive strength caues occasional data corruption with bus I/O reads, using 8mA instead
-    write32 (ARM_PM_PADS0, ARM_PM_PASSWD | ARM_PADS_SLEW | ARM_PADS_HYST | ARM_PADS_DRIVE(1));
+    write32(ARM_PM_PADS0, ARM_PM_PASSWD | ARM_PADS_SLEW | ARM_PADS_HYST | ARM_PADS_DRIVE(1));
 
 }
 
@@ -908,6 +795,12 @@ inline void CKernel::GPIOInterruptRaise() {
 
 inline void CKernel::GPIOInterruptRelease() {
     write32(ARM_GPIO_GPSET0, 1 << 18);
+}
+
+inline void CKernel::GPIOBreakReset() {
+    write32(ARM_GPIO_GPSET0, 1 << 16);
+    CTimer::SimpleMsDelay(100);
+    write32(ARM_GPIO_GPCLR0, 1 << 16);
 }
 
 inline void CKernel::GPIODataOutput(u32 data) {
