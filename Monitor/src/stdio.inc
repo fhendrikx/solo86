@@ -49,7 +49,7 @@ puts:
 
 .loop:
     lodsb
-    or al,al            ; are we done?
+    cmp al,0            ; are we done?
     jz .exit
     out uart_data,al
     jmp .loop

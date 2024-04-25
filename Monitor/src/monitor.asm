@@ -29,10 +29,20 @@ uart_data       equ 22h
 
 
 ;======================================================================
-; monitor start
+; 0xf0000 - reserved space
 ;======================================================================
 
 start:
+    jmp start
+
+
+;======================================================================
+; 0xf8000 - monitor start
+;======================================================================
+
+TIMES 32768-($-$$)      db 00h
+
+init:
     cli
     cld
 
@@ -56,10 +66,9 @@ start:
     stosw               ; seg (AX)
     loop .copy
 
-; initialise DS/ES
+; initialise DS
     mov ax,dseg
     mov ds,ax
-    mov es,ax
 
     sti
 
@@ -67,30 +76,27 @@ start:
     print mesg_welcome
     print mesg_upload
 
-; read intel hex file
-    call read_hex_file
+; initialise ES
+    mov ax,cseg
+    mov es,ax
 
+    call read_hex_file
     print mesg_upload_done
 
-;    xor ax,ax
-;    mov ds,ax
-;    mov es,ax
-;    jmp cseg:start
+; reset
+    xor ax,ax
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+
+    mov ax,2h
+    push ax
+    popf
+    jmp cseg:start
 
 halt:
     hlt
     jmp halt
-
-
-;======================================================================
-; includes
-;======================================================================
-
-%include "delay.inc"
-%include "intel.inc"
-%include "leds.inc"
-%include "messages.inc"
-%include "stdio.inc"
 
 
 ;======================================================================
@@ -118,51 +124,65 @@ int_pi:
 ;======================================================================
 
 interrupts:
-    dw int_dummy        ; 00 - divide by zero
-    dw int_dummy        ; 01 - single step
-    dw int_dummy        ; 02 - NMI
-    dw int_dummy        ; 03 - breakpoint
-    dw int_dummy        ; 04 - INTO overflow
-    dw int_dummy        ; 05 - BOUND range
-    dw int_dummy        ; 06 - invalid opcode
-    dw int_dummy        ; 07 - extension not available
-    dw int_dummy        ; 08 - interrupt table too small
-    dw int_dummy        ; 09 - segment overrun
-    dw int_dummy        ; 0A - reserved
-    dw int_dummy        ; 0B - reserved
-    dw int_dummy        ; 0C - reserved
-    dw int_dummy        ; 0D - reserved
-    dw int_dummy        ; 0E - reserved
-    dw int_dummy        ; 0F - reserved
-    dw int_dummy        ; 10 - extension error
-    dw int_dummy        ; 11 - reserved
-    dw int_dummy        ; 12 - reserved
-    dw int_dummy        ; 13 - reserved
-    dw int_dummy        ; 14 - reserved
-    dw int_dummy        ; 15 - reserved
-    dw int_dummy        ; 16 - reserved
-    dw int_dummy        ; 17 - reserved
-    dw int_dummy        ; 18 - reserved
-    dw int_dummy        ; 19 - reserved
-    dw int_dummy        ; 1A - reserved
-    dw int_dummy        ; 1B - reserved
-    dw int_dummy        ; 1C - reserved
-    dw int_dummy        ; 1D - reserved
-    dw int_dummy        ; 1E - reserved
-    dw int_dummy        ; 1F - reserved
-    dw int_pi           ; 20 - user
+    dw int_dummy            ; 00 - divide by zero
+    dw int_dummy            ; 01 - single step
+    dw int_dummy            ; 02 - NMI
+    dw int_dummy            ; 03 - breakpoint
+    dw int_dummy            ; 04 - INTO overflow
+    dw int_dummy            ; 05 - BOUND range
+    dw int_dummy            ; 06 - invalid opcode
+    dw int_dummy            ; 07 - extension not available
+    dw int_dummy            ; 08 - interrupt table too small
+    dw int_dummy            ; 09 - segment overrun
+    dw int_dummy            ; 0A - reserved
+    dw int_dummy            ; 0B - reserved
+    dw int_dummy            ; 0C - reserved
+    dw int_dummy            ; 0D - reserved
+    dw int_dummy            ; 0E - reserved
+    dw int_dummy            ; 0F - reserved
+    dw int_dummy            ; 10 - extension error
+    dw int_dummy            ; 11 - reserved
+    dw int_dummy            ; 12 - reserved
+    dw int_dummy            ; 13 - reserved
+    dw int_dummy            ; 14 - reserved
+    dw int_dummy            ; 15 - reserved
+    dw int_dummy            ; 16 - reserved
+    dw int_dummy            ; 17 - reserved
+    dw int_dummy            ; 18 - reserved
+    dw int_dummy            ; 19 - reserved
+    dw int_dummy            ; 1A - reserved
+    dw int_dummy            ; 1B - reserved
+    dw int_dummy            ; 1C - reserved
+    dw int_dummy            ; 1D - reserved
+    dw int_dummy            ; 1E - reserved
+    dw int_dummy            ; 1F - reserved
+    dw int_pi               ; 20 - user
 interrupts_end:
+
+
+;======================================================================
+; includes
+;======================================================================
+
+TIMES 65536-1024-($-$$)     db 0FFh
+
+%include "delay.inc"
+%include "intel.inc"
+%include "leds.inc"
+%include "messages.inc"
+%include "stdio.inc"
 
 
 ;======================================================================
 ; reset code (called on CPU reset)
 ;======================================================================
 
-TIMES 64*1024-16-($-$$) db 0FFh
+TIMES 65536-16-($-$$)       db 0FFh
 
 reset:
-    jmp cseg:start
+    jmp cseg:init
 
-    db 0
+build:
     db __DATE__
+    db 0
 

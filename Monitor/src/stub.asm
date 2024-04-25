@@ -5,7 +5,7 @@
 
 cpu 8086
 
-org 0F000h
+org 0
 
 
 ;======================================================================
@@ -47,12 +47,11 @@ start:
     mov es,ax
 
 ; welcome
-    print mesg_welcome
+    print mesg_welcome_stub
 
 halt:
     hlt
     jmp halt
-
 
 ;======================================================================
 ; includes

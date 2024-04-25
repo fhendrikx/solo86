@@ -4,7 +4,7 @@
 
 ;======================================================================
 ; read intel hex file records until we get an EOF record
-; the decoded file is written to ES (DI always reset to 0)
+; the decoded file is written to ES (DI loaded from file)
 ;======================================================================
 
 read_hex_file:
@@ -20,9 +20,13 @@ read_hex_file:
     jnz .find_record
 
     call read_hex       ; get length
-    mov cl,al
-    call read_hex       ; eat address
+    mov cl,al           ; rec_data uses cl for counter
+
+    call read_hex       ; get address
+    mov bh,al
     call read_hex
+    mov bl,al
+    mov di,bx           ; rec_data uses ES:DI in stosb
 
     call read_hex       ; get type
     cmp al,0            ; 0x00 - data
@@ -44,20 +48,14 @@ read_hex_file:
 
 .rec_segment:
     call read_hex       ; get segment
-    ;stosb
     call read_hex       ; get segment
-    ;stosb
     jmp .find_record
 
 .rec_start:
     call read_hex       ; get CS
-    ;stosb
     call read_hex       ; get CS
-    ;stosb
     call read_hex       ; get IP
-    ;stosb
     call read_hex       ; get IP
-    ;stosb
     jmp .find_record
 
 .exit:
