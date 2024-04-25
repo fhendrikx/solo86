@@ -46,7 +46,7 @@ sub print_data
 
     # byte count, address, type (00), data
 
-    print_line(sprintf("%02X%04X00%s", $len, $offs, unpack("H".$len*2, $bin)));
+    print_line(sprintf("%02X%04X00%s", $len, $offs, uc unpack("H".$len*2, $bin)));
 }
 
 sub print_segment
