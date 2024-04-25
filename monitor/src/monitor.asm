@@ -80,10 +80,17 @@ init:
     mov ax,cseg
     mov es,ax
 
+; read hex file
     call read_hex_file
-    print mesg_upload_done
+
+; dump memory
+    print mesg_memdump
+    mov si,0
+    mov cx,384
+    call mem_dump
 
 ; reset
+    print mesg_restart
     xor ax,ax
     mov ds,ax
     mov es,ax
@@ -169,6 +176,7 @@ TIMES 65536-1024-($-$$)     db 0FFh
 %include "delay.inc"
 %include "intel.inc"
 %include "leds.inc"
+%include "mem.inc"
 %include "messages.inc"
 %include "stdio.inc"
 
