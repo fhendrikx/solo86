@@ -23,6 +23,8 @@ cseg            equ 0F000h
 dseg            equ 01000h
 sseg            equ 07000h
 
+; I/O addresses should be even numbers only
+mem_toggle	equ 06h
 leds_data       equ 08h
 uart_ctrl       equ 20h
 uart_data       equ 22h
@@ -74,6 +76,24 @@ init:
 
 ; welcome
     print mesg_welcome
+
+
+; copy ROM to RAM
+    push cs
+    pop ds
+    xor si,si
+
+    push cs
+    pop es
+    xor di,di
+
+    mov cx,08000h
+    
+.romcopy:
+    movsw
+    loop .romcopy
+
+; prep upload    
     print mesg_upload
 
 ; initialise ES
@@ -83,6 +103,9 @@ init:
 ; read hex file
     call read_hex_file
 
+; toggle ROM -> RAM
+    out mem_toggle, al		; value of al doesn't matter
+    
 ; dump memory
     print mesg_memdump
     mov si,0
