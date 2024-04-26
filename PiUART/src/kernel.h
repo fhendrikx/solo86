@@ -82,7 +82,7 @@
 
 #define RAM_SIZE 16384
 
-#define RING_BUF_SIZE 16384
+#define RING_BUF_SIZE 2097152
 
 #define NETWORK_DELAY_US 30000 // 30 ms
 #define NETWORK_DELAY_BYTES 132 // one xmodem packet

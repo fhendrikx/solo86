@@ -10,6 +10,7 @@
 read_hex_file:
     push ax
     push bx
+    push cx
     push di
     push es
     xor di,di
@@ -44,11 +45,13 @@ read_hex_file:
     stosb
     dec cl
     jnz .rec_data       ; are we done yet?
+    call .checksum
     jmp .find_record
 
 .rec_segment:
     call read_hex       ; get segment
     call read_hex       ; get segment
+    call .checksum
     jmp .find_record
 
 .rec_start:
@@ -56,11 +59,19 @@ read_hex_file:
     call read_hex       ; get CS
     call read_hex       ; get IP
     call read_hex       ; get IP
+    call .checksum
     jmp .find_record
 
+.checksum:
+    call read_hex	; read the checksum
+    ;call read_hex	; read the new line
+    ret
+    
 .exit:
+    call .checksum	; read the trailing checksum
     pop es
     pop di
+    pop cx
     pop bx
     pop ax
     ret

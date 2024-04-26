@@ -102,6 +102,7 @@ init:
 
 ; read hex file
     call read_hex_file
+    print mesg_upload_done
 
 ; toggle ROM -> RAM
     out mem_toggle, al		; value of al doesn't matter
