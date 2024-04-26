@@ -72,6 +72,7 @@ entity Control286 is
 
     );
 
+  constant mem_toggle_addr  : unsigned(7 downto 0) := x"06";
   constant led_latch_addr   : unsigned(7 downto 0) := x"08";
   constant piuart_addr      : unsigned(7 downto 0) := x"20"; -- 0x20->3F
   constant piuart_mask      : unsigned(7 downto 0) := "11100000";
@@ -528,7 +529,7 @@ begin
               if (i_addr_low and piuart_mask) = piuart_addr then
                 event_start <= '1';
               end if;
-              
+
             end if;
             
           elsif i_m_io = '0' and i_s1_n = '1' and i_s0_n = '0' then
@@ -544,6 +545,11 @@ begin
               -- PiUART
               if (i_addr_low and piuart_mask) = piuart_addr then
                 event_start <= '1';
+              end if;
+
+              -- memory toggle
+              if i_addr_low = mem_toggle_addr then
+                rom_ram_sw <= '1';
               end if;
               
             end if;
