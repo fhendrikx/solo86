@@ -11,24 +11,65 @@ mem_dump:
     push ds
     push cs
     pop ds
+
+.loop1:
+
+    ; print the memory address SI
+    mov ax,si
+    mov al,ah
+    call print_hex
+    mov ax,si
+    call print_hex
+    mov al,':'
+    call print_chr
+
+    push si
     mov bl,16
 
-.loop:
+.loop2:
+
+    ; dump the memory content in hex
+    mov al,' '
+    call print_chr
     lodsb
     call print_hex
-    ;mov al,' '
-    ;call print_chr
     dec bl
-    jnz .next
+    jnz .loop2
+
+    mov al,' '
+    call print_chr
+    
+    pop si
+    mov bl,16
+    
+.loop3:
+
+    ; dump the memory content in ascii
+    lodsb
+    cmp al,32		; space
+    jb .print_dot
+
+    cmp al,126		; last printable char
+    ja .print_dot
+
+    jmp .print_ascii
+
+.print_dot:
+    
+    mov al,'.'
+
+.print_ascii:
+    
+    call print_chr    
+    
+    dec bl
+    jnz .loop3
 
     mov al,0ah
     call print_chr
-    mov bl,16
 
-.next:
-    dec cx
-    jz .exit
-    jmp .loop
+    sub cx,16
+    ja .loop1
 
 .exit:
     pop ds
