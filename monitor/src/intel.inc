@@ -66,7 +66,7 @@ read_hex_file:
     mov bh,al
     call read_hex       ; get segment
     mov bl,al
-    mov es,bx
+    mov es,bx           ; rec_data uses ES:DI in stosb
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
