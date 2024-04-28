@@ -151,7 +151,7 @@ run:
     push ax
     popf
 ; indirect far jump to CS:IP
-    jmp far [ reloc_address ]
+    jmp far [ start_address ]
 
 
 halt:
@@ -209,12 +209,12 @@ int_pi:
 
 
 ;======================================================================
-; intel relocation address
+; intel hex file start address
 ;======================================================================
 
-reloc_address:
+start_address:
     dw 0
-reloc_segment:
+start_segment:
     dw 0
 
 ;======================================================================
