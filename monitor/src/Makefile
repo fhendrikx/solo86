@@ -8,6 +8,7 @@ MON_SRC = monitor.asm
 MON_BIN = monitor.bin
 MON_LST = monitor.lst
 MON_ROM = monitor.rom
+MON_HEX = monitor.hex
 
 STB_SRC = stub.asm
 STB_BIN = stub.bin
@@ -29,6 +30,7 @@ $(MON_BIN): $(MON_SRC)
 	$(DD) if=/dev/zero bs=1024 count=448 > $(MON_ROM)
 	cat $(MON_BIN) >> $(MON_ROM)
 	$(SPLIT) --file=$(MON_ROM)
+	$(BIN2HEX) --file=$(MON_BIN) > $(MON_HEX)
 
 $(STB_BIN): $(STB_SRC)
 	$(AS) $(STB_SRC) -O9 -f bin -o $(STB_BIN) -l $(STB_LST)

@@ -21,9 +21,10 @@ org 0
 
 cseg            equ 0F000h
 dseg            equ 01000h
-sseg            equ 07000h
+sseg            equ 00000h
 rseg		equ 00000h	; relocation segment
-
+useg		equ 01000h	; user segment
+    
 ; I/O addresses should be even numbers only
 mem_toggle	equ 06h
 leds_data       equ 08h
@@ -32,31 +33,19 @@ uart_data       equ 22h
 
 
 ;======================================================================
-; 0xf0000 - reserved space
+; 0xf0100 - monitor start
 ;======================================================================
 
-start:
-    jmp start
-
-
-;======================================================================
-; 0xf8000 - monitor start
-;======================================================================
-
-TIMES 32768-($-$$)      db 00h
-
+%include "vectors.inc"
+    
 init:
     cli
     cld
 
-; initialise SS/SP
-    mov ax,sseg
-    mov ss,ax
-    mov sp,0FFFFh
-    
 ; copy ROM to RAM
-    push cs
-    pop ds
+; don't use the stack yet as the ROM copy will overwrite any stored data
+    mov ax,cseg
+    mov ds,ax
     xor si,si
 
     mov ax,rseg
@@ -64,30 +53,23 @@ init:
     xor di,di
 
     mov cx,08000h
-    
-    call mem_copy_w
+
+.rom_copy:    
+    movsw
+    loop .rom_copy
 
     jmp rseg:reloc
 
 reloc:
 ; toggle ROM -> RAM
     out mem_toggle, al		; value of al doesn't matter
-    
-; initialise interrupts
-    push cs
-    pop ds
 
-    xor di,di
-    mov es,di
-    mov si,interrupts
-    mov ax,rseg
-    mov cx,(interrupts_end - interrupts)/2
+; initialise SS/SP
+    mov ax,sseg
+    mov ss,ax
+    mov sp,0FFFFh
 
-.copy:
-    movsw               ; off (copied from table)
-    stosw               ; seg (AX)
-    loop .copy
-
+; emable interrupts
     sti
     
 ; initialise DS
@@ -111,21 +93,25 @@ menu:
 
     cmp al,'d'
     je dump
+    
     cmp al,'D'
     je dump
 
     cmp al,'h'
     je halt
+
     cmp al,'H'
     je halt
 
     cmp al,'r'
     je run
+
     cmp al,'R'
     je run
 
     cmp al,'u'
     je upload
+    
     cmp al,'U'
     je upload
 
@@ -133,6 +119,7 @@ menu:
     
     jmp menu
 
+    
 upload:	
 ; prep upload    
     print mesg_upload
@@ -157,7 +144,6 @@ dump:
     call mem_dump
 
     jmp menu
-
     
 run:	
 ; reset
@@ -170,7 +156,7 @@ run:
     mov ax,2h
     push ax
     popf
-    jmp cseg:start
+    jmp cseg:0
 
     
 halt:
@@ -185,6 +171,24 @@ halt:
 int_dummy:
     iret
 
+int_irq0:
+
+    push ax
+
+    mov al,1
+    call set_leds
+    
+    mov ax,1000
+    call delay_ms
+
+    xor ax,ax
+    call set_leds
+    
+    pop ax
+
+    iret
+
+    
 int_pi:
 
     push ax
@@ -199,52 +203,12 @@ int_pi:
 
 
 ;======================================================================
-; interrupt offsets
-;======================================================================
-
-interrupts:
-    dw int_dummy            ; 00 - divide by zero
-    dw int_dummy            ; 01 - single step
-    dw int_dummy            ; 02 - NMI
-    dw int_dummy            ; 03 - breakpoint
-    dw int_dummy            ; 04 - INTO overflow
-    dw int_dummy            ; 05 - BOUND range
-    dw int_dummy            ; 06 - invalid opcode
-    dw int_dummy            ; 07 - extension not available
-    dw int_dummy            ; 08 - interrupt table too small
-    dw int_dummy            ; 09 - segment overrun
-    dw int_dummy            ; 0A - reserved
-    dw int_dummy            ; 0B - reserved
-    dw int_dummy            ; 0C - reserved
-    dw int_dummy            ; 0D - reserved
-    dw int_dummy            ; 0E - reserved
-    dw int_dummy            ; 0F - reserved
-    dw int_dummy            ; 10 - extension error
-    dw int_dummy            ; 11 - reserved
-    dw int_dummy            ; 12 - reserved
-    dw int_dummy            ; 13 - reserved
-    dw int_dummy            ; 14 - reserved
-    dw int_dummy            ; 15 - reserved
-    dw int_dummy            ; 16 - reserved
-    dw int_dummy            ; 17 - reserved
-    dw int_dummy            ; 18 - reserved
-    dw int_dummy            ; 19 - reserved
-    dw int_dummy            ; 1A - reserved
-    dw int_dummy            ; 1B - reserved
-    dw int_dummy            ; 1C - reserved
-    dw int_dummy            ; 1D - reserved
-    dw int_dummy            ; 1E - reserved
-    dw int_dummy            ; 1F - reserved
-    dw int_pi               ; 20 - user
-interrupts_end:
-
-
-;======================================================================
 ; includes
 ;======================================================================
 
-TIMES 65536-1024-($-$$)     db 0FFh
-
+; why doesn't this work?
+;TIMES 65536-1024-($-$$)     db 0FFh
+    
 %include "delay.inc"
 %include "intel.inc"
 %include "leds.inc"
