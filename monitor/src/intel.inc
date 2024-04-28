@@ -33,42 +33,44 @@ read_hex_file:
     cmp al,0            ; 0x00 - data
     je .rec_data
     cmp al,1            ; 0x01 - EOF
-    je .exit
+    je .rec_eof
     cmp al,2            ; 0x02 - segment
     je .rec_segment
     cmp al,3            ; 0x03 - CS:IP
     je .rec_start
     jmp .find_record
 
+; record type 0x00
 .rec_data:
     call read_hex       ; get data (1 byte)
     stosb
     dec cl
     jnz .rec_data       ; are we done yet?
-    call .checksum
+    call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
+; record type 0x01
+.rec_eof:
+    call read_hex       ; get checksum (1 byte)
+    jmp .exit
+
+; record type 0x02
 .rec_segment:
     call read_hex       ; get segment
     call read_hex       ; get segment
-    call .checksum
+    call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
+; record type 0x03
 .rec_start:
     call read_hex       ; get CS
     call read_hex       ; get CS
     call read_hex       ; get IP
     call read_hex       ; get IP
-    call .checksum
+    call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
-.checksum:
-    call read_hex	; read the checksum
-    ;call read_hex	; read the new line
-    ret
-    
 .exit:
-    call .checksum	; read the trailing checksum
     pop es
     pop di
     pop cx
