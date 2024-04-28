@@ -1,4 +1,8 @@
-    dw int_dummy,0	    ; 00 - divide by zero
+;----------------------------------------------------------------------
+; interrupt vectors
+;----------------------------------------------------------------------
+
+    dw int_dummy,0          ; 00 - divide by zero
     dw int_dummy,0          ; 01 - single step
     dw int_dummy,0          ; 02 - NMI
     dw int_dummy,0          ; 03 - breakpoint
@@ -32,7 +36,7 @@
     dw int_dummy,0          ; 1F - reserved
     dw int_irq0,0           ; 20 - user
     dw int_dummy,0          ; 21 - user
-    dw int_dummy,0          ; 22 - user    
+    dw int_dummy,0          ; 22 - user
     dw int_pi,0             ; 23 - user
     dw int_dummy,0          ; 24 - unused
     dw int_dummy,0          ; 25 - unused

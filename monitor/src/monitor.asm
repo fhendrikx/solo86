@@ -150,7 +150,8 @@ run:
     mov ax,2h
     push ax
     popf
-    jmp cseg:0
+; indirect far jump to CS:IP
+    jmp far [ reloc_address ]
 
 
 halt:
@@ -206,6 +207,15 @@ int_pi:
 %include "messages.inc"
 %include "stdio.inc"
 
+
+;======================================================================
+; intel relocation address
+;======================================================================
+
+reloc_address:
+    dw 0
+reloc_segment:
+    dw 0
 
 ;======================================================================
 ; reset code (called on CPU reset)

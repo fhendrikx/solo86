@@ -47,6 +47,7 @@ read_hex_file:
     jmp .find_record
 
 ; record type 0x00 - Data
+; read data to ES:DI, keep going until CL is zero
 .rec_data:
     call read_hex       ; get data (1 byte)
     stosb
@@ -56,11 +57,13 @@ read_hex_file:
     jmp .find_record
 
 ; record type 0x01 - EOF
+; the end of the road
 .rec_eof:
     call read_hex       ; get checksum (1 byte)
     jmp .exit
 
 ; record type 0x02 - Segment
+; read segment into ES
 .rec_segment:
     call read_hex       ; get segment
     mov bh,al
@@ -71,11 +74,18 @@ read_hex_file:
     jmp .find_record
 
 ; record type 0x03 - CS:IP
+; read CS:IP into reloc_segment/reloc_address
 .rec_start:
     call read_hex       ; get CS
+    mov bh,al
     call read_hex       ; get CS
+    mov bl,al
+    mov [ reloc_segment ], bx
     call read_hex       ; get IP
+    mov bh,al
     call read_hex       ; get IP
+    mov bl,al
+    mov [ reloc_address ], bx
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
