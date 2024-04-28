@@ -1,6 +1,6 @@
 ;======================================================================
 ; 80x86 Monitor
-; Ferry Hendrikx, April 2024
+; Ferry Hendrikx/Dylan Hall, April 2024
 ;======================================================================
 
 cpu 8086
@@ -19,14 +19,15 @@ org 0
 ; defines
 ;======================================================================
 
+; important segments
 cseg            equ 0F000h
 dseg            equ 01000h
 sseg            equ 00000h
-rseg		equ 00000h	; relocation segment
-useg		equ 01000h	; user segment
-    
+rseg            equ 00000h  ; relocation segment
+useg            equ 01000h  ; user segment
+
 ; I/O addresses should be even numbers only
-mem_toggle	equ 06h
+mem_toggle      equ 06h
 leds_data       equ 08h
 uart_ctrl       equ 20h
 uart_data       equ 22h
@@ -37,7 +38,7 @@ uart_data       equ 22h
 ;======================================================================
 
 %include "vectors.inc"
-    
+
 init:
     cli
     cld
@@ -54,7 +55,7 @@ init:
 
     mov cx,08000h
 
-.rom_copy:    
+.rom_copy:
     movsw
     loop .rom_copy
 
@@ -62,7 +63,7 @@ init:
 
 reloc:
 ; toggle ROM -> RAM
-    out mem_toggle, al		; value of al doesn't matter
+    out mem_toggle, al      ; value of al doesn't matter
 
 ; initialise SS/SP
     mov ax,sseg
@@ -71,7 +72,7 @@ reloc:
 
 ; emable interrupts
     sti
-    
+
 ; initialise DS
     mov ax,dseg
     mov ds,ax
@@ -93,35 +94,28 @@ menu:
 
     cmp al,'d'
     je dump
-    
     cmp al,'D'
     je dump
-
     cmp al,'h'
     je halt
-
     cmp al,'H'
     je halt
-
     cmp al,'r'
     je run
-
     cmp al,'R'
     je run
-
     cmp al,'u'
     je upload
-    
     cmp al,'U'
     je upload
 
     print mesg_unknown_cmd
-    
+
     jmp menu
 
-    
-upload:	
-; prep upload    
+
+upload:
+; prep upload
     print mesg_upload
 
 ; initialise ES
@@ -134,7 +128,7 @@ upload:
 
     jmp menu
 
-dump:	
+dump:
 ; dump memory
     print mesg_memdump
     mov ax,cseg
@@ -144,8 +138,8 @@ dump:
     call mem_dump
 
     jmp menu
-    
-run:	
+
+run:
 ; reset
     print mesg_restart
     xor ax,ax
@@ -158,7 +152,7 @@ run:
     popf
     jmp cseg:0
 
-    
+
 halt:
     hlt
     jmp halt
@@ -177,20 +171,19 @@ int_irq0:
 
     mov al,1
     call set_leds
-    
+
     mov ax,1000
     call delay_ms
 
     xor ax,ax
     call set_leds
-    
+
     pop ax
 
     iret
 
-    
-int_pi:
 
+int_pi:
     push ax
 
     in al,uart_data
@@ -206,9 +199,6 @@ int_pi:
 ; includes
 ;======================================================================
 
-; why doesn't this work?
-;TIMES 65536-1024-($-$$)     db 0FFh
-    
 %include "delay.inc"
 %include "intel.inc"
 %include "leds.inc"
