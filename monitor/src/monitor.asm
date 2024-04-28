@@ -22,6 +22,7 @@ org 0
 cseg            equ 0F000h
 dseg            equ 01000h
 sseg            equ 07000h
+rseg		equ 00000h	; relocation segment
 
 ; I/O addresses should be even numbers only
 mem_toggle	equ 06h
@@ -52,7 +53,26 @@ init:
     mov ax,sseg
     mov ss,ax
     mov sp,0FFFFh
+    
+; copy ROM to RAM
+    push cs
+    pop ds
+    xor si,si
 
+    mov ax,rseg
+    mov es,ax
+    xor di,di
+
+    mov cx,08000h
+    
+    call mem_copy_w
+
+    jmp rseg:reloc
+
+reloc:
+; toggle ROM -> RAM
+    out mem_toggle, al		; value of al doesn't matter
+    
 ; initialise interrupts
     push cs
     pop ds
@@ -60,7 +80,7 @@ init:
     xor di,di
     mov es,di
     mov si,interrupts
-    mov ax,cseg
+    mov ax,rseg
     mov cx,(interrupts_end - interrupts)/2
 
 .copy:
@@ -68,31 +88,52 @@ init:
     stosw               ; seg (AX)
     loop .copy
 
+    sti
+    
 ; initialise DS
     mov ax,dseg
     mov ds,ax
 
-    sti
-
 ; welcome
     print mesg_welcome
 
+menu:
+    print mesg_menu
+    call read_chr
+    push ax
+    call print_chr
 
-; copy ROM to RAM
-    push cs
-    pop ds
-    xor si,si
+    mov al,0Ah
+    call print_chr
+    mov al,0Ah
+    call print_chr
+    pop ax
 
-    push cs
-    pop es
-    xor di,di
+    cmp al,'d'
+    je dump
+    cmp al,'D'
+    je dump
 
-    mov cx,08000h
+    cmp al,'h'
+    je halt
+    cmp al,'H'
+    je halt
+
+    cmp al,'r'
+    je run
+    cmp al,'R'
+    je run
+
+    cmp al,'u'
+    je upload
+    cmp al,'U'
+    je upload
+
+    print mesg_unknown_cmd
     
-.romcopy:
-    movsw
-    loop .romcopy
+    jmp menu
 
+upload:	
 ; prep upload    
     print mesg_upload
 
@@ -104,15 +145,21 @@ init:
     call read_hex_file
     print mesg_upload_done
 
-; toggle ROM -> RAM
-    out mem_toggle, al		; value of al doesn't matter
-    
+    jmp menu
+
+dump:	
 ; dump memory
     print mesg_memdump
+    mov ax,cseg
+    mov ds,ax
     mov si,0
     mov cx,384
     call mem_dump
 
+    jmp menu
+
+    
+run:	
 ; reset
     print mesg_restart
     xor ax,ax
@@ -125,6 +172,7 @@ init:
     popf
     jmp cseg:start
 
+    
 halt:
     hlt
     jmp halt

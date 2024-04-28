@@ -1,6 +1,6 @@
 
 ;----------------------------------------------------------------------
-; memory dump; dump memory content at CS:SI for CX bytes
+; memory dump; dump memory content at DS:SI for CX bytes
 ;----------------------------------------------------------------------
 
 mem_dump:
@@ -9,8 +9,6 @@ mem_dump:
     push cx
     push si
     push ds
-    push cs
-    pop ds
 
 .loop1:
 
@@ -79,3 +77,12 @@ mem_dump:
     pop ax
     ret
 
+;----------------------------------------------------------------------
+; memory copy; copy cx *words* from ds:si to es:di
+;----------------------------------------------------------------------
+
+mem_copy_w:
+    movsw
+    loop mem_copy_w
+    ret
+    
