@@ -4,7 +4,9 @@
 
 ;======================================================================
 ; read intel hex file records until we get an EOF record
-; the decoded file is written to ES (DI loaded from file)
+;
+; the decoded file is written to SEGMENT::OFFSET, where the SEGMENT is
+; derived from record 0x02, and OFFSET is derived from each record 0x01
 ;======================================================================
 
 read_hex_file:
@@ -13,6 +15,10 @@ read_hex_file:
     push cx
     push di
     push es
+
+; defaults for ES:DI
+    mov ax,cseg
+    mov es,ax
     xor di,di
 
 .find_record:
@@ -21,7 +27,7 @@ read_hex_file:
     jnz .find_record
 
     call read_hex       ; get length
-    mov cl,al           ; rec_data uses cl for counter
+    mov cl,al           ; rec_data uses CL for counter
 
     call read_hex       ; get address
     mov bh,al
@@ -30,17 +36,17 @@ read_hex_file:
     mov di,bx           ; rec_data uses ES:DI in stosb
 
     call read_hex       ; get type
-    cmp al,0            ; 0x00 - data
+    cmp al,0            ; 0x00 - Data
     je .rec_data
     cmp al,1            ; 0x01 - EOF
     je .rec_eof
-    cmp al,2            ; 0x02 - segment
+    cmp al,2            ; 0x02 - Segment
     je .rec_segment
     cmp al,3            ; 0x03 - CS:IP
     je .rec_start
     jmp .find_record
 
-; record type 0x00
+; record type 0x00 - Data
 .rec_data:
     call read_hex       ; get data (1 byte)
     stosb
@@ -49,19 +55,22 @@ read_hex_file:
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
-; record type 0x01
+; record type 0x01 - EOF
 .rec_eof:
     call read_hex       ; get checksum (1 byte)
     jmp .exit
 
-; record type 0x02
+; record type 0x02 - Segment
 .rec_segment:
     call read_hex       ; get segment
+    mov bh,al
     call read_hex       ; get segment
+    mov bl,al
+    mov es,bx
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
-; record type 0x03
+; record type 0x03 - CS:IP
 .rec_start:
     call read_hex       ; get CS
     call read_hex       ; get CS
