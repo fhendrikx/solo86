@@ -148,19 +148,23 @@ architecture rtl of Control286 is
   signal rom_ram_sw           : std_logic;
 
   signal irq0_latch           : std_logic;
+  signal irq1_latch           : std_logic;
+  signal irq2_latch           : std_logic;
   signal pint_latch           : std_logic;
 
+  signal irq0_clear           : std_logic;
+  signal irq1_clear           : std_logic;
+  signal irq2_clear           : std_logic;
+  signal pint_clear           : std_logic;
+  
   signal wait_states          : integer range 0 to 3;
   
-  type t_ctrl_state is (INIT, TS1, TS2, TC1, TC2, ERROR_S);
+  type t_ctrl_state is (TS1, TS2, TC1, TC2, ERROR_S);
   signal ctrl_state           : t_ctrl_state;
 
   type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
   signal piuart_state         : t_piuart_state;
 
-  type t_clear_int is (NONE, IRQ0, PINT);
-  signal clear_int            : t_clear_int;
-  
 
 begin
 
@@ -172,7 +176,8 @@ begin
   -- interrupt outputs
   o_nmi <= '0';
   
-  o_intr <= '1' when irq0_latch = '1' or pint_latch = '1'
+  o_intr <= '1' when irq0_latch = '1' or irq1_latch = '1' or
+            irq2_latch = '1' or pint_latch = '1'
             else '0';
 
   -- expansion slot clock
@@ -190,10 +195,10 @@ begin
   
 
   -- edge triggered interrupt latches
-  proc_irq0_latch: process(i_irq0_n, i_reset_n, clear_int) is
+  proc_irq0_latch: process(i_irq0_n, i_reset_n, irq0_clear) is
   begin
     
-    if i_reset_n = '0' or clear_int = IRQ0 then
+    if i_reset_n = '0' or irq0_clear = '1' then
 
       irq0_latch <= '0';
 
@@ -205,11 +210,40 @@ begin
 
   end process;
 
-  
-  proc_pint_latch: process(i_pint_n, i_reset_n, clear_int) is
+  proc_irq1_latch: process(i_irq1_n, i_reset_n, irq1_clear) is
   begin
     
-    if i_reset_n = '0' or clear_int = PINT then
+    if i_reset_n = '0' or irq1_clear = '1' then
+
+      irq1_latch <= '0';
+
+    elsif falling_edge(i_irq1_n) then
+      
+      irq1_latch <= '1';
+
+    end if;
+
+  end process;
+
+  proc_irq2_latch: process(i_irq2_n, i_reset_n, irq2_clear) is
+  begin
+    
+    if i_reset_n = '0' or irq2_clear = '1' then
+
+      irq2_latch <= '0';
+
+    elsif falling_edge(i_irq2_n) then
+      
+      irq2_latch <= '1';
+
+    end if;
+
+  end process;
+  
+  proc_pint_latch: process(i_pint_n, i_reset_n, pint_clear) is
+  begin
+    
+    if i_reset_n = '0' or pint_clear = '1' then
 
       pint_latch <= '0';
 
@@ -359,19 +393,23 @@ begin
   -- ctrl_state represents the end of the given cycle, e.g. TS1 is the falling edge
   -- at the end of the TS1 cycle
   
-  proc_ctrl_state_machine: process(i_clk, i_reset_n) is
+  proc_ctrl_state_machine: process(i_clk, i_reset_n, i_jp1) is
   begin
 
     if i_reset_n = '0' then
 
       -- initial signal state
-      ctrl_state <= INIT;
+      ctrl_state <= TS1;
       wait_states <= 0;
-      clear_int <= NONE;
 
       event_start <= '0';
       inta_cycle <= '0';
-      rom_ram_sw <= '0';
+      rom_ram_sw <= i_jp1;
+
+      irq0_clear <= '0';
+      irq1_clear <= '0';
+      irq2_clear <= '0';
+      pint_clear <= '0';
       
       -- initial output pin state
       o_warning <= '0';
@@ -398,13 +436,6 @@ begin
     elsif falling_edge(i_clk) then
 
       case ctrl_state is
-
-        --
-        when INIT =>
-        
-          ctrl_state <= TS1;
-
-          rom_ram_sw <= i_jp1;
 
         --
         when TS1 =>
@@ -503,12 +534,22 @@ begin
               if irq0_latch = '1' then
               
                 io_data <= "00100000";
-                clear_int <= IRQ0;
+                irq0_clear <= '1';
+
+              elsif irq1_latch = '1' then
+
+                io_data <= "00100001";
+                irq1_clear <= '1';
+
+              elsif irq2_latch = '1' then
+
+                io_data <= "00100010";
+                irq2_clear <= '1';
 
               elsif pint_latch = '1' then
                 
                 io_data <= "00100011";
-                clear_int <= PINT;
+                pint_clear <= '1';
 
               end if;
               
@@ -610,7 +651,10 @@ begin
 
           event_start <= '0';
 
-          clear_int <= NONE;
+          irq0_clear <= '0';
+          irq1_clear <= '0';
+          irq2_clear <= '0';
+          pint_clear <= '0';
 
           if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then
             -- no reason to wait, set the ready signal
