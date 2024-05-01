@@ -27,6 +27,7 @@ rseg            equ 00000h  ; relocation segment
 useg            equ 01000h  ; user segment
 
 ; I/O addresses should be even numbers only
+ticks_ctrl      equ 04h
 mem_toggle      equ 06h
 leds_data       equ 08h
 uart_ctrl       equ 20h
@@ -104,6 +105,10 @@ menu:
     je run
     cmp al,'R'
     je run
+    cmp al,'t'
+    je ticks
+    cmp al,'T'
+    je ticks
     cmp al,'u'
     je upload
     cmp al,'U'
@@ -153,6 +158,15 @@ run:
 ; indirect far jump to CS:IP
     jmp far [ start_address ]
 
+ticks:
+; toggle the ticks timer on/off
+    print mesg_ticks
+
+    in al,ticks_ctrl
+    not al
+    out ticks_ctrl,al
+
+    jmp menu
 
 halt:
     hlt
@@ -215,7 +229,16 @@ int_piuart:
     iret
 
 int_ticks:
+    push ax
+    mov ax,[ ticks_count ]
+    inc ax
+    mov [ ticks_count ],ax
+    call set_leds
+    pop ax
     iret
+
+ticks_count:
+    dw 0
 
 ;======================================================================
 ; includes

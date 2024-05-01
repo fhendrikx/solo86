@@ -154,7 +154,8 @@ interrupts:
     dw int_irq0		; 20 - IRQ0
     dw int_dummy	; 21 - IRQ1
     dw int_dummy	; 22 - IRQ2
-    dw int_pi		; 23 - PiUART
+    dw int_dummy	; 23 - IRQ3
+    dw int_pi           ; 24 - PiUART
 interrupts_end:	
     
 ;======================================================================
