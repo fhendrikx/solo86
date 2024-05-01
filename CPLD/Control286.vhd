@@ -150,11 +150,13 @@ architecture rtl of Control286 is
   signal irq0_latch           : std_logic;
   signal irq1_latch           : std_logic;
   signal irq2_latch           : std_logic;
+  signal irq3_latch           : std_logic;
   signal pint_latch           : std_logic;
 
   signal irq0_clear           : std_logic;
   signal irq1_clear           : std_logic;
   signal irq2_clear           : std_logic;
+  signal irq3_clear           : std_logic;
   signal pint_clear           : std_logic;
   
   signal wait_states          : integer range 0 to 3;
@@ -177,7 +179,8 @@ begin
   o_nmi <= '0';
   
   o_intr <= '1' when irq0_latch = '1' or irq1_latch = '1' or
-            irq2_latch = '1' or pint_latch = '1'
+            irq2_latch = '1' or irq3_latch = '1' or
+            pint_latch = '1'
             else '0';
 
   -- expansion slot clock
@@ -239,6 +242,21 @@ begin
     end if;
 
   end process;
+
+  proc_irq3_latch: process(i_irq3_n, i_reset_n, irq3_clear) is
+  begin
+    
+    if i_reset_n = '0' or irq3_clear = '1' then
+
+      irq3_latch <= '0';
+
+    elsif falling_edge(i_irq3_n) then
+      
+      irq3_latch <= '1';
+
+    end if;
+
+  end process;  
   
   proc_pint_latch: process(i_pint_n, i_reset_n, pint_clear) is
   begin
@@ -409,6 +427,7 @@ begin
       irq0_clear <= '0';
       irq1_clear <= '0';
       irq2_clear <= '0';
+      irq3_clear <= '0';
       pint_clear <= '0';
       
       -- initial output pin state
@@ -540,9 +559,14 @@ begin
                 io_data <= "00100010";
                 irq2_clear <= '1';
 
+              elsif irq3_latch = '1' then
+
+                io_data <= "00100011";
+                irq3_clear <= '1';
+                
               elsif pint_latch = '1' then
                 
-                io_data <= "00100011";
+                io_data <= "00100100";
                 pint_clear <= '1';
 
               end if;
@@ -649,6 +673,7 @@ begin
           irq0_clear <= '0';
           irq1_clear <= '0';
           irq2_clear <= '0';
+          irq3_clear <= '0';
           pint_clear <= '0';
 
           if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then

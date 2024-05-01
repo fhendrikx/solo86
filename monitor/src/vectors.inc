@@ -35,11 +35,11 @@
     dw int_dummy,0          ; 1E - reserved
     dw int_dummy,0          ; 1F - reserved
     dw int_irq0,0           ; 20 - user
-    dw int_dummy,0          ; 21 - user
-    dw int_dummy,0          ; 22 - user
-    dw int_pi,0             ; 23 - user
-    dw int_dummy,0          ; 24 - unused
-    dw int_dummy,0          ; 25 - unused
+    dw int_irq1,0           ; 21 - user
+    dw int_irq2,0           ; 22 - user
+    dw int_irq3,0           ; 23 - user
+    dw int_piuart,0         ; 24 - PiUART
+    dw int_ticks,0          ; 25 - 100 Hz ticks
     dw int_dummy,0          ; 26 - unused
     dw int_dummy,0          ; 27 - unused
     dw int_dummy,0          ; 28 - unused

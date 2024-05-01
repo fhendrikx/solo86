@@ -159,6 +159,18 @@ halt:
     jmp menu
 
 
+led_blink:
+    call set_leds
+
+    mov ax,500
+    call delay_ms
+
+    xor ax,ax
+    call set_leds
+
+    ret
+
+
 ;======================================================================
 ; intr_debug
 ;======================================================================
@@ -167,34 +179,43 @@ int_dummy:
     iret
 
 int_irq0:
-
     push ax
-
-    mov al,1
-    call set_leds
-
-    mov ax,1000
-    call delay_ms
-
-    xor ax,ax
-    call set_leds
-
+    mov al,00000001b
+    call led_blink
     pop ax
-
     iret
 
-
-int_pi:
+int_irq1:
     push ax
+    mov al,00000010b
+    call led_blink
+    pop ax
+    iret
 
+int_irq2:
+    push ax
+    mov al,00000100b
+    call led_blink
+    pop ax
+    iret
+
+int_irq3:
+    push ax
+    mov al,00001000b
+    call led_blink
+    pop ax
+    iret
+
+int_piuart:
+    push ax
     in al,uart_data
     out leds_data,al
     out uart_data,al
-
     pop ax
-
     iret
 
+int_ticks:
+    iret
 
 ;======================================================================
 ; includes
