@@ -159,7 +159,7 @@ architecture rtl of Control286 is
   
   signal wait_states          : integer range 0 to 3;
   
-  type t_ctrl_state is (TS1, TS2, TC1, TC2, ERROR_S);
+  type t_ctrl_state is (TS1, TS2, TC1, TC2);
   signal ctrl_state           : t_ctrl_state;
 
   type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
@@ -449,10 +449,12 @@ begin
             -- the status bits represent something interesting, decode them
             -- to determine what type of bus cycle we're dealing with
 
+            ctrl_state <= TS2;
+
+            o_warning <= '0';
+            
             if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '0' then
               -- Interrupt Ack
-
-              ctrl_state <= TS2;
 
               -- toggle the cycle count
               inta_cycle <= not inta_cycle;
@@ -460,15 +462,11 @@ begin
             elsif i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
               -- IO Read
 
-              ctrl_state <= TS2;
-              
               o_ale <= '1';
               o_addr_high <= i_addr_high;
               
             elsif i_m_io = '0' and i_s1_n = '1' and i_s0_n = '0' then
               -- IO Write
-
-              ctrl_state <= TS2;
 
               o_ale <= '1';
               o_addr_high <= i_addr_high;
@@ -476,13 +474,10 @@ begin
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '0' then
               -- Halt/Shutdown
 
-              -- TODO, error for now
-              ctrl_state <= ERROR_S;
-
+              o_warning <= '1';
+              
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
               -- Mem Read
-
-              ctrl_state <= TS2;
 
               o_ale <= '1';
               o_addr_high <= i_addr_high;
@@ -499,8 +494,6 @@ begin
               
             elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
               -- Mem Write
-              
-              ctrl_state <= TS2;
               
               o_ale <= '1';
               o_addr_high <= i_addr_high;
@@ -526,6 +519,7 @@ begin
           if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '0' then
             -- Interrupt Ack
 
+            -- the datasheet says we should add one wait state
             wait_states <= 1;
 
             -- only output the interrupt vector on the second cycle
@@ -595,6 +589,11 @@ begin
               
             end if;
 
+          elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '0' then
+            -- Halt/Shutdown
+
+            wait_states <= 0;
+            
           elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
             -- Mem Read
 
@@ -634,10 +633,6 @@ begin
               -- write to the low bank
               o_ram_we_low_n <= '0';
             end if;
-            
-          else
-
-            ctrl_state <= ERROR_S;
             
           end if;
           
@@ -706,14 +701,6 @@ begin
             io_data <= "ZZZZZZZZ";
 
           end if;
-
-        --
-        when ERROR_S =>
-
-          -- remain in error state until reset
-          ctrl_state <= ERROR_S;
-
-          o_warning <= '1';
 
       end case;
 
