@@ -90,6 +90,11 @@ read_hex_file:
     jmp .find_record
 
 .exit:
+; clean up any remaining chars in the UART
+    call read_ready
+    jz .exit_done
+    call read_chr
+.exit_done:
     pop es
     pop di
     pop cx
