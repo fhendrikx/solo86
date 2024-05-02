@@ -44,6 +44,10 @@ init:
     cli
     cld
 
+; ensure UART has interrupts disabled
+    xor al,al
+    out uart_ctrl,al
+    
 ; copy ROM to RAM
 ; don't use the stack yet as the ROM copy will overwrite any stored data
     mov ax,cseg
@@ -101,6 +105,10 @@ menu:
     je halt
     cmp al,'H'
     je halt
+    cmp al,'p'
+    je pitest
+    cmp al,'P'
+    je pitest
     cmp al,'r'
     je run
     cmp al,'R'
@@ -168,6 +176,29 @@ ticks:
 
     jmp menu
 
+pitest:
+    print mesg_pi
+    mov al,1
+    mov [ piactive ],al
+    out uart_ctrl,al
+
+.pitest1:
+    mov al,[ piactive ]
+    cmp al,0
+    jne .pitest1
+
+    xor al,al
+    out uart_ctrl,al
+
+    mov al,0Ah
+    call print_chr
+    call print_chr
+    
+    jmp menu
+
+piactive:
+    db 0
+    
 halt:
     hlt
     jmp menu
@@ -223,6 +254,12 @@ int_irq3:
 int_piuart:
     push ax
     in al,uart_data
+    cmp al,01Bh                 ; ESC
+    jne .int_piuart1
+    xor al,al
+    out uart_ctrl,al            ; disable UART interrupts
+    mov [ piactive ],al
+.int_piuart1:
     out leds_data,al
     out uart_data,al
     pop ax
