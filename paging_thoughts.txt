@@ -29,6 +29,12 @@ Goals:
  - Ability to disable RAM + ROM so external memory mapped hardware can respond (video card)
 
 
+Possible boot process:
+1. Launch Monitor (held in 64k ROM)
+2. Copy Monitor to 00000, contine executing from RAM
+3. Determine desired application/memory layout, update paging
+4. Jump to appropriate location
+
  -- Fully flexible paging --
  
 Top 512k broken into 8 x 64k pages.
