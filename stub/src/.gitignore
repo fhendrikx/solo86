@@ -1,0 +1,6 @@
+*.bin
+*.lst
+*.rom
+*.hex
+monitor.0
+monitor.1
