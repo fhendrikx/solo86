@@ -11,8 +11,15 @@ mem_dump:
     push ds
 
 .loop1:
-
-    ; print the memory address SI
+    ; print the segment (DS)
+    mov ax,ds
+    mov al,ah
+    call print_hex
+    mov ax,ds
+    call print_hex
+    mov al,':'
+    call print_chr
+    ; print the offset (SI)
     mov ax,si
     mov al,ah
     call print_hex
@@ -25,7 +32,6 @@ mem_dump:
     mov bl,16
 
 .loop2:
-
     ; dump the memory content in hex
     mov al,' '
     call print_chr
@@ -36,30 +42,26 @@ mem_dump:
 
     mov al,' '
     call print_chr
-    
+
     pop si
     mov bl,16
-    
-.loop3:
 
+.loop3:
     ; dump the memory content in ascii
     lodsb
-    cmp al,32		; space
+    cmp al,32       ; space
     jb .print_dot
 
-    cmp al,126		; last printable char
+    cmp al,126      ; last printable char
     ja .print_dot
 
     jmp .print_ascii
 
 .print_dot:
-    
     mov al,'.'
 
 .print_ascii:
-    
-    call print_chr    
-    
+    call print_chr
     dec bl
     jnz .loop3
 
@@ -77,12 +79,3 @@ mem_dump:
     pop ax
     ret
 
-;----------------------------------------------------------------------
-; memory copy; copy cx *words* from ds:si to es:di
-;----------------------------------------------------------------------
-
-mem_copy_w:
-    movsw
-    loop mem_copy_w
-    ret
-    

@@ -1,21 +1,26 @@
 
-mesg_welcome        db 0Ah, 0Ah, 'Welcome to Solo86 Monitor', 0Ah, 00h
-mesg_welcome_stub   db 'Welcome to Solo86 Stub', 0Ah, 0Ah, 00h
+mesg_welcome        db 0Ah, 0Ah, 'Solo86 Monitor', 0Ah, 00h
+mesg_copyright      db 'Copyright (c) 2024 Dylan Hall and Ferry Hendrikx', 0Ah, 00h
+mesg_build          db 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah, 00h
 
-mesg_upload         db '[ Upload file ]', 0Ah, 00h
-mesg_upload_done    db '[ Upload complete ]', 0Ah, 00h
-mesg_memdump        db '[ Memory dump ]', 0Ah, 00h
-mesg_restart        db '[ Restart ]', 0Ah, 0Ah, 00h
-mesg_ticks          db '[ Toggling timer ]', 0Ah, 00h
-mesg_pi             db '[ Press ESC to return to menu ]', 0Ah, 00h
+mesg_prompt         db 0Ah, '> ', 00h
+mesg_help           db 0Ah
+                    db 'd ssss:oooo - Dump address SSSS:OOOO', 0Ah
+                    db 'h           - Help', 0Ah
+                    db 'i pp        - INP port PP', 0Ah
+                    db 'j ssss:oooo - Jump address SSSS:OOOO', 0Ah, 0Ah
+                    db 'l           - Load Intel Hex File', 0Ah
+                    db 'o pp xx     - OUT port PP byte XX', 0Ah
+                    db 'r ssss:oooo - Dump address SSSS:OOOO', 0Ah
+                    db 'x           - Jump address (intel hex file specified)', 0Ah
+                    db 0Ah, 'All values specified in HEX', 0Ah, 0Ah
+                    db 00h
 
-mesg_menu           db 0Ah, '(D) Dump Memory', 0Ah
-                    db '(H) Halt', 0Ah
-                    db '(P) PiUART Interrupt Test', 0Ah
-                    db '(R) Run Code', 0Ah
-                    db '(T) Toggle Timer', 0Ah
-                    db '(U) Upload Intel Hex File', 0Ah, 0Ah
-                    db '> ', 00h
+mesg_dump           db '[ Dump ]', 0Ah, 00h
+mesg_load           db '[ Load File ]', 0Ah, 00h
+mesg_load_done      db '[ Load File Complete ]', 0Ah, 00h
 
-mesg_unknown_cmd    db 'Unknown Command', 0Ah, 00h
+mesg_inp            db '[ INP ]', 0Ah, 00h
+mesg_jump           db '[ JMP ]', 0Ah, 00h
+mesg_out            db '[ OUT ]', 0Ah, 00h
 
