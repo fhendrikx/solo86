@@ -16,16 +16,16 @@ entity Control286 is
     o_warning       : out std_logic;
 
     -- Bit banged SD card
-    i_sd_miso       : in std_logic;
+    --i_sd_miso       : in std_logic;
     
-    o_sd_sck        : out std_logic;
-    o_sd_cs         : out std_logic;
-    o_sd_mosi       : out std_logic;
+    --o_sd_sck        : out std_logic;
+    --o_sd_cs         : out std_logic;
+    --o_sd_mosi       : out std_logic;
     
     -- CPU
-    i_addr_high     : in unsigned(3 downto 0); -- A19..A16
-    i_addr_low      : in unsigned(7 downto 0); -- A7..A0
-    io_data         : inout unsigned(7 downto 0); -- D7..D0
+    i_addr_high     : in std_logic_vector(3 downto 0); -- A19..A16
+    i_addr_low      : in std_logic_vector(7 downto 0); -- A7..A0
+    io_data         : inout std_logic_vector(7 downto 0); -- D7..D0
 
     i_s0_n          : in std_logic;
     i_s1_n          : in std_logic;
@@ -46,7 +46,7 @@ entity Control286 is
     o_ram_oe_n      : out std_logic;
     o_ram_ce_n      : out std_logic;
 
-    o_addr_high     : out unsigned(3 downto 0); -- AC19..AC16
+    o_addr_high     : out std_logic_vector(3 downto 0); -- AC19..AC16
     
     -- Expansion slot
     o_memrd_n       : out std_logic;
@@ -72,12 +72,11 @@ entity Control286 is
 
     );
 
-  constant ticks_ctrl_addr  : unsigned(7 downto 0) := x"04";
-  constant mem_toggle_addr  : unsigned(7 downto 0) := x"06";
-  constant led_latch_addr   : unsigned(7 downto 0) := x"08";
-  constant piuart_addr      : unsigned(7 downto 0) := x"20"; -- 0x20->3F
-  constant piuart_mask      : unsigned(7 downto 0) := "11100000";
-
+  constant ticks_ctrl_addr  : std_logic_vector(7 downto 0) := x"04";
+  constant mem_toggle_addr  : std_logic_vector(7 downto 0) := x"06";
+  constant led_latch_addr   : std_logic_vector(7 downto 0) := x"08";
+  constant piuart_addr      : std_logic_vector(7 downto 5) := "001"; -- 0x20->3F
+  
   constant clock_hz         : integer := 40000000 / 64;
   constant ticks_wrap       : integer := (clock_hz / 200) - 1; -- 100 Hz ticks
   
@@ -98,10 +97,10 @@ architecture rtl of Control286 is
   attribute chip_pin of o_warning       : signal is "75";
 
   -- Bit banged SD card
-  attribute chip_pin of i_sd_miso       : signal is "9";
-  attribute chip_pin of o_sd_sck        : signal is "5";
-  attribute chip_pin of o_sd_cs         : signal is "6";
-  attribute chip_pin of o_sd_mosi       : signal is "8";
+  --attribute chip_pin of i_sd_miso       : signal is "9";
+  --attribute chip_pin of o_sd_sck        : signal is "5";
+  --attribute chip_pin of o_sd_cs         : signal is "6";
+  --attribute chip_pin of o_sd_mosi       : signal is "8";
   
   -- CPU
   attribute chip_pin of i_addr_high     : signal is "64, 63, 60, 61"; -- A19..A16
@@ -187,9 +186,9 @@ architecture rtl of Control286 is
 begin
 
   -- SD card outputs
-  o_sd_sck <= '0';
-  o_sd_cs <= '0';
-  o_sd_mosi <= '0';
+  --o_sd_sck <= '0';
+  --o_sd_cs <= '0';
+  --o_sd_mosi <= '0';
 
   -- interrupt outputs
   o_nmi <= '0';
@@ -569,7 +568,8 @@ begin
               o_ale <= '1';
               o_addr_high <= i_addr_high;
 
-              if (i_addr_high and "1000") = "1000" and rom_ram_sw = '0' then
+              if i_addr_high(3) = '1' and rom_ram_sw = '0' then
+              
                 -- reading from ROM, enable the ROM chips
                 o_rom_ce_n <= '0';
 
@@ -651,14 +651,14 @@ begin
             -- IO Read
 
             -- only signal even numbered I/O requests
-            if (i_addr_low and "00000001") = "00000000" then
+            if i_addr_low(0) = '0' then
               o_iord_n <= '0';
               -- we need at least one wait state to allow peripherals time to
               -- assert wait if they need it
               wait_states <= 1;
 
               -- PiUART
-              if (i_addr_low and piuart_mask) = piuart_addr then
+              if i_addr_low(7 downto 5) = piuart_addr then
                 event_start <= '1';
               end if;
 
@@ -678,14 +678,14 @@ begin
             -- IO Write
 
             -- only signal even numbered I/O requests
-            if (i_addr_low and "00000001") = "00000000" then
+            if i_addr_low(0) = '0' then
               o_iowr_n <= '0';
               -- we need at least one wait state to allow peripherals time to
               -- assert wait if they need it
               wait_states <= 1;
 
               -- PiUART
-              if (i_addr_low and piuart_mask) = piuart_addr then
+              if i_addr_low(7 downto 5) = piuart_addr then
                 event_start <= '1';
               end if;
 
@@ -696,12 +696,7 @@ begin
 
               -- ticks control
               if i_addr_low = ticks_ctrl_addr then
-                if (io_data and "00000001") = "00000001" then
-                  ticks_enable <= '1';
-                else
-                  ticks_enable <= '0';
-                end if;
-                
+                ticks_enable <= io_data(0);
               end if;
               
             end if;
@@ -719,7 +714,7 @@ begin
 
             -- output enable (OE) the memory chips (e.g. tell them to put a
             -- value on the data bus)
-            if (i_addr_high and "1000") = "1000" and rom_ram_sw = '0' then
+            if i_addr_high(3) = '1' and rom_ram_sw = '0' then
               -- reading from ROM
 
               o_rom_oe_n <= '0';
@@ -746,7 +741,7 @@ begin
               o_ram_we_high_n <= '0';
             end if;
 
-            if (i_addr_low and "00000001") = "00000000" then
+            if i_addr_low(0) = '0' then
               -- write to the low bank
               o_ram_we_low_n <= '0';
             end if;
