@@ -1,4 +1,6 @@
- -- LEDs and Switches --
+# Module ideas
+
+## LEDs and Switches
 
 Basic version modeled on the RC2014 module, e.g.
   - Address decode
@@ -15,7 +17,7 @@ Advanced version using 82C55A, e.g.
   - Retro feel :)
 
 
-  -- Storage --
+## Storage
 
 SD Card and Compact Flash
   - Address decode
@@ -26,7 +28,7 @@ SD Card and Compact Flash
   - CF direct bus access in 16 bit mode
 
 
- -- Time --
+ ## Time
 
  Real time clock and interval timer
   - Address decode
@@ -36,7 +38,7 @@ SD Card and Compact Flash
     - generate 100Hz ticks timer with interrupts
 
 
- -- PiUART --
+## PiUART
 
 Pi based UART module
   - HDMI output
@@ -45,7 +47,7 @@ Pi based UART module
   - Upload over wifi
 
 
- -- PiVideo --
+## PiVideo
 
  Pi based video module
   - HDMI output
@@ -57,3 +59,10 @@ Pi based UART module
     - 320x200 colour
 
 
+## Real UART
+
+A proper UART, not an emulation
+  - 16550 or similar
+  - 2 ports ideally
+  - 16 bytes buffer (or more)
+  - Automatic RTS/CTS controls
