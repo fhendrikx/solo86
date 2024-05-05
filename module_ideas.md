@@ -12,7 +12,7 @@ Advanced version using 82C55A, e.g.
   - 82C55A reads switches and drives LEDs directly
   - 2.5mA per pin (sink/drive), need higher LED current limiting resistors
   - Chip needs initialisation before use
-  - 24 I/O pins (with resitrictions), could have 12 x LEDs, 12 x switches.
+  - 24 I/O pins (with restrictions), could have 12 x LEDs, 12 x switches.
   - Maybe generate interrupts on events? (needs investigation)
   - Retro feel :)
 
