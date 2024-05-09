@@ -36,7 +36,7 @@ entity Control286 is
     o_ready_n       : buffer std_logic;
     o_nmi           : out std_logic;
     o_intr          : out std_logic;
-    
+
     -- Memory
     o_rom_ce_n      : out std_logic;
     o_rom_oe_n      : out std_logic;
@@ -496,6 +496,7 @@ begin
       irq2_clear <= '0';
       irq3_clear <= '0';
       pint_clear <= '0';
+      ticks_clear <= '0';
       
       -- initial output pin state
       o_warning <= '0';
@@ -510,7 +511,7 @@ begin
       o_ram_oe_n <= '1';
       o_ram_ce_n <= '1';
 
-      o_addr_high <= "1111";
+      o_addr_high <= "0000";
       
       o_memrd_n <= '1';
       o_iord_n <= '1';
@@ -566,15 +567,17 @@ begin
               -- Mem Read
 
               o_ale <= '1';
-              o_addr_high <= i_addr_high;
 
-              if i_addr_high(3) = '1' and rom_ram_sw = '0' then
-              
+              if i_addr_high = "1111" and rom_ram_sw = '0' then
                 -- reading from ROM, enable the ROM chips
+
+                o_addr_high <= "0000";
                 o_rom_ce_n <= '0';
 
               else
                 -- reading from RAM, enable the RAM chips
+
+                o_addr_high <= i_addr_high;
                 o_ram_ce_n <= '0';
 
               end if;
@@ -714,7 +717,7 @@ begin
 
             -- output enable (OE) the memory chips (e.g. tell them to put a
             -- value on the data bus)
-            if i_addr_high(3) = '1' and rom_ram_sw = '0' then
+            if i_addr_high = "1111" and rom_ram_sw = '0' then
               -- reading from ROM
 
               o_rom_oe_n <= '0';

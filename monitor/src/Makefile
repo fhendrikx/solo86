@@ -22,7 +22,7 @@ clean:
 
 $(MON_BIN): $(MON_SRC)
 	$(AS) $(MON_SRC) -O9 -f bin -o $(MON_BIN) -l $(MON_LST)
-	$(DD) if=/dev/zero bs=1024 count=448 > $(MON_ROM)
+#	$(DD) if=/dev/zero bs=1024 count=448 > $(MON_ROM)
 	cat $(MON_BIN) >> $(MON_ROM)
 	$(SP) --file=$(MON_ROM)
 	$(BH) --file=$(MON_BIN) > $(MON_HEX)
