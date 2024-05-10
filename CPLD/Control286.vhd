@@ -72,13 +72,9 @@ entity Control286 is
 
     );
 
-  constant ticks_ctrl_addr  : std_logic_vector(7 downto 0) := x"04";
   constant mem_toggle_addr  : std_logic_vector(7 downto 0) := x"06";
   constant led_latch_addr   : std_logic_vector(7 downto 0) := x"08";
   constant piuart_addr      : std_logic_vector(7 downto 5) := "001"; -- 0x20->3F
-  
-  constant clock_hz         : integer := 40000000 / 64;
-  constant ticks_wrap       : integer := (clock_hz / 200) - 1; -- 100 Hz ticks
   
 end Control286;
 
@@ -149,32 +145,20 @@ architecture rtl of Control286 is
   signal piuart_wait_n        : std_logic;
   signal inta_cycle           : std_logic;
   signal rom_ram_sw           : std_logic;
-  signal ticks_enable         : std_logic;
 
   signal irq0_latch           : std_logic;
   signal irq1_latch           : std_logic;
   signal irq2_latch           : std_logic;
   signal irq3_latch           : std_logic;
   signal pint_latch           : std_logic;
-  signal ticks_latch          : std_logic;
 
   signal irq0_clear           : std_logic;
   signal irq1_clear           : std_logic;
   signal irq2_clear           : std_logic;
   signal irq3_clear           : std_logic;
   signal pint_clear           : std_logic;
-  signal ticks_clear          : std_logic;
   
   signal wait_states          : integer range 0 to 3;
-
-  signal ticks_count          : integer range 0 to ticks_wrap;
-
-  signal pre2                 : std_logic;
-  signal pre4                 : std_logic;
-  signal pre8                 : std_logic;
-  signal pre16                : std_logic;  
-  signal pre32                : std_logic;    
-  signal pre64                : std_logic;
   
   type t_ctrl_state is (TS1, TS2, TC1, TC2);
   signal ctrl_state           : t_ctrl_state;
@@ -195,11 +179,11 @@ begin
   
   o_intr <= '1' when irq0_latch = '1' or irq1_latch = '1' or
             irq2_latch = '1' or irq3_latch = '1' or
-            pint_latch = '1' or ticks_latch = '1'
+            pint_latch = '1'
             else '0';
-
+    
   -- expansion slot clock
-  --o_clkout <= i_clk;
+  o_clkout <= i_clk;
 
   -- CPU reset
   o_reset <= not i_reset_n;
@@ -210,41 +194,6 @@ begin
   
   -- PiUART read/write control
   o_prdwr <= '1' when o_iord_n = '0' else '0';
-
-  -- prescaler
-  pre2 <= not pre2 when rising_edge(i_clk);
-  pre4 <= not pre4 when rising_edge(pre2);
-  pre8 <= not pre8 when rising_edge(pre4);
-  pre16 <= not pre16 when rising_edge(pre8);  
-  pre32 <= not pre32 when rising_edge(pre16);  
-  pre64 <= not pre64 when rising_edge(pre32);  
-
-  -- count clock pulses until we reach ticks_wrap
-  -- for now outputting this via pin o_clkout
-  -- change this to an internal register to trigger an interrupt
-  -- when interrupt handling is added
-  -- TODO, add enable ticks option
-
-  proc_ticks: process(pre64, i_reset_n) is
-  begin
-
-    if i_reset_n = '0' then
-      
-      ticks_count <= 0;
-      o_clkout <= '0';
-      
-    elsif rising_edge(pre64) then
-      
-      if ticks_count = ticks_wrap then
-        ticks_count <= 0;
-        o_clkout <= not o_clkout;
-      else
-        ticks_count <= ticks_count + 1;
-      end if;
-
-    end if;
-
-  end process;
   
   -- edge triggered interrupt latches
   proc_irq0_latch: process(i_irq0_n, i_reset_n, irq0_clear) is
@@ -322,24 +271,7 @@ begin
 
   end process;
 
-  proc_ticks_latch: process(o_clkout, i_reset_n, ticks_clear) is
-  begin
-    
-    if i_reset_n = '0' or ticks_clear = '1' then
 
-      ticks_latch <= '0';
-
-    elsif falling_edge(o_clkout) then
-
-      if ticks_enable = '1' then
-        ticks_latch <= '1';
-      end if;
-
-    end if;
-
-  end process;
-
-  
   -- the 74HCT273 clk pulse min width ~25ns
   -- the 74HCT273 data min setup time ~25ns
   -- o_iowr_n will change during TS2 so will be visible TC1 meeting data setup time
@@ -489,14 +421,12 @@ begin
       event_start <= '0';
       inta_cycle <= '0';
       rom_ram_sw <= i_jp1;
-      ticks_enable <= '0';
 
       irq0_clear <= '0';
       irq1_clear <= '0';
       irq2_clear <= '0';
       irq3_clear <= '0';
       pint_clear <= '0';
-      ticks_clear <= '0';
       
       -- initial output pin state
       o_warning <= '0';
@@ -640,11 +570,6 @@ begin
                 io_data <= "00100100";
                 pint_clear <= '1';
 
-              elsif ticks_latch = '1' then
-                
-                io_data <= "00100101";
-                ticks_clear <= '1';
-
               end if;
               
             end if;
@@ -663,16 +588,6 @@ begin
               -- PiUART
               if i_addr_low(7 downto 5) = piuart_addr then
                 event_start <= '1';
-              end if;
-
-              -- ticks control
-              if i_addr_low = ticks_ctrl_addr then
-                if ticks_enable = '1' then
-                  io_data <= "00000001";
-                else
-                  io_data <= "00000000";
-                end if;
-                
               end if;
               
             end if;
@@ -695,11 +610,6 @@ begin
               -- memory toggle
               if i_addr_low = mem_toggle_addr then
                 rom_ram_sw <= '1';
-              end if;
-
-              -- ticks control
-              if i_addr_low = ticks_ctrl_addr then
-                ticks_enable <= io_data(0);
               end if;
               
             end if;
@@ -766,7 +676,6 @@ begin
           irq2_clear <= '0';
           irq3_clear <= '0';
           pint_clear <= '0';
-          ticks_clear <= '0';
 
           if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then
             -- no reason to wait, set the ready signal
