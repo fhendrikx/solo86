@@ -32,7 +32,7 @@ Goals:
 
 Possible boot process:
 1. Launch Monitor (held in 64k ROM)
-2. Copy Monitor to 00000, contine executing from RAM
+2. Copy Monitor to 00000, continue executing from RAM
 3. Determine desired application/memory layout, update paging
 4. Jump to appropriate location
 
@@ -60,7 +60,7 @@ OR
 
  - As above, but top 512k broken into 4 x 128k pages.
  - Any of the 8 x ROM 128k can be assigned to any of the 4 pages.
- - Botton 512k alawys RAM.
+ - Botton 512k always RAM.
  - 4 bits per page, 4 pages => 16 macrocells minimum.
 
 ## Mode based paging
