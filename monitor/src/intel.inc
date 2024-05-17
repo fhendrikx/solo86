@@ -13,6 +13,7 @@ read_hex_file:
     push ax
     push bx
     push cx
+    push dx
     push di
     push es
 
@@ -60,7 +61,7 @@ read_hex_file:
 ; the end of the road
 .rec_eof:
     call read_hex       ; get checksum (1 byte)
-    jmp .exit
+    jmp .clean
 
 ; record type 0x02 - Segment
 ; read segment into ES
@@ -70,6 +71,7 @@ read_hex_file:
     call read_hex       ; get segment
     mov bl,al
     mov es,bx           ; rec_data uses ES:DI in stosb
+
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
@@ -81,22 +83,26 @@ read_hex_file:
     call read_hex       ; get CS
     mov bl,al
     mov [ start_segment ], bx
+
     call read_hex       ; get IP
     mov bh,al
     call read_hex       ; get IP
     mov bl,al
     mov [ start_address ], bx
+
     call read_hex       ; get checksum (1 byte)
     jmp .find_record
 
-.exit:
+.clean:
 ; clean up any remaining chars in the UART
     call read_ready
-    jz .exit_done
+    jz .exit
     call read_chr
-.exit_done:
+
+.exit:
     pop es
     pop di
+    pop dx
     pop cx
     pop bx
     pop ax
