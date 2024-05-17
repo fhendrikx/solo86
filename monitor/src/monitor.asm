@@ -106,21 +106,21 @@ prompt:
     print mesg_prompt
 
     call read_chr
-    cmp al,'d'
+    cmp al,'D'
     je  menu_dump
-    cmp al,'h'
+    cmp al,'F'
+    je  menu_fill
+    cmp al,'H'
     je  menu_help
-    cmp al,'i'
+    cmp al,'I'
     je  menu_inp
-    cmp al,'j'
+    cmp al,'J'
     je  menu_jump
-    cmp al,'l'
+    cmp al,'L'
     je  menu_load
-    cmp al,'o'
+    cmp al,'O'
     je  menu_out
-    cmp al,'r'
-    je  menu_dump
-    cmp al,'x'
+    cmp al,'X'
     je  menu_exe
     jmp prompt
 
@@ -128,8 +128,9 @@ menu_dump:
 ; dump memory
     print mesg_dump
 
-    push ds
     push bx
+    push cx
+    push ds
     push si
 
     call read_chr           ; space
@@ -152,8 +153,54 @@ menu_dump:
     call mem_dump
 
     pop si
-    pop bx
     pop ds
+    pop cx
+    pop bx
+    jmp prompt
+
+menu_fill:
+; fill memory
+    print mesg_fill
+
+    push ax
+    push bx
+    push cx
+    push di
+    push es
+
+    call read_chr           ; space
+
+    call read_hex           ; get segment
+    mov bh,al
+    call read_hex           ; get segment
+    mov bl,al
+    mov es,bx
+
+    call read_chr           ; colon
+
+    call read_hex           ; get offset
+    mov bh,al
+    call read_hex           ; get offset
+    mov bl,al
+    mov di,bx
+
+    call read_chr           ; space
+
+    call read_hex           ; get count
+    xor cx,cx
+    mov cl,al
+
+    call read_chr           ; space
+
+    call read_hex           ; get hex byte
+
+    call mem_fill
+
+    pop es
+    pop di
+    pop cx
+    pop bx
+    pop ax
     jmp prompt
 
 menu_help:
@@ -164,12 +211,18 @@ menu_help:
 menu_inp:
 ; inp pp
     print mesg_inp
+
     push dx
     xor dx,dx
+
+    call read_chr           ; space
+
     call read_hex           ; get port
     mov dl,al
+
     in al,dx                ; INP
     call print_hex
+
     pop dx
     jmp prompt
 
@@ -178,6 +231,7 @@ menu_jump:
     print mesg_jump
 
     call read_chr           ; space
+
     call read_hex           ; get segment
     mov bh,al
     call read_hex           ; get segment
@@ -191,13 +245,16 @@ menu_jump:
     call read_hex           ; get offset
     mov bl,al
     mov [ start_address ], bx
+
 ; indirect far jump to CS:IP
     jmp far [ start_address ]
 
 menu_load:
 ; load intel hex file
     print mesg_load
+
     call read_hex_file
+
     print mesg_load_done
     jmp prompt
 
@@ -205,13 +262,17 @@ menu_out:
 ; out pp xx
     print mesg_out
     push dx
-
     xor dx,dx
+
+    call read_chr           ; space
+
     call read_hex           ; get port
     mov dl,al
+
     call read_chr           ; space
-    call read_hex           ; get hex
-    out dx,al
+    call read_hex           ; get hex byte
+
+    out dx,al               ; OUT
 
     pop dx
     jmp prompt
