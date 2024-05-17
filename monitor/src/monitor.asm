@@ -103,6 +103,7 @@ relocate:
 
 ; prompt
 prompt:
+    mov dx,1                ; echo please
     print mesg_prompt
 
     call read_chr
@@ -261,6 +262,7 @@ menu_load:
 menu_out:
 ; out pp xx
     print mesg_out
+
     push dx
     xor dx,dx
 
