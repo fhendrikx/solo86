@@ -14,6 +14,7 @@ putc:
 
 ;======================================================================
 ; read a char into AL from the UART (blocking)
+; echo to the UART if DL==1
 ;======================================================================
 
 read_chr:
@@ -21,7 +22,14 @@ getc:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz read_chr
+
     in al,uart_data     ; read character
+
+    cmp dl,1            ; echo?
+    jne .exit
+    out uart_data,al
+
+.exit:
     ret
 
 
@@ -63,6 +71,7 @@ puts:
 
 ;======================================================================
 ; read an ASCIIZ string into ES:DI from the UART (blocking)
+; echo to the UART if DL==1
 ;======================================================================
 
 read_str:
@@ -76,10 +85,18 @@ gets:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz .loop
+
     in al,uart_data     ; read character
     stosb
+
+    cmp dl,1            ; echo?
+    jne .continue
+    out uart_data,al
+
+.continue:
     cmp al,10           ; are we done?
     jz .exit
+
     jmp .loop
 
 .exit:
@@ -122,6 +139,7 @@ print_hex:
 
 ;======================================================================
 ; read 2 hex characters into AL from the UART (blocking)
+; echo to the UART if DL==1
 ;======================================================================
 
 read_hex:
@@ -139,9 +157,17 @@ read_hex:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz .nibble
+
     in al,uart_data     ; read character
+
+    cmp dl,1            ; echo?
+    jne .continue
+    out uart_data,al
+
+.continue:
     cmp al,41h
     jae .letter
+
     sub al,30h          ; '0'
     ret
 
