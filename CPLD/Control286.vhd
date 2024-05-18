@@ -199,7 +199,10 @@ begin
   -- PiUART read/write control
   o_prdwr <= '1' when o_iord_n = '0' else '0';
 
+  --
   -- edge triggered interrupt latches
+  --
+
   proc_irq0_latch: process(i_irq0_n, i_reset_n, irq0_clear) is
   begin
 
@@ -260,6 +263,10 @@ begin
 
   end process;
 
+  --
+  -- generate the address high outputs
+  --
+
   proc_addr_high: process(i_reset_n, o_ale) is
     variable bank           : std_logic_vector(4 downto 0);
     variable bank_index     : integer;
@@ -277,7 +284,7 @@ begin
       ram_enable <= '0';
 
       if i_addr_high(3) = '1' then
-        -- reading from top half of memory, use bank table
+        -- accessing top half of memory, use bank table
 
         bank_index := to_integer(unsigned(i_addr_high(2 downto 0)));
         bank := bank_table(bank_index);
@@ -291,7 +298,7 @@ begin
         end if;
 
       else
-        -- reading from RAM, enable the RAM chips
+        -- accessing bottom half of memory, always RAM
 
         o_addr_high <= i_addr_high;
         ram_enable <= '1';
@@ -302,6 +309,9 @@ begin
 
   end process;
 
+  --
+  -- update the banking table
+  --
 
   proc_bank_write: process(i_reset_n, bank_write) is
     variable bank_index     : integer;
@@ -530,7 +540,7 @@ begin
           io_data <= "ZZZZZZZZ";
 
           if i_s0_n = '1' and i_s1_n = '1' then
-            -- still waiting for something to happen
+            -- still waiting for something to happen (idle state)
 
             ctrl_state <= TS1;
             o_ale <= '0';
@@ -540,6 +550,11 @@ begin
             -- to determine what type of bus cycle we're dealing with
 
             ctrl_state <= TS2;
+
+            -- tell the address latches and the o_addr_high mapper to latch.
+            -- this isn't strictly needed by the Halt/Shutdown or Interrupt
+            -- Ack cycles, however it makes for simpler CPLD logic to do so
+            -- regardless
             o_ale <= '1';
 
             o_warning <= '0';
@@ -564,12 +579,19 @@ begin
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
               -- Mem Read
 
+              -- at this point we don't know if this read is from RAM, ROM,
+              -- or an external peripheral so enable both RAM and ROM and
+              -- use the OE/WE controls to determine which is used during 
+              -- the TS2 cycle
               o_ram_ce_n <= '0';
               o_rom_ce_n <= '0';
 
             elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
               -- Mem Write
 
+              -- at this point we don't know if this write is to RAM or an
+              -- external peripheral so enable RAM and use the OE/WE
+              -- controls to determine which is used during the TS2 cycle
               o_ram_ce_n <= '0';
 
             end if;
@@ -608,14 +630,21 @@ begin
           -- the latched address bus and data bus should now have stable values
           -- enable the expansion slot IORD/IOWR/MEMRD/MEMWR pins
           -- set the number of wait states to add
+          -- output an interrupt vector
 
           if i_m_io = '0' and i_s1_n = '0' and i_s0_n = '0' then
             -- Interrupt Ack
 
-            -- the datasheet says we should add one wait state
+            -- the datasheet says we should add one wait state during the first
+            -- interrupt ack to allow the intel interrupt controllers to do their
+            -- thing and to add one wait state during the second interrupt ack
+            -- to allow the CPU to output an address correctly.
+            -- the first doesn't apply (no intel interrupt controller) but the 
+            -- second does so apply one wait state regardless of first/second
+            -- ack to simplify CPLD logic
             wait_states <= 1;
 
-            -- only output the interrupt vector on the second cycle
+            -- only output the interrupt vector on the second ack cycle
             if inta_cycle = '0' then
 
               if irq0_latch = '1' then
@@ -654,7 +683,9 @@ begin
             o_iord_n <= '0';
 
             -- we need at least one wait state to allow peripherals time to
-            -- assert wait if they need it
+            -- assert wait if they need it and even more for peripherals that
+            -- don't assert wait and are designed for a slower CPU (82C55A
+            -- for example)
             wait_states <= 3;
 
             if i_addr_low(0) = '0' then
@@ -668,7 +699,8 @@ begin
               -- memory banking control
               if i_addr_low(7 downto 4) = bank_ctrl_addr then
                 bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
-                -- don't use "000", adds more macro cells and results in bad mapping (wtf?)
+                -- don't use "000", adds three more macro cells and results 
+                -- in flaky behaviour elsewhere in the CPLD (fitter bug?)
                 io_data(7 downto 5) <= "111";
                 io_data(4 downto 0) <= bank_table(bank_index);
               end if;
@@ -681,7 +713,9 @@ begin
             o_iowr_n <= '0';
 
             -- we need at least one wait state to allow peripherals time to
-            -- assert wait if they need it
+            -- assert wait if they need it and even more for peripherals that
+            -- don't assert wait and are designed for a slower CPU (82C55A
+            -- for example)
             wait_states <= 3;
 
             if i_addr_low(0) = '0' then
@@ -707,30 +741,39 @@ begin
           elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
             -- Mem Read
 
+            -- no wait states required for our memory @ 20Mhz
             wait_states <= 0;
 
+            -- read from ROM
             if rom_enable = '1' then
               o_rom_oe_n <= '0';
             end if;
 
+            -- read from RAM
             if ram_enable = '1' then
               o_ram_oe_n <= '0';
             end if;
 
+            -- read from an external peripheral
             if rom_enable = '0' and ram_enable = '0' then
               o_memrd_n <= '0';
+              -- assume external peripheral is slow and requires
+              -- extra wait states
               wait_states <= 3;
             end if;
 
           elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
             -- Mem Write
 
+            -- no wait states required for our memory @ 20Mhz
             wait_states <= 0;
 
+            -- write to ROM
             if rom_enable = '1' then
               -- do nothing, we don't write to ROM
             end if;
 
+            -- write to RAM
             if ram_enable = '1' then
 
               -- write enable (WE) the memory chips (e.g. tell them to read a
@@ -749,9 +792,11 @@ begin
 
             end if;
 
+            -- write to an external peripheral
             if rom_enable = '0' and ram_enable = '0' then
-              -- write to external peripheral
               o_memwr_n <= '0';
+              -- assume external peripheral is slow and requires
+              -- extra wait states
               wait_states <= 3;
             end if;
 
@@ -761,7 +806,6 @@ begin
         when TC1 =>
 
           -- work out if we're going to signal ready or not ready to the CPU
-          -- during this phase peripherals are deciding what to do
 
           ctrl_state <= TC2;
 
