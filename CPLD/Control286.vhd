@@ -8,11 +8,11 @@ entity Control286 is
     -- Misc
     i_clk           : in std_logic;
     i_reset_n       : in std_logic;
-    i_jp1           : in std_logic;
+    -- i_jp1           : in std_logic;
 
     -- o_clkout        : buffer std_logic;
     o_led_latch     : out std_logic;
-    o_ale           : out std_logic;
+    o_ale           : buffer std_logic;
     o_warning       : out std_logic;
 
     -- Bit banged SD card
@@ -46,7 +46,7 @@ entity Control286 is
     o_ram_oe_n      : out std_logic;
     o_ram_ce_n      : out std_logic;
 
-    o_addr_high     : out std_logic_vector(3 downto 0); -- AC19..AC16
+    o_addr_high     : buffer std_logic_vector(3 downto 0); -- AC19..AC16
 
     -- Expansion slot
     o_memrd_n       : out std_logic;
@@ -86,7 +86,7 @@ architecture rtl of Control286 is
   -- Misc
   attribute chip_pin of i_clk           : signal is "83";
   attribute chip_pin of i_reset_n       : signal is "1";
-  attribute chip_pin of i_jp1           : signal is "2";
+  -- attribute chip_pin of i_jp1           : signal is "2";
   -- attribute chip_pin of o_clkout        : signal is "24";
   attribute chip_pin of o_led_latch     : signal is "4";
   attribute chip_pin of o_ale           : signal is "65";
@@ -161,6 +161,7 @@ architecture rtl of Control286 is
 
   type t_bank_table is array (0 to 7) of std_logic_vector(4 downto 0);
   signal bank_table           : t_bank_table;
+  signal bank_write           : std_logic;
 
   type t_ctrl_state is (TS1, TS2, TC1, TC2);
   signal ctrl_state           : t_ctrl_state;
@@ -168,10 +169,8 @@ architecture rtl of Control286 is
   type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
   signal piuart_state         : t_piuart_state;
 
-  signal addr_high            : std_logic_vector(3 downto 0);
   signal ram_enable           : std_logic;
   signal rom_enable           : std_logic;
-  signal bank_write           : std_logic;
 
 begin
 
@@ -261,52 +260,40 @@ begin
 
   end process;
 
-
-  proc_addr_high: process(i_reset_n, i_clk) is
+  proc_addr_high: process(i_reset_n, o_ale) is
     variable bank           : std_logic_vector(4 downto 0);
     variable bank_index     : integer;
   begin
 
     if i_reset_n = '0' then
 
-      addr_high <= "0000";
-      ram_enable <= '0';
+      o_addr_high <= "0000";
       rom_enable <= '0';
-
-    elsif falling_edge(i_clk) then
-
       ram_enable <= '0';
+
+    elsif rising_edge(o_ale) then
+
       rom_enable <= '0';
+      ram_enable <= '0';
 
       if i_addr_high(3) = '1' then
-        -- reading from top half of memory
+        -- reading from top half of memory, use bank table
 
         bank_index := to_integer(unsigned(i_addr_high(2 downto 0)));
         bank := bank_table(bank_index);
 
+        o_addr_high <= bank(3 downto 0);
+
         if bank(4) = '0' then
-          -- reading from ROM, enable the ROM chips
-
-          addr_high <= bank(3 downto 0);
           rom_enable <= '1';
-
-        elsif bank(4) = '1' and bank(0) = '0' then
-          -- reading from RAM, enable RAM chips
-
-          addr_high <= i_addr_high;
+        elsif bank(3) = '1' then
           ram_enable <= '1';
-
-        else
-          -- reading from external peripheral
-
-          addr_high <= i_addr_high;
-
         end if;
 
       else
         -- reading from RAM, enable the RAM chips
 
-        addr_high <= i_addr_high;
+        o_addr_high <= i_addr_high;
         ram_enable <= '1';
 
       end if;
@@ -316,7 +303,7 @@ begin
   end process;
 
 
-  proc_bank: process(i_reset_n, bank_write) is
+  proc_bank_write: process(i_reset_n, bank_write) is
     variable bank_index     : integer;
   begin
 
@@ -327,13 +314,6 @@ begin
       end loop;
 
     elsif rising_edge(bank_write) then
-
-        --   -- if JP1 is set then initialise bank table to use RAM
-        --   if i_jp1 = '1' then
-        --     for i in 0 to 7 loop
-        --       bank_table(i) <= "11111";
-        --     end loop;
-        --   end if;
 
       bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
       bank_table(bank_index) <= io_data(4 downto 0);
@@ -364,25 +344,6 @@ begin
   -- i_addr_low will change after TC1 meaning latch pulse will only last one clock
   -- meeting the pulse width requirement
 
-  -- proc_led_latch: process(i_clk, i_reset_n) is
-  -- begin
-  --   if i_reset_n = '0' then
-
-  --     o_led_latch <= '0';
-
-  --   elsif falling_edge(i_clk) then
-
-  --     if o_iowr_n = '0' and i_addr_low = led_latch_addr then
-  --       o_led_latch <= '1';
-  --     else
-  --       o_led_latch <= '0';
-  --     end if;
-
-  --   end if;
-
-  -- end process;
-
-  -- simpler alternative, not sure about the timing
   o_led_latch <= '1' when o_iowr_n = '0' and i_addr_low = led_latch_addr
                 else '0';
 
@@ -496,8 +457,8 @@ begin
   -- ctrl_state represents the end of the given cycle, e.g. TS1 is the falling edge
   -- at the end of the TS1 cycle
 
-  proc_ctrl_state_machine: process(i_clk, i_reset_n, i_jp1) is
-    -- variable bank_index     : integer;
+  proc_ctrl_state_machine: process(i_clk, i_reset_n) is
+    variable bank_index     : integer;
   begin
 
     if i_reset_n = '0' then
@@ -507,6 +468,7 @@ begin
       wait_states <= 0;
 
       event_start <= '0';
+      bank_write <= '0';
       inta_cycle <= '0';
 
       irq0_clear <= '0';
@@ -515,11 +477,8 @@ begin
       irq3_clear <= '0';
       -- pint_clear <= '0';
 
-      bank_write <= '0';
-
       -- initial output pin state
       o_warning <= '0';
-
       o_ale <= '0';
       o_ready_n <= '1';
 
@@ -529,8 +488,6 @@ begin
       o_ram_we_high_n <= '1';
       o_ram_oe_n <= '1';
       o_ram_ce_n <= '1';
-
-      o_addr_high <= "0000";
 
       o_memrd_n <= '1';
       o_iord_n <= '1';
@@ -546,16 +503,44 @@ begin
         --
         when TS1 =>
 
+          wait_states <= 0;
+
+          event_start <= '0';
+          bank_write <= '0';
+
+          irq0_clear <= '0';
+          irq1_clear <= '0';
+          irq2_clear <= '0';
+          irq3_clear <= '0';
+
+          o_ready_n <= '1';
+
+          o_rom_oe_n <= '1';
+          o_rom_ce_n <= '1';
+          o_ram_we_low_n <= '1';
+          o_ram_we_high_n <= '1';
+          o_ram_oe_n <= '1';
+          o_ram_ce_n <= '1';
+
+          o_memrd_n <= '1';
+          o_iord_n <= '1';
+          o_memwr_n <= '1';
+          o_iowr_n <= '1';
+
+          io_data <= "ZZZZZZZZ";
+
           if i_s0_n = '1' and i_s1_n = '1' then
             -- still waiting for something to happen
 
             ctrl_state <= TS1;
+            o_ale <= '0';
 
           else
             -- the status bits represent something interesting, decode them
             -- to determine what type of bus cycle we're dealing with
 
             ctrl_state <= TS2;
+            o_ale <= '1';
 
             o_warning <= '0';
 
@@ -568,15 +553,8 @@ begin
             elsif i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
               -- IO Read
 
-              o_ale <= '1';
-              o_addr_high <= i_addr_high;
-
-
             elsif i_m_io = '0' and i_s1_n = '1' and i_s0_n = '0' then
               -- IO Write
-
-              o_ale <= '1';
-              o_addr_high <= i_addr_high;
 
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '0' then
               -- Halt/Shutdown
@@ -586,24 +564,12 @@ begin
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
               -- Mem Read
 
-              o_ale <= '1';
-              o_addr_high <= addr_high;
-
-              if ram_enable = '1' then
-                o_ram_ce_n <= '0';
-              end if;
-
-              if rom_enable = '1' then
-                o_rom_ce_n <= '0';
-              end if;
+              o_ram_ce_n <= '0';
+              o_rom_ce_n <= '0';
 
             elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
               -- Mem Write
 
-              o_ale <= '1';
-              o_addr_high <= i_addr_high;
-
-              -- all writes go to RAM, enable the RAM chips
               o_ram_ce_n <= '0';
 
             end if;
@@ -614,8 +580,30 @@ begin
         when TS2 =>
 
           ctrl_state <= TC1;
+          wait_states <= 0;
+
+          event_start <= '0';
+          bank_write <= '0';
+
+          irq0_clear <= '0';
+          irq1_clear <= '0';
+          irq2_clear <= '0';
+          irq3_clear <= '0';
 
           o_ale <= '0';
+          o_ready_n <= '1';
+
+          o_rom_oe_n <= '1';
+          o_ram_we_low_n <= '1';
+          o_ram_we_high_n <= '1';
+          o_ram_oe_n <= '1';
+
+          o_memrd_n <= '1';
+          o_iord_n <= '1';
+          o_memwr_n <= '1';
+          o_iowr_n <= '1';
+
+          io_data <= "ZZZZZZZZ";
 
           -- the latched address bus and data bus should now have stable values
           -- enable the expansion slot IORD/IOWR/MEMRD/MEMWR pins
@@ -663,12 +651,14 @@ begin
           elsif i_m_io = '0' and i_s1_n = '0' and i_s0_n = '1' then
             -- IO Read
 
-            -- only signal even numbered I/O requests
+            o_iord_n <= '0';
+
+            -- we need at least one wait state to allow peripherals time to
+            -- assert wait if they need it
+            wait_states <= 3;
+
             if i_addr_low(0) = '0' then
-              o_iord_n <= '0';
-              -- we need at least one wait state to allow peripherals time to
-              -- assert wait if they need it
-              wait_states <= 1;
+            -- only signal even numbered I/O requests
 
               -- PiUART
               if i_addr_low(7 downto 5) = piuart_addr then
@@ -676,23 +666,26 @@ begin
               end if;
 
               -- memory banking control
-              -- if i_addr_low(7 downto 4) = bank_ctrl_addr then
-                -- bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
-                -- io_data(7 downto 5) <= "111";
-                -- io_data(4 downto 0) <= bank_table(bank_index);
-              -- end if;
+              if i_addr_low(7 downto 4) = bank_ctrl_addr then
+                bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
+                -- don't use "000", adds more macro cells and results in bad mapping (wtf?)
+                io_data(7 downto 5) <= "111";
+                io_data(4 downto 0) <= bank_table(bank_index);
+              end if;
 
             end if;
 
           elsif i_m_io = '0' and i_s1_n = '1' and i_s0_n = '0' then
             -- IO Write
 
-            -- only signal even numbered I/O requests
+            o_iowr_n <= '0';
+
+            -- we need at least one wait state to allow peripherals time to
+            -- assert wait if they need it
+            wait_states <= 3;
+
             if i_addr_low(0) = '0' then
-              o_iowr_n <= '0';
-              -- we need at least one wait state to allow peripherals time to
-              -- assert wait if they need it
-              wait_states <= 1;
+            -- only signal even numbered I/O requests
 
               -- PiUART
               if i_addr_low(7 downto 5) = piuart_addr then
@@ -732,21 +725,34 @@ begin
           elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
             -- Mem Write
 
-            o_memwr_n <= '0';
             wait_states <= 0;
 
-            -- write enable (WE) the memory chips (e.g. tell them to read a
-            -- value from the data bus)
-            -- use BHE/A0 to work out which banks (high/low) need to be enabled
-
-            if i_bhe_n = '0' then
-              -- write to the high bank
-              o_ram_we_high_n <= '0';
+            if rom_enable = '1' then
+              -- do nothing, we don't write to ROM
             end if;
 
-            if i_addr_low(0) = '0' then
-              -- write to the low bank
-              o_ram_we_low_n <= '0';
+            if ram_enable = '1' then
+
+              -- write enable (WE) the memory chips (e.g. tell them to read a
+              -- value from the data bus)
+              -- use BHE/A0 to work out which banks (high/low) need to be enabled
+
+              if i_bhe_n = '0' then
+                -- write to the high bank
+                o_ram_we_high_n <= '0';
+              end if;
+
+              if i_addr_low(0) = '0' then
+                -- write to the low bank
+                o_ram_we_low_n <= '0';
+              end if;
+
+            end if;
+
+            if rom_enable = '0' and ram_enable = '0' then
+              -- write to external peripheral
+              o_memwr_n <= '0';
+              wait_states <= 3;
             end if;
 
           end if;
@@ -767,6 +773,9 @@ begin
           irq2_clear <= '0';
           irq3_clear <= '0';
           -- pint_clear <= '0';
+
+          o_ale <= '0';
+          o_ready_n <= '1';
 
           if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then
             -- no reason to wait, set the ready signal
@@ -790,6 +799,16 @@ begin
 
           -- last phase in the TC cycle. Either we're done or we'll repeat
           -- because of wait states
+
+          event_start <= '0';
+          bank_write <= '0';
+
+          irq0_clear <= '0';
+          irq1_clear <= '0';
+          irq2_clear <= '0';
+          irq3_clear <= '0';
+
+          o_ale <= '0';
 
           if o_ready_n = '1' then
             -- the CPU has been instructed to add another TC cycle
