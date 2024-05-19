@@ -2,7 +2,9 @@
 ; print
 ;=========================================================================
 %imacro print 1
+    push si
     mov si,%1
     call print_str
+    pop si
 %endm
 

@@ -144,7 +144,6 @@ prompt:
 
 menu_dump:
 ; dump memory
-    print mesg_dump
 
     push bx
     push cx
@@ -167,6 +166,8 @@ menu_dump:
     mov bl,al
     mov si,bx
 
+    print mesg_dump
+
     mov cx,256
     call mem_dump
 
@@ -178,7 +179,6 @@ menu_dump:
 
 menu_fill:
 ; fill memory
-    print mesg_fill
 
     push ax
     push bx
@@ -212,6 +212,8 @@ menu_fill:
 
     call read_hex           ; get hex byte
 
+    print mesg_fill
+
     call mem_fill
 
     pop es
@@ -228,15 +230,15 @@ menu_help:
 
 menu_inp:
 ; inp pp
-    print mesg_inp
 
-    push dx
-    xor dx,dx
+    push dx                 ; save echo state
 
     call read_chr           ; space
-
     call read_hex           ; get port
+    xor dx,dx
     mov dl,al
+
+    print mesg_inp
 
     in al,dx                ; INP
     call print_hex
@@ -246,7 +248,6 @@ menu_inp:
 
 menu_jump:
 ; jump
-    print mesg_jump
 
     call read_chr           ; space
 
@@ -264,6 +265,8 @@ menu_jump:
     mov bl,al
     mov [ start_address ], bx
 
+    print mesg_jump
+
 ; indirect far jump to CS:IP
     jmp far [ start_address ]
 
@@ -278,18 +281,21 @@ menu_load:
 
 menu_out:
 ; out pp xx
-    print mesg_out
 
-    push dx
-    xor dx,dx
+    push dx                 ; save echo state
 
     call read_chr           ; space
 
     call read_hex           ; get port
-    mov dl,al
+    mov bl,al
 
     call read_chr           ; space
     call read_hex           ; get hex byte
+
+    xor dx,dx
+    mov dl,bl
+
+    print mesg_out
 
     out dx,al               ; OUT
 
@@ -298,7 +304,7 @@ menu_out:
 
 menu_exe:
 ; execute
-    print mesg_out
+    print mesg_exe
 
     xor ax,ax
     mov ds,ax
