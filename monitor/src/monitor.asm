@@ -28,8 +28,16 @@ sseg            equ 00000h
 
 ; I/O addresses should be even numbers only
 ticks_ctrl      equ 04h
-mem_toggle      equ 06h
 leds_data       equ 08h
+bank_table      equ 10h
+bank_row_0      equ 10h
+bank_row_1      equ 12h
+bank_row_2      equ 14h
+bank_row_3      equ 16h
+bank_row_4      equ 18h
+bank_row_5      equ 1Ah
+bank_row_6      equ 1Ch
+bank_row_7      equ 1Eh
 uart_ctrl       equ 20h
 uart_data       equ 22h
 
@@ -80,8 +88,17 @@ relocate:
     mov ss,ax
     mov sp,0FFFFh
 
-; toggle ROM -> RAM
-    out mem_toggle, al      ; value of al doesn't matter
+; setup memory banking table
+; map RAM into the top half of memory
+    mov al,011000b
+    mov dx,bank_table
+    mov cx,8
+.bank_init:
+    out dx,al
+    inc al
+    inc dx
+    inc dx
+    loop .bank_init
 
 ; enable interrupts
     sti
