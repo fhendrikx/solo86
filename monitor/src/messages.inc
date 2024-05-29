@@ -17,12 +17,13 @@ mesg_help           db 0Ah
                     db 00h
 
 mesg_dump           db 0Ah, '[ Memory Dump ]', 0Ah, 00h
-mesg_load           db 0Ah, '[ Load File ]', 0Ah, 00h
-mesg_load_done      db '[ Load File Complete ]', 0Ah, 00h
 mesg_fill           db 0Ah, '[ Memory Fill ]', 0Ah, 00h
+
+mesg_load           db 0Ah, '[ Load File ]', 0Ah, 00h
+mesg_load_done      db 0Ah, '[ Load File Complete ]', 0Ah, 00h
 
 mesg_inp            db 0Ah, '[ INP ]', 0Ah, 00h
 mesg_jump           db 0Ah, '[ JMP ]', 0Ah, 00h
 mesg_out            db 0Ah, '[ OUT ]', 0Ah, 00h
-mesg_exe            db 0Ah, '[ EXEC ]', 0Ah, 00h
+mesg_exe            db 0Ah, '[ EXE ]', 0Ah, 00h
 
