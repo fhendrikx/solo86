@@ -97,12 +97,12 @@ write j to port i
 
 peek (i)
 
-read from memory address i
+read from memory address i (limited to the current 64K segment)
 
 
 poke i,j(,k,l)?
 
-write j to memory address i
+write j to memory address i (limited to the current 64K segment)
 
 
 wait i,j,k
@@ -110,4 +110,29 @@ usr (i(,j))
 abs
 size
 
+
+======================================================================
+Samples
+======================================================================
+
+Program to count to 10
+
+10 for i=1 to 10
+20 print "Hello ", i
+30 next i
+
+
+Program to ask your age
+
+10 print "Hello, what is your age?"
+20 input a
+30 if a  < 18 print "You are a child"
+40 if a >= 18 print "You are an adult"
+
+
+Program to modify a byte in memory (BE CAREFUL!)
+
+10 let a=303
+20 let d=79
+30 poke a,d
 
