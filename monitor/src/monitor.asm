@@ -38,8 +38,6 @@ bank_row_4      equ 18h
 bank_row_5      equ 1Ah
 bank_row_6      equ 1Ch
 bank_row_7      equ 1Eh
-uart_ctrl       equ 20h
-uart_data       equ 22h
 
 
 ;======================================================================
@@ -120,7 +118,6 @@ relocate:
 
 ; prompt
 prompt:
-    mov dx,1                ; echo please
     print mesg_prompt
 
     call read_chr
