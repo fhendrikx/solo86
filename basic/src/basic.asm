@@ -36,8 +36,9 @@
 ;*     support time and date from ms-dos
 ;*
 ;* vers 1.2 - support for Solo86 (Ferry Hendrikx, June 2024)
-;*     adapted for usage in ROM
-;*     fix formatting
+;*     adapted for usage with Solo86
+;*     fixed formatting
+;*     documented language
 ;*
 ;**************************************************************
 
@@ -45,19 +46,70 @@ cpu 8086
 
 org 0
 
+
+;======================================================================
+; defines
+;======================================================================
+
+; important segments
+cseg_init       equ 0F000h  ; CS
+cseg            equ 01000h  ; CS after relocation
+dseg            equ 01000h
+sseg            equ 01000h
+
+
 section .text
 
+;======================================================================
+; 0xf0000 - init
+;======================================================================
+
 init:
+; clear interrupts
+    cli
     cld
-    mov ax,cs
+
+; copy ROM to RAM
+; don't use the stack yet as the ROM copy will overwrite any stored data
+    mov ax,cseg_init
+    mov ds,ax
+    xor si,si
+
+    mov ax,cseg
+    mov es,ax
+    xor di,di
+
+    mov cx,08000h
+
+.copy_rom:
+    movsw
+    loop .copy_rom
+
+    jmp cseg:relocate
+
+
+;======================================================================
+; 0x10xxx - relocation
+;======================================================================
+
+relocate:
+; initialise DS/ES
+    mov ax,dseg
     mov ds,ax
     mov es,ax
+
+; initialise SS/SP
+    mov ax,sseg
+    mov ss,ax
+
+
+;------------------------------------------
 
 start:
     mov sp,stack        ;set up stack
     mov dx,msg          ;get sign-on msg
     call prtstg         ;send it
-    mov byte [buf_max],80h  ;init cmd line buffer
+;    mov byte [buf_max],80h  ;init cmd line buffer
 
 ;------------------------
 ; main
@@ -237,13 +289,13 @@ ahow:
     jmp error
 
 how:
-    db 'how?',0dh
+    db 'how?',0Ah,00h
 ok:
-    db 'ok',0dh
+    db 'ok',0Ah,00h
 what:
-    db 'what?',0dh
+    db 'what?',0Ah,00h
 sorry:
-    db 'sorry',0dh
+    db 'sorry',0Ah,00h
 
 ;*
 ;**********************************************************
@@ -284,12 +336,13 @@ tab1: equ $         ;direct commands
     dw run
     db 'ne','w' | 80h
     dw new
-    db 'loa','d' | 80h
-    dw dload
-    db 'sav','e' | 80h
-    dw dsave
-    db 'by','e' | 80h   ;go back to dos (exit tbasic)
-    dw bye
+;    db 'loa','d' | 80h
+;    dw dload
+;    db 'sav','e' | 80h
+;    dw dsave
+;    db 'by','e' | 80h   ;go back to dos (exit tbasic)
+;    dw bye
+
 tab2: equ $         ;direct/statement
     db 'nex','t' | 80h
     dw next             ;execution addresses
@@ -341,19 +394,22 @@ tab4: equ $         ;functions
 ;to move xp40 down
     dw xp40
 
-tab5: equ $         ;"to" in "for"
+tab5: equ $             ;"to" in "for"
     db 't','o' | 80h
 tab5a:
     dw fr1
     db 128
     dw qwhat
-tab6: equ $         ;"step" in "for"
+
+tab6: equ $             ;"step" in "for"
     db 'ste','p' | 80h
+
 tab6a:
     dw fr2
     db 128
     dw fr3
-tab8: equ $         ;relation operators
+
+tab8: equ $             ;relation operators
     db '>','=' | 80h
     dw xp11             ;execution address
     db '#' | 80h
@@ -375,8 +431,9 @@ tab8: equ $         ;relation operators
 
 direct:
     mov bx,tab1-1       ;***direct***
-;*
-exec: equ $         ;***exec***
+
+exec: equ $             ;***exec***
+
 ex0:
     mov ah,0
     call ignblnk        ;ignore leading blanks
@@ -491,169 +548,170 @@ gt1:
     pop ax
     jmp runtsl          ;go do it
 ; bdos equates (for ms-dos)
-bye: equ 0         ;bdos exit address
-fcb: equ 5ch
-setdma: equ 26
-open: equ 15
-readd: equ 20
-writed: equ 21
-close: equ 16
-make: equ 22
-bconin: equ 10         ;buffered console input
-delete: equ 19
-conout: equ 2         ;console output
-const: equ 11         ;console status
-dload:
-    mov ah,0
-    call ignblnk        ;ignore blanks
-    push bx             ;save h
-    call fcbset         ;set up file control block
-    push dx             ;save the rest
-    push cx             ;save the rest
-    mov dx,fcb          ;get fcb addr
-    mov ah,open         ;prepare to open file
-    int 33              ;call ms-dos to open file
-    cmp al,0ffh         ;is it there?
-    jnz dl1             ;no, send error
-    jmp qhow
-dl1:
-    xor al,al           ;clear a
-    mov [fcb+32],al     ;start at record 0
-    mov dx,txtbgn       ;get beginning
-load:
-    push dx             ;save dma address
-    mov ah,setdma
-    int 33              ;call ms-dos to set dam addr
-    mov ah,readd
-    mov dx,fcb
-    int 33              ;call ms-dos to read sector
-    cmp al,1            ;done?
-    jc rdmore           ;no, read more
-    jz ll1
-load1:
-    jmp qhow            ;bad read or no delimiter
-ll1:
-    mov ah,close
-    mov dx,fcb
-    int 33              ;call ms-dos to close file
-    pop bp              ;dma addr in bp
-    sub bp,100h         ;backup
-    mov cx,100h         ;max loops
-rdm1:
-    inc bp              ;pre inc
-    cmp word [bp],0     ;found delimiter?
-    loopnz rdm1         ;keep looking
-    cmp cl,0            ;mac loops executed?
-    jz load1            ;give error if so
-    mov [txtunf],bp     ;update pointer
-    pop cx              ;get old reg back
-    pop dx              ;get old reg back
-    pop bx              ;get old reg back
-    call finish         ;finish
-rdmore:
-    pop dx              ;get dma addr
-    mov bx,80h          ;get 128
-    add bx,dx           ;add it to dma addr
-    xchg dx,bx          ;back in d
-    jmp load            ;and read some more
-dsave:
-    cmp word [txtunf],txtbgn    ;see if anything to save
-    jnz ds1a
-    jmp qwhat
-ds1a:
-    mov bp,[txtunf]
-    mov word [bp],0     ;set delimiter
-    mov ah,0
-    call ignblnk        ;ignore blanks
-    push bx             ;save bx
-    call fcbset         ;setup fcb
-    push dx
-    push cx             ;save others
-    mov dx,fcb
-    mov ah,delete
-    int 33              ;call ms-dos to erase file
-    mov dx,fcb
-    mov ah,make
-    int 33              ;call ms-dos to make a new one
-    cmp al,0ffh         ;is there space?
-    jnz ds1
-    jmp qhow            ;no, error
-ds1:
-    xor al,al           ;clear a
-    mov [fcb+32],al     ;start at record 0
-    mov dx,txtbgn       ;get beginning
-save:
-    push dx             ;save dma addr
-    mov ah,setdma
-    int 33              ;call ms-dos to set dma addr
-    mov ah,writed
-    mov dx,fcb
-    int 33              ;call ms-dos to write sector
-    or al,al            ;set flags
-    jz ss1              ;if not zero, error
-    jmp qhow
-ss1:
-    pop dx              ;get dma addr back
-    mov ax,dx
-    cmp ax,[txtunf]     ;see if done
-    jz savdon
-    jnc savdon          ;jump if done
-writmor:
-    mov bx,80h
-    add bx,dx
-    xchg dx,bx          ;get it to d
-    jmp save
-savdon:
-    mov ah,close
-    mov dx,fcb
-    int 33              ;call ms-dos to close file
-    pop cx              ;get regs back
-    pop dx              ;get regs back
-    pop bx              ;get regs back
-    call finish
-fcbset:
-    mov bx,fcb          ;get fcb addr
-    mov byte [bx],0     ;clear entry type
-fnclr:
-    inc bx
-    mov byte [bx],' '   ;clear to space
-    mov ax,fcb+8
-    cmp ax,bx           ;done?
-    jnz fnclr           ;no, do it again
-    inc bx
-    mov byte [bx],'t'   ;set file type to 'tbi'
-    inc bx
-    mov byte [bx],'b'
-    inc bx
-    mov byte [bx],'i'
-exrc:
-    inc bx
-    mov byte [bx],0
-    mov ax,fcb+15
-    cmp ax,bx
-    jnz exrc            ;no, continue
-    mov bx,fcb+1        ;get filename start
-fn:
-    mov si,dx
-    lodsb               ;get char
-    cmp al,0dh          ;is it a 'cr'
-    jz ret3             ;yes, done
-    cmp al,'!'          ;legal char?
-    jnc fn1             ;no, send error
-    jmp qwhat
-fn1:
-    cmp al,'['          ;again
-    jc fn2              ;ditto
-    jmp qwhat
-fn2:
-    mov [bx],al         ;save it in fcb
-    inc bx
-    inc dx
-    mov ax,fcb+9
-    cmp ax,bx           ;last?
-    jnz fn              ;no, continue
-ret3:
-    ret                 ;truncate at eight chars
+; bye: equ 0         ;bdos exit address
+; fcb: equ 5ch
+; setdma: equ 26
+; open: equ 15
+; readd: equ 20
+; writed: equ 21
+; close: equ 16
+; make: equ 22
+; bconin: equ 10         ;buffered console input
+; delete: equ 19
+; conout: equ 2         ;console output
+; const: equ 11         ;console status
+
+;dload:
+;    mov ah,0
+;    call ignblnk        ;ignore blanks
+;    push bx             ;save h
+;    call fcbset         ;set up file control block
+;    push dx             ;save the rest
+;    push cx             ;save the rest
+;    mov dx,fcb          ;get fcb addr
+;    mov ah,open         ;prepare to open file
+;    int 33              ;call ms-dos to open file
+;    cmp al,0ffh         ;is it there?
+;    jnz dl1             ;no, send error
+;    jmp qhow
+;dl1:
+;    xor al,al           ;clear a
+;    mov [fcb+32],al     ;start at record 0
+;    mov dx,txtbgn       ;get beginning
+;load:
+;    push dx             ;save dma address
+;    mov ah,setdma
+;    int 33              ;call ms-dos to set dam addr
+;    mov ah,readd
+;    mov dx,fcb
+;    int 33              ;call ms-dos to read sector
+;    cmp al,1            ;done?
+;    jc rdmore           ;no, read more
+;    jz ll1
+;load1:
+;    jmp qhow            ;bad read or no delimiter
+;ll1:
+;    mov ah,close
+;    mov dx,fcb
+;    int 33              ;call ms-dos to close file
+;    pop bp              ;dma addr in bp
+;    sub bp,100h         ;backup
+;    mov cx,100h         ;max loops
+;rdm1:
+;    inc bp              ;pre inc
+;    cmp word [bp],0     ;found delimiter?
+;    loopnz rdm1         ;keep looking
+;    cmp cl,0            ;mac loops executed?
+;    jz load1            ;give error if so
+;    mov [txtunf],bp     ;update pointer
+;    pop cx              ;get old reg back
+;    pop dx              ;get old reg back
+;    pop bx              ;get old reg back
+;    call finish         ;finish
+;rdmore:
+;    pop dx              ;get dma addr
+;    mov bx,80h          ;get 128
+;    add bx,dx           ;add it to dma addr
+;    xchg dx,bx          ;back in d
+;    jmp load            ;and read some more
+;dsave:
+;    cmp word [txtunf],txtbgn    ;see if anything to save
+;    jnz ds1a
+;    jmp qwhat
+;ds1a:
+;    mov bp,[txtunf]
+;    mov word [bp],0     ;set delimiter
+;    mov ah,0
+;    call ignblnk        ;ignore blanks
+;    push bx             ;save bx
+;    call fcbset         ;setup fcb
+;    push dx
+;    push cx             ;save others
+;    mov dx,fcb
+;    mov ah,delete
+;    int 33              ;call ms-dos to erase file
+;    mov dx,fcb
+;    mov ah,make
+;    int 33              ;call ms-dos to make a new one
+;    cmp al,0ffh         ;is there space?
+;    jnz ds1
+;    jmp qhow            ;no, error
+;ds1:
+;    xor al,al           ;clear a
+;    mov [fcb+32],al     ;start at record 0
+;    mov dx,txtbgn       ;get beginning
+;save:
+;    push dx             ;save dma addr
+;    mov ah,setdma
+;    int 33              ;call ms-dos to set dma addr
+;    mov ah,writed
+;    mov dx,fcb
+;    int 33              ;call ms-dos to write sector
+;    or al,al            ;set flags
+;    jz ss1              ;if not zero, error
+;    jmp qhow
+;ss1:
+;    pop dx              ;get dma addr back
+;    mov ax,dx
+;    cmp ax,[txtunf]     ;see if done
+;    jz savdon
+;    jnc savdon          ;jump if done
+;writmor:
+;    mov bx,80h
+;    add bx,dx
+;    xchg dx,bx          ;get it to d
+;    jmp save
+;savdon:
+;    mov ah,close
+;    mov dx,fcb
+;    int 33              ;call ms-dos to close file
+;    pop cx              ;get regs back
+;    pop dx              ;get regs back
+;    pop bx              ;get regs back
+;    call finish
+;fcbset:
+;    mov bx,fcb          ;get fcb addr
+;    mov byte [bx],0     ;clear entry type
+;fnclr:
+;    inc bx
+;    mov byte [bx],' '   ;clear to space
+;    mov ax,fcb+8
+;    cmp ax,bx           ;done?
+;    jnz fnclr           ;no, do it again
+;    inc bx
+;    mov byte [bx],'t'   ;set file type to 'tbi'
+;    inc bx
+;    mov byte [bx],'b'
+;    inc bx
+;    mov byte [bx],'i'
+;exrc:
+;    inc bx
+;    mov byte [bx],0
+;    mov ax,fcb+15
+;    cmp ax,bx
+;    jnz exrc            ;no, continue
+;    mov bx,fcb+1        ;get filename start
+;fn:
+;    mov si,dx
+;    lodsb               ;get char
+;    cmp al,0dh          ;is it a 'cr'
+;    jz ret3             ;yes, done
+;    cmp al,'!'          ;legal char?
+;    jnc fn1             ;no, send error
+;    jmp qwhat
+;fn1:
+;    cmp al,'['          ;again
+;    jc fn2              ;ditto
+;    jmp qwhat
+;fn2:
+;    mov [bx],al         ;save it in fcb
+;    inc bx
+;    inc dx
+;    mov ax,fcb+9
+;    cmp ax,bx           ;last?
+;    jnz fn              ;no, continue
+;ret3:
+;    ret                 ;truncate at eight chars
 
 ; ****list**** and ****print**** and ****edit****
 ; list has two forms:
@@ -716,7 +774,8 @@ print:
     call crlf           ;give cr,lf and
     jmp runsml          ;continue same line
 pr2:
-    mov ah,0dh
+;    mov ah,0dh
+    mov ah,0Ah
     call ignblnk
     jnz pr0
     call crlf           ;also give crlf and
@@ -971,7 +1030,9 @@ inperr:
     mov [currnt],bx
     pop dx
     pop dx              ;redo input
-input: equ $         ;****input****
+
+input: equ $            ;****input****
+
 ip1:
     push dx             ;save in case of error
     call qtstg          ;is next item a string?
@@ -1031,7 +1092,8 @@ ip5:
 deflt:
     mov si,dx
     lodsb               ;****deflt****
-    cmp al,0dh          ;empty line is ok
+;    cmp al,0dh          ;empty line is ok
+    cmp al,0Ah          ;empty line is ok
     jz lt1              ;else it is 'let'
 let:
     call setval         ;****let****
@@ -1235,13 +1297,15 @@ rnd:
 rnd1:
     push cx
     push dx
-    mov ah,2ch          ;get time
-    int 33              ;ask ms-dos
-    mov ax,327
-    mov dh,0
-; mul ax,dx         ; 0<=ax<=32700
-    mul dx
-    xchg dx,bx
+;    mov ah,2ch          ;get time
+;    int 33              ;ask ms-dos
+;    mov ax,327
+;    mov dh,0
+;; mul ax,dx         ; 0<=ax<=32700
+;    mul dx
+;    xchg dx,bx
+;    mov bx,ax
+    mov ax,1
     mov bx,ax
     call divide         ;rnd(n)=mod(m,n)+1
     pop dx
@@ -1495,7 +1559,8 @@ fin:
     pop ax
     jmp runsml
 fi1:
-    mov ah,0dh
+;    mov ah,0dh
+    mov ah,0Ah
     call ignblnk
     jnz fi2
     pop ax
@@ -1503,7 +1568,8 @@ fi1:
 fi2:
     ret                 ;else return to caller
 endchk:
-    mov ah,0dh          ;end with cr?
+;    mov ah,0dh          ;end with cr?
+    mov ah,0Ah          ;end with cr?
     call ignblnk
     jz fi2              ;ok, else say "what?"
 qwhat:
@@ -1571,20 +1637,31 @@ asorry:
 getln:
     call chrout         ;****getln****
 gl1:
-    mov dx,buffer-2
     push dx
-    mov ah,bconin       ;buffered console input
-    int 33              ;call ms-dos
+    xor dx,dx
+    mov di,buffer
+    call read_str
+    mov di,dx
     pop dx
-    add dl,[buffer-1]
-    inc dx
-    inc dx
-    inc dx
-    mov di,dx           ;for consistancy
-    push dx
-    call crlf           ;need crlf
-    pop dx
-    ret                 ;we've got a line
+    ret
+
+;getln:
+;    call chrout         ;****getln****
+;gl1:
+;    mov dx,buffer-2
+;    push dx
+;    mov ah,bconin       ;buffered console input
+;    int 33              ;call ms-dos
+;    pop dx
+;    add dl,[buffer-1]
+;    inc dx
+;    inc dx
+;    inc dx
+;    mov di,dx           ;for consistancy
+;    push dx
+;    call crlf           ;need crlf
+;    pop dx
+;    ret                 ;we've got a line
 
 ; at entry bx -> line # to be found
 
@@ -1615,7 +1692,8 @@ fl2:
 fndskp:
     mov si,dx
     lodsb               ;****fndskp****
-    cmp al,0dh          ;try to find cr
+;    cmp al,0dh          ;try to find cr
+    cmp al,0Ah          ;try to find cr
     jnz fl2             ;keep looking
     inc dx
     jmp fl1             ;check iff end of text
@@ -1651,7 +1729,8 @@ ps1:
     ret
 ps2:
     call chrout         ;else, print it
-    cmp al,0Dh          ;was it a cr?
+;    cmp al,0dh          ;was it a cr?
+    cmp al,0Ah          ;was it a cr?
     jnz ps1             ;no, next
     ret
 qtstg:
@@ -1661,7 +1740,8 @@ qtstg:
     mov al,34           ;it is a '"'
 qt1:
     call prtstg         ;print until another
-    cmp al,0dh          ;was last one a cr?
+;    cmp al,0dh          ;was last one a cr?
+    cmp al,0Ah          ;was last one a cr?
     pop bx              ;return address
     jnz qt2             ;was cr, run next line
     jmp runnxl
@@ -1686,6 +1766,7 @@ qt4:
     jmp qt2
 qt5:
     ret                 ;none of the above
+
 ; on entry bx = binary #,cl = # spaces
 prtnum:
     push dx             ;****prtnum****
@@ -1832,70 +1913,90 @@ pu1:
 ; does not return to the caller.
 
 crlf:
-    mov al,0dh          ;****crlf****
+    mov al,0ah
 chrout:
-    cmp byte [ocsw],0
-    jz cout1            ;see if output redirected
-    push cx             ;save cx on stack
-    push dx             ;and dx
-    push bx             ;and bx too
-    mov [outcar],al     ;save chatacter
-    mov dl,al           ;put char in e for cp/m
-    mov ah,conout       ;console output
-    int 33              ;call ms-dos and output char
-    mov al,[outcar]     ;get char. back
-    cmp al,0dh          ;was it a 'cr'?
-    jnz done            ;no,done
-    mov dl,0ah          ;get linefeed
-    mov ah,conout       ;console output again
-    int 33              ;call ms-dos
-done:
-    mov al,[outcar]     ;get char back
-idone:
-    pop bx              ;get h back
-    pop dx              ;and d
-    pop cx              ;then h
-    ret                 ;done at last
+    call print_chr
+    ret
 
-cout1:
-    cmp byte al,0       ;is it null?
-    jz ret16            ;skip it
-    stosb               ;store al (char) in buffer
-    inc byte [buffer-1] ;increment counter
-ret16:
-    ret                 ;done
+;crlf:
+;    mov al,0dh          ;****crlf****
+;chrout:
+;    cmp byte [ocsw],0
+;    jz cout1            ;see if output redirected
+;    push cx             ;save cx on stack
+;    push dx             ;and dx
+;    push bx             ;and bx too
+;    mov [outcar],al     ;save chatacter
+;    mov dl,al           ;put char in e for cp/m
+;    mov ah,conout       ;console output
+;    int 33              ;call ms-dos and output char
+;    mov al,[outcar]     ;get char. back
+;    cmp al,0dh          ;was it a 'cr'?
+;    jnz done            ;no,done
+;    mov dl,0ah          ;get linefeed
+;    mov ah,conout       ;console output again
+;    int 33              ;call ms-dos
+;done:
+;    mov al,[outcar]     ;get char back
+;idone:
+;    pop bx              ;get h back
+;    pop dx              ;and d
+;    pop cx              ;then h
+;    ret                 ;done at last
+;
+;cout1:
+;    cmp byte al,0       ;is it null?
+;    jz ret16            ;skip it
+;    stosb               ;store al (char) in buffer
+;    inc byte [buffer-1] ;increment counter
+;ret16:
+;    ret                 ;done
 
 chkio:
-    push cx             ;save b on stack
-    push dx             ;and d
-    push bx             ;then h
-    mov ah,const        ;get console status word
-    int 33              ;call ms-dos
-    or al,al            ;set flags
-    jnz ci1             ;if ready, get char
-    jmp idone           ;restore and return
-ci1:
-    mov ah,1            ;call the bdos
-    int 33              ;call ms-dos
-ci2:
-    cmp al,18h          ;is ti control-x?
-    jnz idone           ;return and restore if not
-    jmp rstart          ;yes, restart tbi
+    call read_ready     ; char waiting?
+    cmp al,0            ; anything?
+    jnz ci1
+    ret
 
-lstrom: equ $         ;all above can be rom
+ci1:
+    call read_chr       ; read char
+    cmp al,03h          ; is it control-c?
+    je rstart
+    ret
+
+;chkio:
+;    push cx             ;save b on stack
+;    push dx             ;and d
+;    push bx             ;then h
+;    mov ah,const        ;get console status word
+;    int 33              ;call ms-dos
+;    or al,al            ;set flags
+;    jnz ci1             ;if ready, get char
+;    jmp idone           ;restore and return
+;ci1:
+;    mov ah,1            ;call the bdos
+;    int 33              ;call ms-dos
+;ci2:
+;    cmp al,18h          ;is ti control-x?
+;    jnz idone           ;return and restore if not
+;    jmp rstart          ;yes, restart tbi
+
+
+lstrom: equ $           ;all above can be rom
+
 outio:
     out 0ffh,al
     ret
 
 waitio:
-    in al, 0ffh
+    in al,0ffh
     xor al,bh
     and al,bl
     jz waitio
     call finish
 
 inpio:
-    in al, 0ffh
+    in al,0ffh
     mov bl,al
     ret
 
@@ -1934,40 +2035,81 @@ finish:
 
 ;------------------------------------------
 
-section .data
+;section .data
 
-msg         db '8086 tiny basic v1.2 27 june 82',0dh
+msg         db '8086 tiny basic v1.2 27 june 82',0Ah,00h
 ocsw        db 0ffh     ;output switch
 txtunf      dw txtbgn   ;-> unfilled text area
 
-section .bss
 
-outcar      resb 1      ;output char storage
-currnt      resw 1      ;points to current line
-stkgos      resw 1      ;saves sp in 'gosub'
-varnxt      resw 1      ;temp storage
-stkinp      resw 1      ;saves sp in 'input'
-lopvar      resw 1      ;'for' loop save area
-lopinc      resw 1      ;increment
-loplmt      resw 1      ;limit
-lopln       resw 1      ;line number
-loppt       resw 1      ;test pointer
-ranpnt      resw 1      ;random number pointer
+;section .bss
+;
+;outcar      resb 1      ;output char storage
+;currnt      resw 1      ;points to current line
+;stkgos      resw 1      ;saves sp in 'gosub'
+;varnxt      resw 1      ;temp storage
+;stkinp      resw 1      ;saves sp in 'input'
+;lopvar      resw 1      ;'for' loop save area
+;lopinc      resw 1      ;increment
+;loplmt      resw 1      ;limit
+;lopln       resw 1      ;line number
+;loppt       resw 1      ;test pointer
+;ranpnt      resw 1      ;random number pointer
+;
+;txtbgn      resb 2000h
+;txtend:                 ; text area save area ends
+;
+;buf_max     resb 1      ; max chars in buffer
+;buf_cnt     resb 1      ; char count
+;
+;buffer      resb 80h
+;bufend:
+;
+;varbgn      resb 54
+;
+;stklmt      resw 400h   ;top limit for stack
+;stack:                  ;stack starts here
 
-txtbgn      resb 2000h
+
+outcar      db 0        ;output char storage
+currnt      dw 0        ;points to current line
+stkgos      dw 0        ;saves sp in 'gosub'
+varnxt      dw 0        ;temp storage
+stkinp      dw 0        ;saves sp in 'input'
+lopvar      dw 0        ;'for' loop save area
+lopinc      dw 0        ;increment
+loplmt      dw 0        ;limit
+lopln       dw 0        ;line number
+loppt       dw 0        ;test pointer
+ranpnt      dw 0        ;random number pointer
+
+txtbgn      times 8192 db 0
 txtend:                 ; text area save area ends
 
-buf_max     resb 1      ; max chars in buffer
-buf_cnt     resb 1      ; char count
-
-buffer      resb 80h
+buffer      times  128 db 0
 bufend:
 
-varbgn      resb 54
+varbgn      times   64 db 0
 
-stklmt      resw 400h   ;top limit for stack
+stklmt      times 1024 db 0
 stack:                  ;stack starts here
 
 ;------------------------------------------
 
+
+;======================================================================
+; reset code (called on CPU reset)
+;======================================================================
+
+TIMES 65536-16-($-$$)       db 0FFh
+
+reset:
+    jmp cseg_init:init
+
+
+;======================================================================
+; filler
+;======================================================================
+
+TIMES 65536-($-$$)          db 0FFh
 

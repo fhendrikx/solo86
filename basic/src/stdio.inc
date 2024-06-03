@@ -98,12 +98,12 @@ gets:
     out uart_data,al
 
 .continue:
-    cmp al,10           ; are we done?
+    cmp al,0Ah          ; are we done?
     jz .exit
-
     jmp .loop
 
 .exit:
+    mov dx,di           ; return length in dx
     mov al,0            ; terminator
     stosb
     pop es

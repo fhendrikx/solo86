@@ -1,0 +1,113 @@
+======================================================================
+8086 tiny basic v1.2
+======================================================================
+
+
+======================================================================
+Commands
+======================================================================
+
+new
+list
+run
+bye
+
+
+======================================================================
+Language
+======================================================================
+
+There are 26 variables, a through to z.
+
+
+let i=v(,j=v)*
+
+assign values to a series of 1 or more variables.
+
+
+if expr1 expr2(; expr3...)*
+
+conditionlly execute expr2 (and expr3...) if expr1 evaluates to true.
+
+you can use thw following conditionals: < <= = >= >
+
+
+goto line
+
+goto line nuber in code.
+
+
+gosub line
+
+goto subroutine in code.
+
+
+return
+
+return from subroutine.
+
+
+rem comment
+
+comment
+
+
+for i=expr1 to expr2 step expr3
+for i=expr1 to expr2
+
+for loop.
+
+
+next i
+
+next loop of for loop.
+
+
+input i
+input "string",i(,"string",j)*
+
+input one or more strings.
+
+
+print i(,j...)
+print "string"
+
+print one or more strings.
+
+
+stop
+
+stop execution
+
+
+rnd (i)
+
+random number.
+
+
+inp (i)
+
+read from port i
+
+
+out i,j(,k,l)?
+
+write j to port i
+
+
+peek (i)
+
+read from memory address i
+
+
+poke i,j(,k,l)?
+
+write j to memory address i
+
+
+wait i,j,k
+usr (i(,j))
+abs
+size
+
+
