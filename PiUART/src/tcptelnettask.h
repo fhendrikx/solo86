@@ -27,7 +27,6 @@ private:
     CSocket *m_pSocket;
     CRingBuf *m_pToSerial;
     telnet_t *m_pTelnet;
-    u8 m_nPrevChar;
 
     // define local instance of From rather than use LOGMODULE
     // so each instantiation of the class has a unique log source
