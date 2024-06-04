@@ -1,0 +1,188 @@
+
+*******************************************************************************
+                                     panel
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# MW-10400000
+Device          g16v8s  Library DLIB-h-40-9
+Created         Tue Jun 04 12:42:56 2024
+Name            panel 
+Partno          ATF16V8C 
+Revision        01 
+Date            2024-06-04 
+Designer        Dylan 
+Company         
+Assembly        None 
+Location        
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+ADDRMATCH =>
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & !J0 & !J1
+  # !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & J0 & !J1
+  # !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & !J0 & J1
+  # !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & J0 & J1
+
+IOADDR =>
+    A7 , A6 , A5 , A4 , A3 , A2 , A1
+
+JUMPER =>
+    J1 , J0
+
+LED_LATCH_HIGH =>
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & !J0 & !J1
+  # !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & J0 & !J1
+  # !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & BHE & IOWR & J0 & J1
+  # !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & BHE & IOWR & !J0 & J1
+
+LED_LATCH_LOW =>
+    A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !J0 & !J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & J0 & !J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IOWR & J0 & J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IOWR & !J0 & J1
+
+SW_EN =>
+    A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !J0 & !J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & J0 & !J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IORD & J0 & J1
+  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IORD & !J0 & J1
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+ !  A0                          9        V        -       -       -     
+    A1                          1        V        -       -       -     
+    A2                          2        V        -       -       -     
+    A3                          3        V        -       -       -     
+    A4                          4        V        -       -       -     
+    A5                          5        V        -       -       -     
+    A6                          6        V        -       -       -     
+    A7                          7        V        -       -       -     
+    ADDRMATCH                   0        I        4       -       -     
+ !  BHE                         8        V        -       -       -     
+    IOADDR                      0        F        -       -       -     
+ !  IORD                        11       V        -       -       -     
+ !  IOWR                        12       V        -       -       -     
+    J0                          14       V        -       -       -     
+    J1                          13       V        -       -       -     
+    JUMPER                      0        F        -       -       -     
+    LED_LATCH_HIGH              15       V        4       8       1     
+    LED_LATCH_LOW               19       V        4       8       1     
+ !  SW_EN                       18       V        4       8       1     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+
+
+===============================================================================
+                                   Fuse Plot
+===============================================================================
+
+Syn   02192 - Ac0   02193 x 
+
+Pin #19  02048  Pol -  02120  Ac1 x 
+ 00000 -x-xx----x---x---x-x-x-x---x-x-- 
+ 00032 -x-x-x---x---x---xx--x-x---x-x-- 
+ 00064 -x-x-x---x--x---x-x--xx----x-x-- 
+ 00096 -x-x-x---x---x--x--x-xx----x-x-- 
+ 00128 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00160 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #18  02049  Pol x  02121  Ac1 x 
+ 00256 -x-xx----x---x---x-x-x-x-----x-x 
+ 00288 -x-x-x---x---x---xx--x-x-----x-x 
+ 00320 -x-x-x---x--x---x-x--xx------x-x 
+ 00352 -x-x-x---x---x--x--x-xx------x-x 
+ 00384 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00416 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00448 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00480 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #17  02050  Pol x  02122  Ac1 - 
+ 00512 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00544 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00576 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00608 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00640 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00672 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00704 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00736 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #16  02051  Pol x  02123  Ac1 - 
+ 00768 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00800 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00832 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00864 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00896 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00928 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00960 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00992 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #15  02052  Pol -  02124  Ac1 x 
+ 01024 -x-xx----x---x---x-x-x-x-x-x---- 
+ 01056 -x-x-x---x---x---xx--x-x-x-x---- 
+ 01088 -x-x-x---x--x---x-x--xx--x-x---- 
+ 01120 -x-x-x---x---x--x--x-xx--x-x---- 
+ 01152 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01184 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #14  02053  Pol x  02125  Ac1 - 
+ 01280 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01408 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01440 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #13  02054  Pol x  02126  Ac1 - 
+ 01536 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01568 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01600 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01632 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01664 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01696 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01728 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01760 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #12  02055  Pol x  02127  Ac1 - 
+ 01792 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01824 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01856 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01888 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01920 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01952 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01984 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 02016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+
+
+LEGEND    X : fuse not blown 
+          - : fuse blown 
+
+===============================================================================
+                                 Chip Diagram
+===============================================================================
+
+                               ______________
+                              |    panel     |
+                       A1 x---|1           20|---x Vcc                      
+                       A2 x---|2           19|---x LED_LATCH_LOW            
+                       A3 x---|3           18|---x !SW_EN                   
+                       A4 x---|4           17|---x                          
+                       A5 x---|5           16|---x                          
+                       A6 x---|6           15|---x LED_LATCH_HIGH           
+                       A7 x---|7           14|---x J0                       
+                     !BHE x---|8           13|---x J1                       
+                      !A0 x---|9           12|---x !IOWR                    
+                      GND x---|10          11|---x !IORD                    
+                              |______________|
+

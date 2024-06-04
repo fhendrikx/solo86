@@ -1,0 +1,43 @@
+Name     panel ;
+PartNo   ATF16V8C ;
+Date     2024-06-04 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly None ;
+Location  ;
+Device   g16v8 ;
+
+PIN 1  = A1;
+PIN 2  = A2;
+PIN 3  = A3;
+PIN 4  = A4;
+PIN 5  = A5;
+PIN 6  = A6;
+PIN 7  = A7;
+PIN 8  = !BHE;
+PIN 9  = !A0;
+// PIN 10 = GND;
+PIN 11 = !IORD;
+PIN 12 = !IOWR;
+PIN 13 = J1;
+PIN 14 = J0;
+PIN 15 = LED_LATCH_HIGH;
+// PIN 16 = UNUSED;
+// PIN 17 = UNUSED;
+PIN 18 = !SW_EN;
+PIN 19 = LED_LATCH_LOW;
+// PIN 20 = VCC;
+
+FIELD JUMPER = [J1..0];                  /* jumpers used to select base address */
+FIELD IOADDR = [A7..1];                  /* I/O address */
+
+ADDRMATCH = JUMPER:[0] & IOADDR:['h'08]  /* valid I/O address based on jumper selection */
+          # JUMPER:[1] & IOADDR:['h'00]
+          # JUMPER:[2] & IOADDR:['h'40]
+          # JUMPER:[3] & IOADDR:['h'60];
+
+/* output functions */
+LED_LATCH_HIGH = ADDRMATCH & IOWR & BHE;
+LED_LATCH_LOW = ADDRMATCH & IOWR & A0;
+SW_EN = ADDRMATCH & IORD & A0;
