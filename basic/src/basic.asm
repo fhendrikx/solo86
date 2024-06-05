@@ -52,47 +52,35 @@ org 0
 ;======================================================================
 
 ; important segments
-cseg_init       equ 0F000h  ; CS
-cseg            equ 01000h  ; CS after relocation
-dseg            equ 01000h
-sseg            equ 01000h
+dseg                equ 01000h
+sseg                equ 01000h
 
+
+;======================================================================
+; ROM signature
+;======================================================================
+
+                    db 055h
+                    db 0AAh
+                    dw 01h
+                    dw entry
+                    dw 00h
+                    db 'Tiny Basic              ', 00h
+
+TIMES 256-($-$$)    db 0FFh
+
+
+;======================================================================
+; entry
+;======================================================================
 
 section .text
 
-;======================================================================
-; 0xf0000 - init
-;======================================================================
-
-init:
+entry:
 ; clear interrupts
     cli
     cld
 
-; copy ROM to RAM
-; don't use the stack yet as the ROM copy will overwrite any stored data
-    mov ax,cseg_init
-    mov ds,ax
-    xor si,si
-
-    mov ax,cseg
-    mov es,ax
-    xor di,di
-
-    mov cx,08000h
-
-.copy_rom:
-    movsw
-    loop .copy_rom
-
-    jmp cseg:relocate
-
-
-;======================================================================
-; 0x10xxx - relocation
-;======================================================================
-
-relocate:
 ; initialise DS/ES
     mov ax,dseg
     mov ds,ax
@@ -2095,16 +2083,6 @@ stklmt      times 1024 db 0
 stack:                  ;stack starts here
 
 ;------------------------------------------
-
-
-;======================================================================
-; reset code (called on CPU reset)
-;======================================================================
-
-TIMES 65536-16-($-$$)       db 0FFh
-
-reset:
-    jmp cseg_init:init
 
 
 ;======================================================================
