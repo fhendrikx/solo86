@@ -332,19 +332,56 @@ int_dummy:
 %include "leds.inc"
 %include "mem.inc"
 %include "messages.inc"
+%include "rom.inc"
 %include "stdio.inc"
 
 
 ;======================================================================
-; intel hex file start address
+; data
 ;======================================================================
 
-TIMES 65536-64-($-$$)       db 0FFh
+TIMES 65536-1024-($-$$)     db 0FFh
 
+; HEX file start address
 start_address:
     dw 00h
 start_segment:
     dw 00h
+
+; ROM data (8 entries)
+rom_list:
+                            dw 00h  ; size
+                            dw 00h  ; addr
+                            dw 00h  ; flag
+    TIMES 24                db 00h  ; name
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
+                            dw 00h
+                            dw 00h
+                            dw 00h
+    TIMES 24                db 00h
 
 
 ;======================================================================
