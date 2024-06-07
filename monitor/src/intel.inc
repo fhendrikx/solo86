@@ -82,13 +82,13 @@ read_hex_file:
     mov bh,al
     call raw_hex            ; get CS
     mov bl,al
-    mov [ start_segment ], bx
+    mov [ hex_seg ], bx
 
     call raw_hex            ; get IP
     mov bh,al
     call raw_hex            ; get IP
     mov bl,al
-    mov [ start_address ], bx
+    mov [ hex_ofs ], bx
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record

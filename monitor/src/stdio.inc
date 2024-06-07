@@ -50,6 +50,21 @@ print_hex:
 
 
 ;======================================================================
+; print AX as 4 hex characters to the UART
+;======================================================================
+
+print_word:
+    push ax
+    push ax
+    mov al,ah
+    call print_hex
+    pop ax
+    call print_hex
+    pop ax
+    ret
+
+
+;======================================================================
 ; print an ASCIIZ string at CS:SI to the UART
 ;======================================================================
 
@@ -58,9 +73,10 @@ puts:
     push ax
     push si
     push ds
+    cld
+
     push cs             ; CS => DS
     pop ds
-    cld
 
 .loop:
     lodsb
