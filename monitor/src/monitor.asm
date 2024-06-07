@@ -116,6 +116,12 @@ relocate:
     call rom_display
 
 
+    call prompt
+
+
+.loopx:
+    jmp .loopx
+
     cli
     hlt
 

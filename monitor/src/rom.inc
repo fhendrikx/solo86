@@ -46,8 +46,7 @@ rom_scan:
 ; copy part of signature block
 .copy:
     movsw               ; DS:SI => ES:DI
-    cmp cx,0
-    jnz .copy
+    loop .copy
 
 .next:
     add bx,rom_size     ; next segment to check
@@ -73,6 +72,7 @@ rom_scan:
 
 rom_display:
     push ax
+    push bx
     push ds
     push si
 
@@ -80,11 +80,25 @@ rom_display:
     pop ds              ; DS:SI
     mov si,rom_table
 
+    xor bl,bl           ; counter
+
 .next:
 ; segment
     lodsw
     cmp ax,0            ; are we done?
     je .exit
+
+    push ax             ; store seg
+
+    mov al,bl           ; counter
+    inc cl
+    call print_hex
+
+    mov al,' '
+    call print_chr
+
+    pop ax              ; restore seg
+
     call print_word
 
     mov al,':'
@@ -102,6 +116,11 @@ rom_display:
 
 ; name
     call print_str
+
+    mov al,0Ah
+    call print_chr
+
+    add si,24           ; print char restores DS:SI
     jmp .next
 
 .exit:
