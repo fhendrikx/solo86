@@ -1,8 +1,15 @@
 
+; monitor
 mesg_welcome        db 0Ah, 0Ah, 'Solo86 Monitor', 0Ah, 00h
-mesg_copyright      db 'Copyright (c) 2024 Dylan Hall and Ferry Hendrikx', 0Ah, 00h
+mesg_copyright      db '(c) 2024 Dylan Hall and Ferry Hendrikx', 0Ah, 00h
 mesg_build          db 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah, 0Ah, 00h
 
+; roms
+mesg_rom            db 0Ah, '[ ROM Options ]', 0Ah, 0Ah, 00h
+mesg_rom_select     db 0Ah, '> ', 00h
+mesg_rom_exec       db 0Ah, '[ ROM Execute ]', 0Ah, 0Ah, 00h
+
+; debug
 mesg_prompt         db 0Ah, '> ', 00h
 mesg_help           db 0Ah
                     db 'D SSSS:OOOO         - Dump address SSSS:OOOO', 0Ah

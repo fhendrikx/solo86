@@ -111,19 +111,22 @@ relocate:
     print mesg_copyright
     print mesg_build
 
-
+; find ROMs
     call rom_scan
+
+    cmp dl,0            ; how many did we find?
+    jg .select
+    jmp prompt          ; none; goto debug interface
+
+.select:
     call rom_display
+    call raw_chr
+    sub al,'0'
+    cmp al,dl
+    jg .select
+    call rom_exec
+    jmp .select
 
-
-    call prompt
-
-
-.loopx:
-    jmp .loopx
-
-    cli
-    hlt
 
 ;======================================================================
 ; intr_dummy

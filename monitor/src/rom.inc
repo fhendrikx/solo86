@@ -17,6 +17,7 @@ rom_relocate    equ 01000h
 ; scan ROM
 ; Scans from segment rom_first to segment rom_last and store the details
 ; of any ROMs it finds in the rom_table
+; returns number of ROMs found in DL
 ;======================================================================
 
 rom_scan:
@@ -26,6 +27,8 @@ rom_scan:
     push ds
     push es
     push si
+
+    xor dl,dl
 
     mov bx,rom_first
     mov ds,bx           ; DS:SI
@@ -39,6 +42,7 @@ rom_scan:
     lodsw
     cmp ax,0AA55h       ; ROM signature found?
     jne .next
+    inc dl
     mov ax,bx           ; store segment
     stosw
     mov cx,30/2
@@ -75,6 +79,8 @@ rom_display:
     push bx
     push ds
     push si
+
+    print mesg_rom
 
     push cs
     pop ds              ; DS:SI
@@ -124,23 +130,28 @@ rom_display:
     jmp .next
 
 .exit:
+    print mesg_rom_select
+
     pop si
     pop ds
+    pop bx
     pop ax
     ret
 
 
 ;======================================================================
-; call ROM
+; execute ROM
 ; Execute ROM number given in AL
 ;======================================================================
 
-rom_call:
+rom_exec:
     push ax
     push bx
     push ds
     push di
     push si
+
+    print mesg_rom_exec
 
     push cs             ; CS => DS
     pop ds
@@ -148,7 +159,8 @@ rom_call:
     mov bl,32           ; multiply by size of ROM table entry
     mul bl
     mov bx,ax
-    mov si,[ rom_table+bx ]
+    mov si,rom_table
+    add si,bx
 
 ; segment
     lodsw
@@ -160,9 +172,7 @@ rom_call:
 
 ; size
     lodsw
-    mov bx,16384        ; multiply by 16384
-    mul bx
-    push ax             ; size for later
+    push ax             ; store size
 
 ; flags
     lodsw
@@ -175,26 +185,37 @@ rom_call:
     xor si,si
 
     mov ax,rom_relocate
-    mov es,ax
+    mov es,ax           ; ES:DI
     xor di,di
 
-    pop cx              ; size
+    pop ax              ; restore size
+
+.copy:
+    mov cx,16384
 
 .copy_rom:
     movsw
     loop .copy_rom
+    dec ax
+    cmp ax,0
+    jg .copy
 
 .call:
     push cs             ; return segment and offset
     mov bx,.return
     push bx
 
+    push cs             ; CS => DS
+    pop ds
+
     call far [ rom_ofs ]
 
-;; we don't have a CALL FAR segment offset in 8086; so we emulate it by
-;; pushing the segment and offset onto the stack and calling retf
-;    push es             ; ROM segment and offset
-;    push bx
+;; alternative to CALL FAR
+;; push the segment and offset onto the stack and call retf
+;    mov ax,[ rom_seg ]
+;    push ax
+;    mov ax,[ rom_ofs ]
+;    push ax
 ;    retf
 
 .return:
