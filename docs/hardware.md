@@ -8,12 +8,12 @@
 
 ### 20h - 3Fh reserved; System
 
- - 20h IRQ0 (Timer)
- - 21h IRQ1
- - 22h IRQ2
- - 23h IRQ3 (UART)
- - 24h IRQ4
- - 25h IRQ5
+ - 20h IRQ0 Timer
+ - 21h IRQ1 Reserved; Expansion board
+ - 22h IRQ2 Reserved; Expansion board
+ - 23h IRQ3 UART
+ - 24h IRQ4 Reserved; Expansion board
+ - 25h IRQ5 Reserved; Expansion board
 
 ### 40h - 7Fh reserved; System
 
@@ -24,23 +24,15 @@
 
 ## IO Ports
 
-### 00h - 7Fh reserved; System
+### 00h - 9Fh reserved; System
 
  - 04h Timer
  - 08h LED
  - 10h Bank table
- - 20h Clock
- - 20h UART Status      -- can we move this out to 30h?
- - 22h UART Data        -- can we move this out to 32h?
+ - 20h Clock            -- TBD
+ - 20h UART Status
+ - 22h UART Data
 
-### 80h - FFh reserved; System Expansion
+### A0h - FFh reserved; Expansion boards
 
- - 80h Slot 1
- - 90h Slot 2
- - A0h Slot 3
- - B0h Slot 4
- - C0h Slot 5
- - D0h Slot 6
- - E0h Slot 7
- - F0h Slot 8
 
