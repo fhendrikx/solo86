@@ -8,12 +8,12 @@
 
 ### 20h - 3Fh reserved; System
 
- - 20h IRQ0
+ - 20h IRQ0 (Timer)
  - 21h IRQ1
  - 22h IRQ2
- - 23h IRQ3
- - 24h UART             -- suggest we make this 28h (room for more IRQs)
- - 25h Timer (100Hz)    -- suggest we make this 30h (tidy power of 2)
+ - 23h IRQ3 (UART)
+ - 24h IRQ4
+ - 25h IRQ5
 
 ### 40h - 7Fh reserved; System
 
