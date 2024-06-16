@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g16v8s  Library DLIB-h-40-9
-Created         Tue Jun 04 12:42:56 2024
+Created         Mon Jun 10 23:48:55 2024
 Name            panel 
 Partno          ATF16V8C 
 Revision        01 
@@ -38,16 +38,16 @@ LED_LATCH_HIGH =>
   # !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & BHE & IOWR & !J0 & J1
 
 LED_LATCH_LOW =>
-    A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !J0 & !J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & J0 & !J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IOWR & J0 & J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IOWR & !J0 & J1
+    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !J0 & !J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & J0 & !J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IOWR & J0 & J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IOWR & !J0 & J1
 
 SW_EN =>
-    A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !J0 & !J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & J0 & !J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IORD & J0 & J1
-  # A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IORD & !J0 & J1
+    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !J0 & !J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & J0 & !J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & A5 & A6 & !A7 & IORD & J0 & J1
+  # !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & A6 & !A7 & IORD & !J0 & J1
 
 
 ===============================================================================
@@ -58,7 +58,7 @@ Pin Variable                                    Pterms   Max     Min
 Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
 --- --------            ---     ---     ----    ------  ------  -----   
 
- !  A0                          9        V        -       -       -     
+    A0                          9        V        -       -       -     
     A1                          1        V        -       -       -     
     A2                          2        V        -       -       -     
     A3                          3        V        -       -       -     
@@ -182,7 +182,7 @@ LEGEND    X : fuse not blown
                        A6 x---|6           15|---x LED_LATCH_HIGH           
                        A7 x---|7           14|---x J0                       
                      !BHE x---|8           13|---x J1                       
-                      !A0 x---|9           12|---x !IOWR                    
+                       A0 x---|9           12|---x !IOWR                    
                       GND x---|10          11|---x !IORD                    
                               |______________|
 

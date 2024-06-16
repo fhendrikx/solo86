@@ -16,7 +16,7 @@ PIN 5  = A5;
 PIN 6  = A6;
 PIN 7  = A7;
 PIN 8  = !BHE;
-PIN 9  = !A0;
+PIN 9  = A0;
 // PIN 10 = GND;
 PIN 11 = !IORD;
 PIN 12 = !IOWR;
@@ -39,5 +39,5 @@ ADDRMATCH = JUMPER:[0] & IOADDR:['h'08]  /* valid I/O address based on jumper se
 
 /* output functions */
 LED_LATCH_HIGH = ADDRMATCH & IOWR & BHE;
-LED_LATCH_LOW = ADDRMATCH & IOWR & A0;
-SW_EN = ADDRMATCH & IORD & A0;
+LED_LATCH_LOW = ADDRMATCH & IOWR & !A0;
+SW_EN = ADDRMATCH & IORD & !A0;
