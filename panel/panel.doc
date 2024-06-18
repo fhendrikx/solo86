@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g16v8s  Library DLIB-h-40-9
-Created         Mon Jun 17 23:46:25 2024
+Created         Tue Jun 18 20:29:40 2024
 Name            panel 
 Partno          ATF16V8C 
 Revision        01 
@@ -20,23 +20,23 @@ Location
 ===============================================================================
 
 ADDRMATCH =>
-    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & !J0
-  # !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & J0
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & !JP0
+  # !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & JP0
 
 IOADDR =>
     A7 , A6 , A5 , A4 , A3 , A2 , A1
 
 LED_LATCH_HIGH =>
-    !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & J0
-  # !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & !J0
+    !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & JP0
+  # !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & !JP0
 
 LED_LATCH_LOW =>
-    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & J0
-  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !J0
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & JP0
+  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !JP0
 
 SW_EN =>
-    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & J0
-  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !J0
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & JP0
+  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !JP0
 
 
 ===============================================================================
@@ -60,7 +60,7 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
     IOADDR                      0        F        -       -       -     
  !  IORD                        11       V        -       -       -     
  !  IOWR                        12       V        -       -       -     
-    J0                          13       V        -       -       -     
+    JP0                         13       V        -       -       -     
     LED_LATCH_HIGH              14       V        2       8       1     
     LED_LATCH_LOW               19       V        2       8       1     
  !  SW_EN                       18       V        2       8       1     
@@ -168,7 +168,7 @@ LEGEND    X : fuse not blown
                        A5 x---|5           16|---x                          
                        A6 x---|6           15|---x                          
                        A7 x---|7           14|---x LED_LATCH_HIGH           
-                     !BHE x---|8           13|---x J0                       
+                     !BHE x---|8           13|---x JP0                      
                        A0 x---|9           12|---x !IOWR                    
                       GND x---|10          11|---x !IORD                    
                               |______________|
