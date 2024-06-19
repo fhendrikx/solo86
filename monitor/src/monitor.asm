@@ -107,25 +107,22 @@ relocate:
 ;======================================================================
 
 ; welcome
-    print mesg_welcome
-    print mesg_copyright
-    print mesg_build
+    print mon_welcome
+    print mon_copyright
+    print mon_build
 
 ; find ROMs
+.scan:
     call rom_scan
 
     cmp dl,0            ; how many did we find?
-    jg .select
-    jmp prompt          ; none; goto debug interface
+    jz .debug           ; none, debug time
 
-.select:
-    call rom_display
-    call raw_chr
-    sub al,'0'
-    cmp al,dl
-    jg .select
-    call rom_exec
-    jmp .select
+    call rom_menu
+
+.debug:
+    call debug_menu
+    jmp .scan
 
 
 ;======================================================================
@@ -140,6 +137,7 @@ int_dummy:
 ; includes
 ;======================================================================
 
+%include "disasm.inc"
 %include "debug.inc"
 %include "delay.inc"
 %include "intel.inc"

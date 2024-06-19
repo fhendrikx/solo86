@@ -31,6 +31,7 @@ print_hex:
     shr al,1
     shr al,1
     call .nibble
+
     pop ax
     and al,0fh
     call .nibble
@@ -82,6 +83,7 @@ puts:
     lodsb
     cmp al,0            ; are we done?
     jz .exit
+
     out uart_data,al
     jmp .loop
 
@@ -130,6 +132,7 @@ raw_hex:
     shl ah,1
     shl ah,1
     shl ah,1
+
     call .nibble
     or al,ah
     ret
@@ -138,6 +141,7 @@ raw_hex:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz .nibble
+
     in al,uart_data     ; read character
     cmp al,41h
     jae .letter
@@ -164,6 +168,7 @@ gets:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz .loop
+
     in al,uart_data     ; read character
     stosb
     cmp al,0Ah          ; are we done?
@@ -227,9 +232,11 @@ read_str:
     in al,uart_ctrl     ; any characters?
     cmp al,0
     jz .loop
+
     in al,uart_data     ; read character
     stosb
     out uart_data,al
+
     cmp al,0Ah          ; are we done?
     jne .loop
 
