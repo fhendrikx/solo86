@@ -53,7 +53,7 @@ cmd_dasm:
     call spaces
 
     call inp_word           ; seg
-    mov ds,ax
+    mov bx,ax
 
     mov al,':'
     call expect
@@ -62,7 +62,12 @@ cmd_dasm:
     call inp_word           ; offset
     mov di,ax
 
+    push ds
+    mov ds,bx
+
     call dasm_inst
+
+    pop ds
 
     jmp debug_menu.loop
 
@@ -72,14 +77,14 @@ cmd_fill:
     call spaces
 
     call inp_word           ; seg
-    mov ds,ax
+    mov bx,ax
 
     mov al,':'
     call expect
     jne syntax
 
     call inp_word           ; offset
-    mov di,ax
+    mov si,ax
 
     call spaces
 
@@ -91,7 +96,12 @@ cmd_fill:
 
     print dbg_cmd_fill
 
+    push es
+    mov es,bx
+
     call mem_fill
+
+    pop es
 
     jmp debug_menu.loop
 
@@ -173,7 +183,7 @@ cmd_read:
     call spaces
 
     call inp_word           ; seg
-    mov ds,ax
+    mov bx,ax
 
     mov al,':'
     call expect
@@ -184,8 +194,13 @@ cmd_read:
 
     print dbg_cmd_dump
 
+    push ds
+    mov ds,bx
+
     mov cx,256
     call mem_dump
+
+    pop ds
 
     jmp debug_menu.loop
 
@@ -221,7 +236,7 @@ syntax:
 ; skip over any spaces
 spaces:
     lodsb
-    cmp al,' '
+    cmp al,20h
     je spaces           ; keep going if we had a space
     dec si              ; undo the last load
     ret
@@ -231,14 +246,8 @@ spaces:
 expect:
     mov bl,al
     lodsb
-    cmp al,bl
-    ret
-
-
-; read character into AL from ES:DI
-inp_chr:
-    lodsb
-    ret
+    cmp al,bl           ; is it what we expected?
+    ret                 ; flag not changed on ret
 
 
 ; read 2 hex characters into AL from ES:DI

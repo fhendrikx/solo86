@@ -76,7 +76,7 @@ rom_menu:
     cmp al,1bh          ; ESC pressed?
     je .exit
 
-    sub al,'0'
+    sub al,30h          ; '0'
 
     call rom_exec
 
