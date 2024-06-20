@@ -150,8 +150,14 @@ mem_dasm:
 ; decode instruction
     call load_inst      ; load instruction
 
+    cmp byte [cs:curr_type],ins_type_unknown
+    je .exit
+
+    cmp byte [cs:curr_type],ins_type_prefix
+    je .prefix
+
     cmp byte [cs:curr_type],ins_type_ext
-    call dasm_ext
+    je .ext
 
 
 ; print instruction
@@ -164,14 +170,6 @@ mem_dasm:
     mov al,0Ah
     call print_chr
 
-
-; check instruction
-
-    cmp byte [cs:curr_type],ins_type_unknown
-    je .exit
-
-    cmp byte [cs:curr_type],ins_type_prefix
-    je .next
 
     cmp byte [cs:curr_op1],ins_op_r8
     jb .decode          ; addressing byte only for op_r8 upwards
@@ -190,6 +188,14 @@ mem_dasm:
     cmp dl,ins_op_none
     je .next
     call dasm_oper
+    jmp .next
+
+.prefix:
+    jmp .next
+
+.ext:
+    call dasm_ext
+    jmp .next
 
 .next:
     loop .loop1
@@ -287,8 +293,6 @@ load_inst:
 
     lodsb
     mov [cs:curr_inst],al
-
-    call print_hex
 
     mov dl,5            ; size of inst
     mul dl
