@@ -65,11 +65,11 @@ init:
 
     mov cx,08000h
 
-.copy_rom:
+.copy:
     movsw
-    loop .copy_rom
+    loop .copy
 
-    jmp cseg:relocate
+    jmp cseg:relocate   ; here we go!
 
 
 ;======================================================================
@@ -77,6 +77,7 @@ init:
 ;======================================================================
 
 relocate:
+
 ; initialise DS
     mov ax,dseg
     mov ds,ax
@@ -91,6 +92,7 @@ relocate:
     mov al,011000b
     mov dx,bank_table
     mov cx,8
+
 .bank_init:
     out dx,al
     inc al
@@ -108,19 +110,17 @@ relocate:
 
 ; welcome
     print mon_welcome
-    print mon_copyright
-    print mon_build
 
 ; find ROMs
 .scan:
     call rom_scan
 
     cmp dl,0            ; how many did we find?
-    jz .debug           ; none, debug time
+    je .debugger        ; none, jump to monitor debugger
 
     call rom_menu
 
-.debug:
+.debugger:
     call debug_menu
     jmp .scan
 
@@ -137,10 +137,10 @@ int_dummy:
 ; includes
 ;======================================================================
 
-%include "disasm.inc"
+%include "dasm.inc"
 %include "debug.inc"
 %include "delay.inc"
-%include "intel.inc"
+%include "ihf.inc"
 %include "leds.inc"
 %include "mem.inc"
 %include "messages.inc"

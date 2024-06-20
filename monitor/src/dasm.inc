@@ -1,74 +1,77 @@
+;======================================================================
+; Ferry Hendrikx, June 2024
+;======================================================================
 
 ;======================================================================
-; disassembler
-;======================================================================
-
-;======================================================================
-;byte           7 6 5 4 3 2 1 0
+;byte       7 6 5 4 3 2 1 0
 ;======================================================================
 
 ;prefix
-;               repetition
-;               segment override
-;               lock
-;               size override (32 bit only)
+;           repetition
+;           segment override
+;           lock
+;           size override (32 bit only)
 ;
-;               7 6 5 4 3 2 1 0
-;opcode         OPCODE      D W
+;           7 6 5 4 3 2 1 0
+;opcode     OPCODE      D W
 ;
-;               OPCODE gives the operation
+;           OPCODE gives the operation
 ;
-;                           D=direction (1=from R/M operand to REG operand, 0=from REG operand to R/M operand)
-;                           C=rotate (1=CL used, 0=1 or immediate)
-;                           S=sign (1=8-bit immediate to be extended, 0=16-bit immediate to be extended)
+;                       D=direction (1=from R/M operand to REG operand,
+;                                    0=from REG operand to R/M operand)
 ;
-;                             W=word/byte (1=16-bit, 0=8-bit)
+;                       C=rotate    (1=CL used, 0=1 or immediate)
 ;
-;               7 6 5 4 3 2 1 0
-;addr mode      MOD REG   R/M
+;                       S=sign      (1=8-bit immediate to be extended,
+;                                    0=16-bit immediate to be extended)
 ;
-;               MOD (determines how R/M is interpreted; 2 bits)
+;                         W=word/byte (1=16-bit, 0=8-bit)
 ;
-;               00=R/M Table 1 for R/M operand
-;               01=R/M Table 2 with  8-bit displacement
-;               10=R/M Table 2 with 16-bit displacement
-;               11=Two registers; use REG table
+;           7 6 5 4 3 2 1 0
+;addr mode  MOD REG   R/M
 ;
-;                   REGister/Segment REGister/Opcode extension (3 bits)
+;           MOD (determines how R/M is interpreted; 2 bits)
 ;
-;                   REG Table
-;                       W=0 W=1      W=0 W=1
-;                   000=AL  AX   100=AH  SP
-;                   001=CL  CX   101=CH  BP
-;                   010=DL  DX   110=DH  SI
-;                   011=BL  BX   111=BH  DI
+;           00=R/M Table 1 for R/M operand
+;           01=R/M Table 2 with  8-bit displacement
+;           10=R/M Table 2 with 16-bit displacement
+;           11=Two registers; use REG table
 ;
-;                   SREG Table (segment register)
-;                   000=ES       010=SS
-;                   001=CS       110=DS
+;               REGister/Segment REGister/Opcode extension (3 bits)
 ;
-;                         R/M (register/memory; 3 bits)
+;               REG Table
+;                   W=0 W=1      W=0 W=1
+;               000=AL  AX   100=AH  SP
+;               001=CL  CX   101=CH  BP
+;               010=DL  DX   110=DH  SI
+;               011=BL  BX   111=BH  DI
 ;
-;                         R/M Table 1 (MOD=00)
-;                         000=[BX+SI]  010=[BP+SI]  100=[SI]  110=DIRECT (2 operands required)
-;                         001=[BX+DI]  011=[BP+DI]  101=[DI]  111=[BX]
+;               SREG Table (segment register)
+;               000=ES       010=SS
+;               001=CS       110=DS
 ;
-;                         R/M Table 2 (MOD=01|10) - Add DISP8/16 to register:
-;                         000=[BX+SI]  010=[BP+SI]  100=[SI]  110=[BP]
-;                         001=[BX+DI]  011=[BP+DI]  101=[DI]  111=[BX]
+;                     R/M (register/memory; 3 bits)
 ;
-;               Addressing mode 00 (using R/M table 1)
-;                   opcode, addrmode
-;                   opcode, addrmode, offset low, offset high
+;                     R/M Table 1 (MOD=00)
+;                     000=[BX+SI]  010=[BP+SI]  100=[SI]  110=DIRECT (2 operands required)
+;                     001=[BX+DI]  011=[BP+DI]  101=[DI]  111=[BX]
 ;
-;               Addressing mode 01 (using R/M table 2 with  8-bit displacement)
-;                   opcode, addrmode, disp8
+;                     R/M Table 2 (MOD=01|10) - Add DISP8/16 to register:
+;                     000=[BX+SI]  010=[BP+SI]  100=[SI]  110=[BP]
+;                     001=[BX+DI]  011=[BP+DI]  101=[DI]  111=[BX]
 ;
-;               Addressing mode 10 (using R/M table 2 with 16-bit displacement)
-;                   opcode, addrmode, disp16 (disp low, disp high)
+;           Addressing mode 00 (using R/M table 1)
+;               opcode, addrmode
+;               opcode, addrmode, offset low, offset high
 ;
-;               Addressing mode 11 (using REG table)
-;                   two operand reg-reg
+;           Addressing mode 01 (using R/M table 2 with  8-bit displacement)
+;               opcode, addrmode, disp8
+;
+;           Addressing mode 10 (using R/M table 2 with 16-bit displacement)
+;               opcode, addrmode, disp16 (disp low, disp high)
+;
+;           Addressing mode 11 (using REG table)
+;               two operand reg-reg
 ;
 ;disp/addr low
 ;disp/addr high
@@ -108,7 +111,7 @@
 ;
 ; ADD BX,2
 ; 83 C3 02
-; 10000011, 11 000 011, 00000010 (W=1 16-bit, S=8-bit immediate to be extended to 16-bit)
+; 10000011, 11 000 011, 00000010 (W=1 16-bit, S=8-bit imm extend to 16-bit)
 ;       SW  11 ADD BX   2h
 ;
 ; CALL DX
@@ -117,57 +120,91 @@
 ;       SW  11 DX  DX
 
 ;======================================================================
-; disasm
+; memory dasm; disassemble memory content at DS:SI for CX instructions
 ;======================================================================
 
+mem_dasm:
+    push ax
+    push bx
+    push cx
+    push ds
+    push si
+
 ; disassemble an instruction at DS:SI
-dasm_inst:
+.loop1:
+
+; print seg:offset
+    mov ax,ds
+    call print_word     ; seg
+
+    mov al,':'
+    call print_chr
+
+    mov ax,si
+    call print_word     ; offset
+
+    mov al,':'
+    call print_chr
+
 
 ; decode instruction
     call load_inst      ; load instruction
 
-    cmp byte [curr_type],ins_type_unknown
+    cmp byte [cs:curr_type],ins_type_ext
+    call dasm_ext
+
+
+; print instruction
+
+    push si
+    mov si,[cs:curr_mnem]
+    call print_str
+    pop si
+
+    mov al,0Ah
+    call print_chr
+
+
+; check instruction
+
+    cmp byte [cs:curr_type],ins_type_unknown
     je .exit
 
-    cmp byte [curr_type],ins_type_prefix
-    je .prefix
+    cmp byte [cs:curr_type],ins_type_prefix
+    je .next
 
-    cmp byte [curr_type],ins_type_extended
-    je .extended
-
-    cmp byte [curr_op1],ins_op_r8
-    jb .decode          ; addressing byte only for op_r8 onwards
+    cmp byte [cs:curr_op1],ins_op_r8
+    jb .decode          ; addressing byte only for op_r8 upwards
 
     call load_addr      ; load addressing
 
+
 ; decode operands
 .decode:
-    mov dl,[curr_op1]
+    mov dl,[cs:curr_op1]
     cmp dl,ins_op_none
-    je .exit
+    je .next
     call dasm_oper
 
-    mov dl,[curr_op2]
+    mov dl,[cs:curr_op2]
     cmp dl,ins_op_none
-    je .exit
+    je .next
     call dasm_oper
 
-    jmp .exit
-
-.prefix:
-    mov byte [is_prefix],1
-    jmp dasm_inst
-
-.extended:
-    call dasm_ins_ext
-    jmp .exit
+.next:
+    loop .loop1
 
 .exit:
+    pop si
+    pop ds
+    pop cx
+    pop bx
+    pop ax
     ret
 
 
 ; disassemble an extended instruction at DS:SI
-dasm_ins_ext:
+dasm_ext:
     ret
 
 ; disassemble operand in DL
@@ -182,13 +219,13 @@ dasm_oper:
     cmp dl,ins_op_sreg
     jbe .exit           ; no displacement required when we're dealing with registers
 
-    cmp byte [curr_mod],1
+    cmp byte [cs:curr_mod],1
     je .disp
-    cmp byte [curr_mod],2
+    cmp byte [cs:curr_mod],2
     je .disp
-    cmp byte [curr_mod],3
+    cmp byte [cs:curr_mod],3
     je .exit
-    cmp byte [curr_rm],6
+    cmp byte [cs:curr_rm],6
     je .disp
     jmp .exit
 
@@ -206,7 +243,7 @@ dasm_oper:
     cmp dl,ins_op_eimm8
     je .imm2
 
-    mov [curr_imm],bx
+    mov [cs:curr_imm],bx
 
     cmp dl,ins_op_far
     jne .exit
@@ -223,20 +260,20 @@ dasm_oper:
     mov bx,ax
 
 .imm3:
-    mov [curr_imm],bx
+    mov [cs:curr_imm],bx
     ret
 
 ; displacement (8 and 16-bit versions)
 .disp:
     lodsb
     mov bl,al
-    cmp byte [curr_mod],1
+    cmp byte [cs:curr_mod],1
     je .disp2
     lodsb
     mov bh,al
 
 .disp2:
-    mov [curr_disp],bx
+    mov [cs:curr_disp],bx
 
 .exit:
     ret
@@ -249,23 +286,25 @@ load_inst:
     xor ax,ax
 
     lodsb
-    mov [curr_inst],ax
+    mov [cs:curr_inst],al
+
+    call print_hex
 
     mov dl,5            ; size of inst
     mul dl
     mov bx,inst_table
     add bx,ax           ; offset
 
-    mov ax,[bx + 0]     ; mnemonic
-    mov [curr_mnem],ax
+    mov ax,[cs:bx + 0]  ; mnemonic
+    mov [cs:curr_mnem],ax
 
-    mov al,[bx + 2]     ; type
-    mov [curr_type],al
+    mov al,[cs:bx + 2]  ; type
+    mov [cs:curr_type],al
 
-    mov al,[bx + 3]     ; op1
-    mov [curr_op1],al
-    mov al,[bx + 4]     ; op2
-    mov [curr_op2],al
+    mov al,[cs:bx + 3]  ; op1
+    mov [cs:curr_op1],al
+    mov al,[cs:bx + 4]  ; op2
+    mov [cs:curr_op2],al
 
     pop dx
     pop bx
@@ -282,18 +321,18 @@ load_addr:
 
     mov cl,6            ; MOD
     shr al,cl
-    mov [curr_mod],al
+    mov [cs:curr_mod],al
 
     mov al,dl           ; REG
     and al,038h
     shr al,1
     shr al,1
     shr al,1
-    mov [curr_reg],al
+    mov [cs:curr_reg],al
 
     mov al,dl           ; R/M
     and al,7h
-    mov [curr_rm],al
+    mov [cs:curr_rm],al
 
     pop dx
     pop cx
@@ -451,7 +490,7 @@ ext ins_ext_fe_ff,      ins_inc,  ins_dec, ins_call, ins_call, ins_jmp,  ins_jmp
 
 ins_type_unknown        equ 000h
 ins_type_normal         equ 001h
-ins_type_extended       equ 002h
+ins_type_ext            equ 002h
 ins_type_segover        equ 003h
 ins_type_prefix         equ 004h
 ins_type_custom         equ 005h
@@ -636,10 +675,10 @@ inst ins_jl,            ins_type_normal,    ins_op_short,   ins_op_none     ; 7c
 inst ins_jge,           ins_type_normal,    ins_op_short,   ins_op_none     ; 7dh
 inst ins_jle,           ins_type_normal,    ins_op_short,   ins_op_none     ; 7eh
 inst ins_jg,            ins_type_normal,    ins_op_short,   ins_op_none     ; 7fh
-inst ins_ext_80_83,     ins_type_extended,  ins_op_rm8,     ins_op_imm8     ; 80h
-inst ins_ext_80_83,     ins_type_extended,  ins_op_rm16,    ins_op_imm16    ; 81h
-inst ins_ext_80_83,     ins_type_extended,  ins_op_rm8,     ins_op_imm8     ; 82h
-inst ins_ext_80_83,     ins_type_extended,  ins_op_rm16,    ins_op_eimm8    ; 83h
+inst ins_ext_80_83,     ins_type_ext,       ins_op_rm8,     ins_op_imm8     ; 80h
+inst ins_ext_80_83,     ins_type_ext,       ins_op_rm16,    ins_op_imm16    ; 81h
+inst ins_ext_80_83,     ins_type_ext,       ins_op_rm8,     ins_op_imm8     ; 82h
+inst ins_ext_80_83,     ins_type_ext,       ins_op_rm16,    ins_op_eimm8    ; 83h
 inst ins_test,          ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 84h
 inst ins_test,          ins_type_normal,    ins_op_r16,     ins_op_rm16     ; 85h
 inst ins_xchg,          ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 86h
@@ -716,10 +755,10 @@ inst ins_int,           ins_type_normal,    ins_op_const3,  ins_op_none     ; cc
 inst ins_int,           ins_type_normal,    ins_op_imm8,    ins_op_none     ; cdh
 inst ins_into,          ins_type_normal,    ins_op_none,    ins_op_none     ; ceh
 inst ins_iret,          ins_type_normal,    ins_op_none,    ins_op_none     ; cfh
-inst ins_ext_d0_d3,     ins_type_extended,  ins_op_rm8,     ins_op_const1   ; d0h
-inst ins_ext_d0_d3,     ins_type_extended,  ins_op_rm16,    ins_op_const1   ; d1h
-inst ins_ext_d0_d3,     ins_type_extended,  ins_op_rm8,     ins_op_cl       ; d2h
-inst ins_ext_d0_d3,     ins_type_extended,  ins_op_rm16,    ins_op_cl       ; d3h
+inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_const1   ; d0h
+inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_const1   ; d1h
+inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_cl       ; d2h
+inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_cl       ; d3h
 inst ins_aam,           ins_type_custom,    ins_op_none,    ins_op_none     ; d4h
 inst ins_aad,           ins_type_custom,    ins_op_none,    ins_op_none     ; d5h
 inst ins_unknown,       ins_type_unknown,   ins_op_none,    ins_op_none     ; d6h
@@ -754,14 +793,14 @@ inst ins_repne,         ins_type_prefix,    ins_op_none,    ins_op_none     ; f2
 inst ins_rep,           ins_type_prefix,    ins_op_none,    ins_op_none     ; f3h
 inst ins_hlt,           ins_type_normal,    ins_op_none,    ins_op_none     ; f4h
 inst ins_cmc,           ins_type_normal,    ins_op_none,    ins_op_none     ; f5h
-inst ins_ext_f6_f7,     ins_type_extended,  ins_op_rm8,     ins_op_none     ; f6h
-inst ins_ext_f6_f7,     ins_type_extended,  ins_op_rm16,    ins_op_none     ; f7h
+inst ins_ext_f6_f7,     ins_type_ext,       ins_op_rm8,     ins_op_none     ; f6h
+inst ins_ext_f6_f7,     ins_type_ext,       ins_op_rm16,    ins_op_none     ; f7h
 inst ins_clc,           ins_type_normal,    ins_op_none,    ins_op_none     ; f8h
 inst ins_stc,           ins_type_normal,    ins_op_none,    ins_op_none     ; f9h
 inst ins_cli,           ins_type_normal,    ins_op_none,    ins_op_none     ; fah
 inst ins_sti,           ins_type_normal,    ins_op_none,    ins_op_none     ; fbh
 inst ins_cld,           ins_type_normal,    ins_op_none,    ins_op_none     ; fch
 inst ins_std,           ins_type_normal,    ins_op_none,    ins_op_none     ; fdh
-inst ins_ext_fe_ff,     ins_type_extended,  ins_op_rm8,     ins_op_none     ; feh
-inst ins_ext_fe_ff,     ins_type_extended,  ins_op_rm16,    ins_op_none     ; ffh
+inst ins_ext_fe_ff,     ins_type_ext,       ins_op_rm8,     ins_op_none     ; feh
+inst ins_ext_fe_ff,     ins_type_ext,       ins_op_rm16,    ins_op_none     ; ffh
 

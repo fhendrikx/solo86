@@ -30,7 +30,7 @@ rom_menu:
 ; segment
     lodsw
     cmp ax,0            ; are we done?
-    je .exit
+    je .loop
 
     push ax             ; store seg
 
@@ -40,18 +40,26 @@ rom_menu:
 
     mov al,' '
     call print_chr
+    mov al,'-'
+    call print_chr
+    mov al,' '
+    call print_chr
 
     pop ax              ; restore seg
 
-    call print_word
+    call print_word     ; seg
 
     mov al,':'
     call print_chr
 
 ; offset
     lodsw
-    call print_word
+    call print_word     ; offset
 
+    mov al,' '
+    call print_chr
+    mov al,'-'
+    call print_chr
     mov al,' '
     call print_chr
 
@@ -73,9 +81,14 @@ rom_menu:
 
     call read_chr
 
-    cmp al,1bh          ; ESC pressed?
+    cmp al,'Q'
     je .exit
 
+    cmp al,30h
+    jae .number
+    jmp .loop
+
+.number:
     sub al,30h          ; '0'
 
     call rom_exec

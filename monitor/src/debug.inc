@@ -21,26 +21,30 @@ debug_menu:
     mov si,buffer           ; DS:SI
     lodsb
 
-    cmp al,'D'
-    je  cmd_dasm
-    cmp al,'F'
-    je  cmd_fill
     cmp al,'H'
     je  cmd_help
+
+    cmp al,'D'
+    je  cmd_mem_dasm
+    cmp al,'F'
+    je  cmd_mem_fill
+    cmp al,'R'
+    je  cmd_mem_read
+
     cmp al,'I'
     je  cmd_inp
-    cmp al,'J'
-    je  cmd_jump
-    cmp al,'L'
-    je  cmd_load
     cmp al,'O'
     je  cmd_out
+    cmp al,'J'
+    je  cmd_jmp
+
+    cmp al,'L'
+    je  cmd_ihf_load
+    cmp al,'E'
+    je  cmd_ihf_exec
+
     cmp al,'Q'
     je .exit
-    cmp al,'R'
-    je  cmd_read
-    cmp al,'X'
-    je  cmd_exe
 
     jmp .loop
 
@@ -48,8 +52,12 @@ debug_menu:
     ret
 
 
-; disassemble
-cmd_dasm:
+cmd_help:
+    print dbg_cmd_help
+    jmp debug_menu.loop
+
+
+cmd_mem_dasm:
     call spaces
 
     call inp_word           ; seg
@@ -60,20 +68,18 @@ cmd_dasm:
     jne syntax
 
     call inp_word           ; offset
-    mov di,ax
+    mov si,ax
 
     push ds
+    mov cx,8
     mov ds,bx
-
-    call dasm_inst
-
+    call mem_dasm
     pop ds
 
     jmp debug_menu.loop
 
 
-; fill memory
-cmd_fill:
+cmd_mem_fill:
     call spaces
 
     call inp_word           ; seg
@@ -98,22 +104,38 @@ cmd_fill:
 
     push es
     mov es,bx
-
     call mem_fill
-
     pop es
 
     jmp debug_menu.loop
 
 
-; help
-cmd_help:
-    print dbg_cmd_help
+cmd_mem_read:
+    call spaces
+
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov si,ax
+
+    print dbg_cmd_read
+
+    push ds
+    mov ds,bx
+
+    mov cx,256
+    call mem_read
+
+    pop ds
 
     jmp debug_menu.loop
 
 
-; inp pp
 cmd_inp:
     call spaces
 
@@ -129,8 +151,24 @@ cmd_inp:
     jmp debug_menu.loop
 
 
-; jump
-cmd_jump:
+cmd_out:
+    call spaces
+
+    call inp_hex            ; port
+    mov dl,al
+
+    call spaces
+
+    call inp_hex            ; byte
+
+    print dbg_cmd_out
+
+    out dx,al               ; OUT
+
+    jmp debug_menu.loop
+
+
+cmd_jmp:
     call spaces
 
     call inp_word           ; seg
@@ -149,65 +187,18 @@ cmd_jump:
     jmp far [ hex_ofs ]
 
 
-; load intel hex file
-cmd_load:
+cmd_ihf_load:
     print dbg_cmd_load
 
-    call read_hex_file
+    call read_ihf
 
     print dbg_cmd_load_done
 
     jmp debug_menu.loop
 
 
-; out pp xx
-cmd_out:
-    call spaces
-
-    call inp_hex            ; port
-    mov dl,al
-
-    call spaces
-
-    call inp_hex            ; byte
-
-    print dbg_cmd_out
-
-    out dx,al               ; OUT
-
-    jmp debug_menu.loop
-
-
-; read memory
-cmd_read:
-    call spaces
-
-    call inp_word           ; seg
-    mov bx,ax
-
-    mov al,':'
-    call expect
-    jne syntax
-
-    call inp_word           ; offset
-    mov si,ax
-
-    print dbg_cmd_dump
-
-    push ds
-    mov ds,bx
-
-    mov cx,256
-    call mem_dump
-
-    pop ds
-
-    jmp debug_menu.loop
-
-
-; execute
-cmd_exe:
-    print dbg_cmd_exe
+cmd_ihf_exec:
+    print dbg_cmd_exec
 
 ; simulate cold start
     xor ax,ax
@@ -222,10 +213,8 @@ cmd_exe:
     jmp far [ hex_ofs ]
 
 
-; syntax error
 syntax:
     print dbg_syntax
-
     jmp debug_menu.loop
 
 
@@ -244,9 +233,11 @@ spaces:
 
 ; expect character AL
 expect:
+    push bx
     mov bl,al
     lodsb
     cmp al,bl           ; is it what we expected?
+    pop bx
     ret                 ; flag not changed on ret
 
 
@@ -290,6 +281,6 @@ inp_word:
 ; data
 ;======================================================================
 
-buffer      times 32    db 000h
+buffer      times 40    db 000h
 
 
