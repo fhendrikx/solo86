@@ -333,6 +333,8 @@ load_addr:
     and al,7h
     mov [cs:curr_rxm],al
 
+    mov byte [cs:addr_load],1
+
     pop dx
     pop cx
     pop ax
@@ -351,6 +353,11 @@ load_extended:
     ; curr_reg is actually the extended inst
     xor ax,ax
     mov al,byte [cs:curr_reg]
+
+
+    ; TODO
+
+
     shl al,1            ; word sized
 
     ; points to extended inst, shift into list
@@ -542,6 +549,8 @@ print_opr:
 
 .addr:
     ; TODO
+
+
     jmp .exit
 
     ; sreg
@@ -610,7 +619,7 @@ print_opr:
     call print_chr
     jmp .exit
 
-    ; far
+    ; FAR
 .far:
     mov ax,[cs:curr_off]
     call print_word
