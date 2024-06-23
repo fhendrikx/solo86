@@ -137,12 +137,12 @@ int_dummy:
 ; includes
 ;======================================================================
 
-%include "dasm.inc"
 %include "debug.inc"
 %include "delay.inc"
 %include "ihf.inc"
 %include "leds.inc"
 %include "mem.inc"
+%include "mem_dasm.inc"
 %include "messages.inc"
 %include "rom.inc"
 %include "stdio.inc"
