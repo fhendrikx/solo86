@@ -1,11 +1,22 @@
 ;======================================================================
 ; Ferry Hendrikx, June 2024
 ;======================================================================
-
+;
+; format of instructions:
+;
 ;======================================================================
-;byte       7 6 5 4 3 2 1 0
+;byte   thing           state
 ;======================================================================
-
+;0      prefix          optional
+;1      opcode          mandatory
+;2      addr mode       optional
+;
+;3      disp/addr low   optional
+;4      disp/addr high  optional
+;5      data low        optional
+;6      data high       optional
+;
+;
 ;prefix
 ;           repetition
 ;           segment override
@@ -72,12 +83,6 @@
 ;
 ;           Addressing mode 11 (using REG table)
 ;               two operand reg-reg
-;
-;disp/addr low
-;disp/addr high
-
-;data low
-;data high
 
 
 ; MOV AX,BX
@@ -131,9 +136,12 @@ mem_dasm:
     push si
 
 ; disassemble an instruction at DS:SI
-.loop1:
+
+.loop:
+
 
 ; print seg:offset
+
     mov ax,ds
     call print_word     ; seg
 
@@ -143,62 +151,73 @@ mem_dasm:
     mov ax,si
     call print_word     ; offset
 
-    mov al,':'
+    mov al,' '
     call print_chr
 
 
 ; decode instruction
+
     call load_inst      ; load instruction
 
     cmp byte [cs:curr_type],ins_type_unknown
     je .exit
 
-    cmp byte [cs:curr_type],ins_type_prefix
-    je .prefix
-
     cmp byte [cs:curr_type],ins_type_ext
-    je .ext
+    jne .print
+
+; extended instruction
+
+    call load_extended
 
 
-; print instruction
+; print instruction mnemonic
 
-    push si
-    mov si,[cs:curr_mnem]
-    call print_str
-    pop si
-
-    mov al,0Ah
-    call print_chr
+.print:
+    call print_inst
 
 
-    cmp byte [cs:curr_op1],ins_op_r8
+; decode operands
+
+    cmp byte [cs:curr_opr1],ins_op_r8
     jb .decode          ; addressing byte only for op_r8 upwards
+
+    ; addr already loaded?
+    cmp byte [cs:addr_load],1
+    je .decode
 
     call load_addr      ; load addressing
 
 
-; decode operands
 .decode:
-    mov dl,[cs:curr_op1]
+    ; operand 1
+
+    mov dl,[cs:curr_opr1]
     cmp dl,ins_op_none
     je .next
-    call dasm_oper
 
-    mov dl,[cs:curr_op2]
+    mov al,20h
+    call print_chr
+
+    call load_opr
+    call print_opr
+
+    ; operand 2
+
+    mov dl,[cs:curr_opr2]
     cmp dl,ins_op_none
     je .next
-    call dasm_oper
-    jmp .next
 
-.prefix:
-    jmp .next
+    mov al,','
+    call print_chr
 
-.ext:
-    call dasm_ext
+    call load_opr
+    call print_opr
+
     jmp .next
 
 .next:
-    loop .loop1
+    call print_end
+    loop .loop
 
 .exit:
     pop si
@@ -209,82 +228,8 @@ mem_dasm:
     ret
 
 
-; disassemble an extended instruction at DS:SI
-dasm_ext:
-    ret
-
-; disassemble operand in DL
-dasm_oper:
-    cmp dl,ins_op_r8
-    jae .reg
-    cmp dl,ins_op_imm8
-    jae .imm
-    ret                 ; no operand
-
-.reg:
-    cmp dl,ins_op_sreg
-    jbe .exit           ; no displacement required when we're dealing with registers
-
-    cmp byte [cs:curr_mod],1
-    je .disp
-    cmp byte [cs:curr_mod],2
-    je .disp
-    cmp byte [cs:curr_mod],3
-    je .exit
-    cmp byte [cs:curr_rm],6
-    je .disp
-    jmp .exit
-
-; immediate (8 and 16-bit versions)
-.imm:
-    lodsb
-    mov bl,al
-    cmp dl,ins_op_imm16
-    jb .imm3
-    lodsb
-    mov bh,al
-
-    cmp dl,ins_op_mem
-    je .disp2
-    cmp dl,ins_op_eimm8
-    je .imm2
-
-    mov [cs:curr_imm],bx
-
-    cmp dl,ins_op_far
-    jne .exit
-
-    lodsb
-    mov bl,al
-    lodsb
-    mov dh,al
-    jmp .disp2
-
-.imm2:
-    mov ax,bx
-    cbw
-    mov bx,ax
-
-.imm3:
-    mov [cs:curr_imm],bx
-    ret
-
-; displacement (8 and 16-bit versions)
-.disp:
-    lodsb
-    mov bl,al
-    cmp byte [cs:curr_mod],1
-    je .disp2
-    lodsb
-    mov bh,al
-
-.disp2:
-    mov [cs:curr_disp],bx
-
-.exit:
-    ret
-
-; load instruction
+; load instruction (and clear variables)
+;
 load_inst:
     push bx
     push dx
@@ -292,6 +237,10 @@ load_inst:
     xor ax,ax
 
     lodsb
+
+    call print_hex
+
+    ; instruction
     mov [cs:curr_inst],al
 
     mov dl,5            ; size of inst
@@ -305,29 +254,43 @@ load_inst:
     mov al,[cs:bx + 2]  ; type
     mov [cs:curr_type],al
 
-    mov al,[cs:bx + 3]  ; op1
-    mov [cs:curr_op1],al
-    mov al,[cs:bx + 4]  ; op2
-    mov [cs:curr_op2],al
+    ; addressing
+    mov byte [cs:addr_load],0
+    mov byte [cs:curr_mod],0
+    mov byte [cs:curr_reg],0
+    mov byte [cs:curr_rxm],0
+
+    ; operands
+    mov al,[cs:bx + 3]  ; opr1
+    mov [cs:curr_opr1],al
+    mov al,[cs:bx + 4]  ; opr2
+    mov [cs:curr_opr2],al
+
+    mov word [cs:curr_imm],0
+    mov word [cs:curr_off],0
 
     pop dx
     pop bx
     ret
 
+
 ; load addressing byte
+;
 load_addr:
     push ax
     push cx
     push dx
 
     lodsb
+    call print_hex
+
     mov dl,al
 
     mov cl,6            ; MOD
     shr al,cl
     mov [cs:curr_mod],al
 
-    mov al,dl           ; REG
+    mov al,dl           ; REG / Ext. Opcode
     and al,038h
     shr al,1
     shr al,1
@@ -336,11 +299,327 @@ load_addr:
 
     mov al,dl           ; R/M
     and al,7h
-    mov [cs:curr_rm],al
+    mov [cs:curr_rxm],al
 
     pop dx
     pop cx
     pop ax
+    ret
+
+
+; load extended instruction
+;
+load_extended:
+    push ax
+    push bx
+    push dx
+
+    call load_addr      ; load addr
+
+    ; curr_reg is actually the extended inst
+    xor ax,ax
+    mov al,byte [cs:curr_reg]
+    shl al,1            ; word sized
+
+    ; points to extended inst, shift into list
+    mov bx,[cs:curr_mnem]
+    add bx,ax
+
+    mov dx,[cs:bx]
+    mov [cs:curr_mnem],dx
+
+    pop dx
+    pop bx
+    pop ax
+    ret
+
+
+; load operand (given in DL)
+;
+load_opr:
+    push ax
+    push dx
+
+    cmp dl,ins_op_rm8
+    jae .rm
+    cmp dl,ins_op_r8
+    jae .reg
+    cmp dl,ins_op_far
+    je .far
+    cmp dl,ins_op_imm16
+    jae .imm16
+    cmp dl,ins_op_imm8
+    jae .imm8
+    jmp .exit
+
+    ; R/M
+.rm:
+    ; 2 registers
+    cmp byte [cs:curr_mod],3
+    je .exit
+
+    ; R/M table 2: 16-bit displacement
+    cmp byte [cs:curr_mod],2
+    je .disp16
+
+    ; R/M table 2;  8-bit displacement
+    cmp byte [cs:curr_mod],1
+    je .disp8
+
+    ; R/M table 1; check for direct operands
+    cmp byte [cs:curr_rxm],6
+    je .disp16
+    jmp .exit
+
+    ; displacement 16-bit
+.disp16:
+    lodsw
+    mov [cs:curr_off],ax
+    jmp .exit
+
+    ; displacement 8-bit
+.disp8:
+    xor ax,ax
+    lodsb
+    mov [cs:curr_off],ax
+    jmp .exit
+
+    ; REG
+.reg:
+    jmp .exit
+
+    ; FAR
+.far:
+    lodsw
+    mov [cs:curr_imm],ax
+    lodsw
+    mov [cs:curr_off],ax
+    jmp .exit
+
+    ; IMM16
+.imm16:
+    lodsw
+    mov [cs:curr_imm],ax
+    jmp .exit
+
+    ; IMM8
+.imm8:
+    xor ax,ax
+    lodsb
+    mov [cs:curr_imm],ax
+    jmp .exit
+
+.exit:
+    pop dx
+    pop ax
+    ret
+
+
+; print instruction
+;
+print_inst:
+    push si
+    mov si,[cs:curr_mnem]
+    call print_str
+    pop si
+    ret
+
+
+; print operand (given in DL)
+;
+print_opr:
+    push ax
+    push bx
+    push dx
+
+    cmp dl,ins_op_none
+    je .exit            ; none
+
+    cmp dl,ins_op_ds
+    jbe .constreg
+
+    cmp dl,ins_op_const1
+    je .const1
+    cmp dl,ins_op_const3
+    je .const3
+
+    cmp dl,ins_op_imm8
+    je .imm8
+    cmp dl,ins_op_eimm8
+    je .imm16
+
+    cmp dl,ins_op_short
+    je .short
+    cmp dl,ins_op_imm16
+    je .imm16
+    cmp dl,ins_op_near
+    je .near
+    cmp dl,ins_op_mem
+    je .mem
+
+    cmp dl,ins_op_far
+    je .far
+
+    cmp dl,ins_op_sreg
+    jbe .reg
+
+    ; addressing
+    cmp byte [cs:curr_mod],3
+    jne .addr
+
+    xor bx,bx
+    mov bl,byte [cs:curr_rxm]
+
+    cmp dl,ins_op_rm8
+    je .rmx
+    add bl,8
+
+.rmx:
+    shl bl,1
+
+    push si
+    mov si,[cs:regs_table + bx]
+    call print_str
+    pop si
+
+    jmp .exit
+
+.addr:
+    ; TODO
+    jmp .exit
+
+    ; sreg
+.constreg:
+    push ax
+    mov al,'Z'
+    call print_chr
+    pop ax
+
+
+    xor bx,bx
+    mov bl,dl
+    ;dec bl
+    shl bl,1
+
+
+
+    push ax
+    mov al,bl
+    call print_hex
+    pop ax
+
+
+
+    push si
+    mov si,[cs:regs_table + bx]
+    call print_str
+    pop si
+    jmp .exit
+
+    ; const 1
+.const1:
+    mov al,'1'
+    call print_chr
+    jmp .exit
+
+    ; const 3
+.const3:
+    mov al,'3'
+    call print_chr
+    jmp .exit
+
+    ; immediate 8-bit
+.imm8:
+    mov ax,[cs:curr_imm]
+    call print_hex
+    jmp .exit
+
+    ; short
+.short:
+    mov ax,[cs:curr_imm]
+    cbw
+    mov dx,si
+    add ax,dx
+    inc ax
+    call print_word
+    jmp .exit
+
+    ; immediate 16-bit
+.imm16:
+    mov ax,[cs:curr_imm]
+    call print_word
+    jmp .exit
+
+    ; near
+.near:
+    mov ax,[cs:curr_imm]
+    mov dx,si
+    add ax,dx
+    inc ax
+    call print_word
+    jmp .exit
+
+    ; mem
+.mem:
+    mov al,'['
+    call print_chr
+
+    mov ax,[cs:curr_off]
+    call print_word
+
+    mov al,']'
+    call print_chr
+    jmp .exit
+
+    ; far
+.far:
+    mov ax,[cs:curr_off]
+    call print_word
+
+    mov al,':'
+    call print_chr
+
+    mov ax,[cs:curr_imm]
+    call print_word
+    jmp .exit
+
+    ; REG
+.reg:
+    xor bx,bx
+    mov bl,byte [cs:curr_reg]
+
+    cmp dl,ins_op_r8
+    je .reg_name
+
+    add bl,8
+
+    cmp dl,ins_op_r16
+    je .reg_name
+
+    add bl,8
+
+.reg_name:
+    shl bl,1
+
+    push si
+    mov si,[cs:regs_table + bx]
+    call print_str
+    pop si
+
+    jmp .exit
+
+.exit:
+    pop dx
+    pop bx
+    pop ax
+    ret
+
+
+; print end
+;
+print_end:
+    mov al,0Ah
+    call print_chr
     ret
 
 
@@ -354,18 +633,18 @@ curr_inst               db 000h
 curr_mnem               dw 000h
 curr_type               db 000h
 
+; addressing
+addr_load               db 000h
 curr_mod                db 000h
 curr_reg                db 000h
-curr_rm                 db 000h
+curr_rxm                db 000h
 
-curr_op1                db 000h
-curr_op2                db 000h
+; operands
+curr_opr1               db 000h
+curr_opr2               db 000h
 
 curr_imm                dw 000h
-curr_disp               dw 000h
-
-is_prefix               db 000h
-is_segover              db 000h
+curr_off                dw 000h
 
 
 ;======================================================================
@@ -504,7 +783,7 @@ ins_type_custom         equ 005h
 
 ins_op_none             equ 000h
 
-ins_op_al               equ 001h
+ins_op_al               equ 001h        ; 8-bit registers
 ins_op_cl               equ 002h
 ins_op_dl               equ 003h
 ins_op_bl               equ 004h
@@ -513,7 +792,7 @@ ins_op_ch               equ 006h
 ins_op_dh               equ 007h
 ins_op_bh               equ 008h
 
-ins_op_ax               equ 008h
+ins_op_ax               equ 008h        ; 16-bit registers
 ins_op_cx               equ 009h
 ins_op_dx               equ 00ah
 ins_op_bx               equ 00bh
@@ -522,12 +801,12 @@ ins_op_bp               equ 00dh
 ins_op_si               equ 00eh
 ins_op_di               equ 00fh
 
-ins_op_es               equ 010h
+ins_op_es               equ 010h        ; segment registers
 ins_op_cs               equ 011h
 ins_op_ss               equ 012h
 ins_op_ds               equ 013h
 
-ins_op_const1           equ 01ah
+ins_op_const1           equ 01ah        ; constant values
 ins_op_const3           equ 01bh
 
 ins_op_imm8             equ 020h        ; 8-bit immediate
@@ -807,4 +1086,51 @@ inst ins_cld,           ins_type_normal,    ins_op_none,    ins_op_none     ; fc
 inst ins_std,           ins_type_normal,    ins_op_none,    ins_op_none     ; fdh
 inst ins_ext_fe_ff,     ins_type_ext,       ins_op_rm8,     ins_op_none     ; feh
 inst ins_ext_fe_ff,     ins_type_ext,       ins_op_rm16,    ins_op_none     ; ffh
+
+
+; registers and address offsets
+
+reg reg_al,     'al'
+reg reg_cl,     'cl'
+reg reg_dl,     'dl'
+reg reg_bl,     'bl'
+reg reg_ah,     'ah'
+reg reg_ch,     'ch'
+reg reg_dh,     'dh'
+reg reg_bh,     'bh'
+
+reg reg_ax,     'ax'
+reg reg_cx,     'cx'
+reg reg_dx,     'dx'
+reg reg_bx,     'bx'
+reg reg_sp,     'sp'
+reg reg_bp,     'bp'
+reg reg_si,     'si'
+reg reg_di,     'di'
+
+reg reg_es,     'es'
+reg reg_cs,     'cs'
+reg reg_ss,     'ss'
+reg reg_ds,     'ds'
+
+reg add_bx_si,  'bx+si'
+reg add_bx_di,  'bx+di'
+reg add_bp_si,  'bp+si'
+reg add_bp_di,  'bp+di'
+reg add_si,     'si'
+reg add_di,     'di'
+reg add_bp,     'bp'
+reg add_bx,     'bx'
+
+
+regs_table:
+
+                dw reg_al, reg_cl, reg_dl, reg_bl, reg_ah, reg_ch, reg_dh, reg_bh
+                dw reg_ax, reg_cx, reg_dx, reg_bx, reg_sp, reg_bp, reg_si, reg_di
+                dw reg_es, reg_cs, reg_ss, reg_ds
+
+addr_table:
+
+                dw add_bx_si,   add_bx_di,  add_bp_si,  add_bp_di
+                dw add_si,      add_di,     add_bp,     add_bx
 
