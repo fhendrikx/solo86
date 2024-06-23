@@ -1,8 +1,15 @@
 
 ; monitor
-mon_welcome         db 0Ah, '[[ Solo86 MONitor ]]', 0Ah, 0Ah
-                    db '(c) 2024 Dylan Hall and Ferry Hendrikx', 0Ah
-                    db 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah, 0Ah, 00h
+
+mon_welcome         db 0Ah
+                    db ' _____       _         _____   ____ ',0Ah
+                    db '/  ___|     | |       |  _  | / ___|',0Ah
+                    db '\ `--.  ___ | | ___    \ V / / /___ ',0Ah
+                    db ' `--. \/ _ \| |/ _ \   / _ \ | ___ \',0Ah
+                    db '/\__/ / (_) | | (_) | | |_| || \_/ |',0Ah
+                    db '\____/ \___/|_|\___/  \_____/\_____/',0Ah,  0Ah
+                    db 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah, 0Ah
+                    db '(c) 2024 Dylan Hall / Ferry Hendrikx', 0Ah, 0Ah, 00h
 
 ; roms
 rom_welcome         db 0Ah, '[ ROM Selection ]', 0Ah, 00h
