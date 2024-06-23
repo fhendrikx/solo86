@@ -7,16 +7,21 @@ mon_welcome         db 0Ah
                     db '\ `--.  ___ | | ___    \ V / / /___ ',0Ah
                     db ' `--. \/ _ \| |/ _ \   / _ \ | ___ \',0Ah
                     db '/\__/ / (_) | | (_) | | |_| || \_/ |',0Ah
-                    db '\____/ \___/|_|\___/  \_____/\_____/',0Ah,  0Ah
-                    db 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah, 0Ah
-                    db '(c) 2024 Dylan Hall / Ferry Hendrikx', 0Ah, 0Ah, 00h
+                    db '\____/ \___/|_|\___/  \_____/\_____/',0Ah
+                    db 0Ah, '(c) 2024 Dylan Hall / Ferry Hendrikx', 0Ah
+                    db 0Ah, 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah
+                    db 0Ah, 00h
+
 
 ; roms
+
 rom_welcome         db 0Ah, '[ ROM Selection ]', 0Ah, 00h
 rom_prompt          db 0Ah, 'ROM$ ', 00h
 rom_select          db 0Ah, '[ Select ]', 0Ah, 0Ah, 00h
 
+
 ; debug
+
 dbg_welcome         db 0Ah, '[ MON Debugger ]', 0Ah, 00h
 dbg_prompt          db 0Ah, 'MON$ ', 00h
 dbg_syntax          db 0Ah, '[ Syntax Error ]', 0Ah, 00h
