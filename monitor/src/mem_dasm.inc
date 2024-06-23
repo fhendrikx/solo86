@@ -1169,47 +1169,47 @@ inst ins_ext_fe_ff,     ins_type_ext,       ins_op_rm16,    ins_op_none     ; ff
 
 ; registers and address offsets
 
-reg reg_al,     'al'
-reg reg_cl,     'cl'
-reg reg_dl,     'dl'
-reg reg_bl,     'bl'
-reg reg_ah,     'ah'
-reg reg_ch,     'ch'
-reg reg_dh,     'dh'
-reg reg_bh,     'bh'
+reg reg_al,             'al'
+reg reg_cl,             'cl'
+reg reg_dl,             'dl'
+reg reg_bl,             'bl'
+reg reg_ah,             'ah'
+reg reg_ch,             'ch'
+reg reg_dh,             'dh'
+reg reg_bh,             'bh'
 
-reg reg_ax,     'ax'
-reg reg_cx,     'cx'
-reg reg_dx,     'dx'
-reg reg_bx,     'bx'
-reg reg_sp,     'sp'
-reg reg_bp,     'bp'
-reg reg_si,     'si'
-reg reg_di,     'di'
+reg reg_ax,             'ax'
+reg reg_cx,             'cx'
+reg reg_dx,             'dx'
+reg reg_bx,             'bx'
+reg reg_sp,             'sp'
+reg reg_bp,             'bp'
+reg reg_si,             'si'
+reg reg_di,             'di'
 
-reg reg_es,     'es'
-reg reg_cs,     'cs'
-reg reg_ss,     'ss'
-reg reg_ds,     'ds'
+reg reg_es,             'es'
+reg reg_cs,             'cs'
+reg reg_ss,             'ss'
+reg reg_ds,             'ds'
 
-reg add_bx_si,  'bx+si'
-reg add_bx_di,  'bx+di'
-reg add_bp_si,  'bp+si'
-reg add_bp_di,  'bp+di'
-reg add_si,     'si'
-reg add_di,     'di'
-reg add_bp,     'bp'
-reg add_bx,     'bx'
+reg add_bx_si,          'bx+si'
+reg add_bx_di,          'bx+di'
+reg add_bp_si,          'bp+si'
+reg add_bp_di,          'bp+di'
+reg add_si,             'si'
+reg add_di,             'di'
+reg add_bp,             'bp'
+reg add_bx,             'bx'
 
 
 regs_table:
 
-                dw reg_al, reg_cl, reg_dl, reg_bl, reg_ah, reg_ch, reg_dh, reg_bh
-                dw reg_ax, reg_cx, reg_dx, reg_bx, reg_sp, reg_bp, reg_si, reg_di
-                dw reg_es, reg_cs, reg_ss, reg_ds
+                        dw reg_al, reg_cl, reg_dl, reg_bl, reg_ah, reg_ch, reg_dh, reg_bh
+                        dw reg_ax, reg_cx, reg_dx, reg_bx, reg_sp, reg_bp, reg_si, reg_di
+                        dw reg_es, reg_cs, reg_ss, reg_ds
 
 addr_table:
 
-                dw add_bx_si,   add_bx_di,  add_bp_si,  add_bp_di
-                dw add_si,      add_di,     add_bp,     add_bx
+                        dw add_bx_si,   add_bx_di,  add_bp_si,  add_bp_di
+                        dw add_si,      add_di,     add_bp,     add_bx
 
