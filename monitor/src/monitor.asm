@@ -13,31 +13,8 @@ org 0
 ;======================================================================
 
 %include "macro.inc"
+%include "defines.inc"
 %include "vectors.inc"
-
-
-;======================================================================
-; defines
-;======================================================================
-
-; important segments
-cseg_init       equ 0F000h  ; CS
-cseg            equ 00000h  ; CS after relocation
-dseg            equ 01000h
-sseg            equ 00000h
-
-; I/O addresses should be even numbers only
-ticks_ctrl      equ 04h
-leds_data       equ 08h
-bank_table      equ 10h
-bank_row_0      equ 10h
-bank_row_1      equ 12h
-bank_row_2      equ 14h
-bank_row_3      equ 16h
-bank_row_4      equ 18h
-bank_row_5      equ 1Ah
-bank_row_6      equ 1Ch
-bank_row_7      equ 1Eh
 
 
 ;======================================================================
@@ -69,7 +46,7 @@ init:
     movsw
     loop .copy
 
-    jmp cseg:relocate   ; here we go!
+    jmp cseg:relocate       ; here we go!
 
 
 ;======================================================================
@@ -84,7 +61,7 @@ relocate:
 
 ; initialise stack
     mov ax,sseg
-    mov ss,ax           ; SS:SP
+    mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
 ; setup memory banking table
@@ -115,8 +92,8 @@ relocate:
 .scan:
     call rom_scan
 
-    cmp dl,0            ; how many did we find?
-    je .debugger        ; none, jump to monitor debugger
+    cmp dl,0                ; how many did we find?
+    je .debugger            ; none, jump to monitor debugger
 
     call rom_menu
 
@@ -154,10 +131,6 @@ int_dummy:
 
 ; padding
 TIMES 65536-1024-($-$$)     db 0FFh
-
-; HEX address
-hex_ofs:                    dw 00h
-hex_seg:                    dw 00h
 
 ; ROM address
 rom_ofs:                    dw 00h

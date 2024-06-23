@@ -2,10 +2,6 @@
 ; Ferry Hendrikx, April 2024
 ;======================================================================
 
-uart_ctrl       equ 20h
-uart_data       equ 22h
-
-
 ;======================================================================
 ; print
 ;======================================================================
@@ -27,7 +23,7 @@ putc:
 print_hex:
     push ax
     push ax
-    shr al,1            ; shr al,4 not possible
+    shr al,1                ; shr al,4 not possible
     shr al,1
     shr al,1
     shr al,1
@@ -42,12 +38,12 @@ print_hex:
 .nibble:
     cmp al,9
     jg .letter
-    add al,30h          ; '0'
+    add al,30h              ; '0'
     out uart_data,al
     ret
 
 .letter:
-    add al,37h          ; 'A' - 10
+    add al,37h              ; 'A' - 10
     out uart_data,al
     ret
 
@@ -78,12 +74,12 @@ puts:
     push ds
     cld
 
-    push cs             ; CS => DS
+    push cs                 ; CS => DS
     pop ds
 
 .loop:
     lodsb
-    cmp al,0            ; are we done?
+    cmp al,0                ; are we done?
     jz .exit
 
     out uart_data,al
@@ -106,7 +102,7 @@ puts:
 ;======================================================================
 
 raw_ready:
-    in al,uart_ctrl     ; any bytes?
+    in al,uart_ctrl         ; any bytes?
     ret
 
 
@@ -116,10 +112,10 @@ raw_ready:
 
 raw_chr:
 getc:
-    in al,uart_ctrl     ; any characters?
+    in al,uart_ctrl         ; any characters?
     cmp al,0
     jz raw_chr
-    in al,uart_data     ; read character
+    in al,uart_data         ; read character
     ret
 
 
@@ -130,7 +126,7 @@ getc:
 raw_hex:
     call .nibble
     mov ah,al
-    shl ah,1            ; shl al,4 not possible
+    shl ah,1                ; shl al,4 not possible
     shl ah,1
     shl ah,1
     shl ah,1
@@ -140,18 +136,18 @@ raw_hex:
     ret
 
 .nibble:
-    in al,uart_ctrl     ; any characters?
+    in al,uart_ctrl         ; any characters?
     cmp al,0
     jz .nibble
 
-    in al,uart_data     ; read character
+    in al,uart_data         ; read character
     cmp al,41h
     jae .letter
-    sub al,30h          ; '0'
+    sub al,30h              ; '0'
     ret
 
 .letter:
-    sub al,37h          ; 'A' - 10
+    sub al,37h              ; 'A' - 10
     ret
 
 
@@ -167,18 +163,18 @@ gets:
     cld
 
 .loop:
-    in al,uart_ctrl     ; any characters?
+    in al,uart_ctrl         ; any characters?
     cmp al,0
     jz .loop
 
-    in al,uart_data     ; read character
+    in al,uart_data         ; read character
     stosb
-    cmp al,0Ah          ; are we done?
+    cmp al,0Ah              ; are we done?
     jne .loop
 
 .exit:
-    mov dx,di           ; return length in dx
-    mov al,0            ; terminator
+    mov dx,di               ; return length in dx
+    mov al,0                ; terminator
     stosb
     pop es
     pop di
@@ -196,7 +192,7 @@ gets:
 ;======================================================================
 
 read_ready:
-    in al,uart_ctrl     ; any bytes?
+    in al,uart_ctrl         ; any bytes?
     ret
 
 
@@ -231,20 +227,20 @@ read_str:
     cld
 
 .loop:
-    in al,uart_ctrl     ; any characters?
+    in al,uart_ctrl         ; any characters?
     cmp al,0
     jz .loop
 
-    in al,uart_data     ; read character
+    in al,uart_data         ; read character
     stosb
     out uart_data,al
 
-    cmp al,0Ah          ; are we done?
+    cmp al,0Ah              ; are we done?
     jne .loop
 
 .exit:
-    mov dx,di           ; return length in dx
-    mov al,0            ; terminator
+    mov dx,di               ; return length in dx
+    mov al,0                ; terminator
     stosb
     pop es
     pop di

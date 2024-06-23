@@ -139,12 +139,12 @@ mem_dasm:
 
 .loop:
 
-    call print_addr     ; print seg:offset
+    call print_addr         ; print seg:offset
 
 
 ; decode instruction
 
-    call load_inst      ; load instruction
+    call load_inst          ; load instruction
 
     cmp byte [cs:curr_type],ins_type_unknown
     je .exit
@@ -152,20 +152,20 @@ mem_dasm:
     cmp byte [cs:curr_type],ins_type_ext
     jne .decode
 
-    call load_extended  ; load extended instruction
+    call load_extended      ; load extended instruction
 
 
 ; decode operands
 
 .decode:
     cmp byte [cs:curr_opr1],ins_op_r8
-    jb .operands        ; addressing byte only for op_r8 upwards
+    jb .operands            ; addressing byte only for op_r8 upwards
 
     ; addr already loaded?
     cmp byte [cs:addr_load],1
     je .operands
 
-    call load_addr      ; load addressing
+    call load_addr          ; load addressing
 
 .operands:
     ; operand 1
@@ -187,7 +187,7 @@ mem_dasm:
 
 
 .print:
-    ; instruction and operands
+    ; print instruction and operands
 
     call print_spaces
     call print_inst
@@ -195,7 +195,7 @@ mem_dasm:
     mov dl,[cs:curr_opr1]
     cmp dl,ins_op_none
     je .print_end
-    call print_opr      ; operand 1
+    call print_opr          ; operand 1
 
     mov dl,[cs:curr_opr2]
     cmp dl,ins_op_none
@@ -204,7 +204,7 @@ mem_dasm:
     mov al,','
     call print_chr
 
-    call print_opr      ; operand 2
+    call print_opr          ; operand 2
 
 .print_end:
     call print_end
@@ -224,13 +224,13 @@ mem_dasm:
 ;
 print_addr:
     mov ax,ds
-    call print_word     ; seg
+    call print_word         ; seg
 
     mov al,':'
     call print_chr
 
     mov ax,si
-    call print_word     ; offset
+    call print_word         ; offset
 
     mov al,' '
     call print_chr
@@ -248,6 +248,7 @@ load_byte:
 
     call print_hex
 
+    ; keep count
     mov al,byte [cs:curr_cnt]
     add al,2
     mov byte [cs:curr_cnt],al
@@ -266,6 +267,7 @@ load_word:
 
     call print_word
 
+    ; keep count
     mov al,byte [cs:curr_cnt]
     add al,4
     mov byte [cs:curr_cnt],al
@@ -275,7 +277,7 @@ load_word:
     ret
 
 
-; load instruction (and clear variables)
+; load instruction byte
 ;
 load_inst:
     push bx
@@ -286,21 +288,21 @@ load_inst:
     ; instruction
     mov [cs:curr_inst],al
 
-    mov dl,5            ; size of inst
+    mov dl,5                ; size of inst
     mul dl
     mov bx,inst_table
-    add bx,ax           ; offset
+    add bx,ax               ; offset
 
-    mov ax,[cs:bx + 0]  ; mnemonic
+    mov ax,[cs:bx + 0]      ; mnemonic
     mov [cs:curr_mnem],ax
 
-    mov al,[cs:bx + 2]  ; type
+    mov al,[cs:bx + 2]      ; type
     mov [cs:curr_type],al
 
     ; operands
-    mov al,[cs:bx + 3]  ; opr1
+    mov al,[cs:bx + 3]      ; opr1
     mov [cs:curr_opr1],al
-    mov al,[cs:bx + 4]  ; opr2
+    mov al,[cs:bx + 4]      ; opr2
     mov [cs:curr_opr2],al
 
     pop dx
@@ -319,18 +321,18 @@ load_addr:
 
     mov dl,al
 
-    mov cl,6            ; MOD
+    mov cl,6                ; MOD
     shr al,cl
     mov [cs:curr_mod],al
 
-    mov al,dl           ; REG / Ext. Opcode
+    mov al,dl               ; REG / Ext. Opcode
     and al,038h
     shr al,1
     shr al,1
     shr al,1
     mov [cs:curr_reg],al
 
-    mov al,dl           ; R/M
+    mov al,dl               ; R/M
     and al,7h
     mov [cs:curr_rxm],al
 
@@ -349,7 +351,7 @@ load_extended:
     push bx
     push dx
 
-    call load_addr      ; load addr
+    call load_addr          ; load addr
 
     ; curr_reg is actually the extended inst
     xor ax,ax
@@ -359,7 +361,7 @@ load_extended:
     ; TODO
 
 
-    shl al,1            ; word sized
+    shl al,1                ; word sized
 
     ; points to extended inst, shift into list
     mov bx,[cs:curr_mnem]
@@ -380,6 +382,7 @@ load_opr:
     push ax
     push dx
 
+    ; determine how to handle operand
     cmp dl,ins_op_rm8
     jae .rm
     cmp dl,ins_op_r8
@@ -396,7 +399,7 @@ load_opr:
 .rm:
     ; 2 registers
     cmp byte [cs:curr_mod],3
-    je .exit
+    je .reg
 
     ; R/M table 2: 16-bit displacement
     cmp byte [cs:curr_mod],2
@@ -411,6 +414,10 @@ load_opr:
     je .disp16
     jmp .exit
 
+    ; REG
+.reg:
+    jmp .exit
+
     ; displacement 16-bit
 .disp16:
     call load_word
@@ -421,10 +428,6 @@ load_opr:
 .disp8:
     call load_byte
     mov [cs:curr_off],ax
-    jmp .exit
-
-    ; REG
-.reg:
     jmp .exit
 
     ; FAR
@@ -454,7 +457,7 @@ load_opr:
     ret
 
 
-; print spaces
+; print spaces (add variable number of spaces)
 ;
 print_spaces:
     push ax
@@ -462,6 +465,7 @@ print_spaces:
 
     xor cx,cx
 
+    ; how many spaces are we short?
     mov al,byte [cs:curr_cnt]
     mov cl,16
     sub cl,al
@@ -481,10 +485,10 @@ print_spaces:
 print_inst:
     push si
     mov si,[cs:curr_mnem]
-    call print_str      ; inst
+    call print_str          ; inst
 
     mov al,20h
-    call print_chr      ; space
+    call print_chr          ; space
     pop si
     ret
 
@@ -496,8 +500,9 @@ print_opr:
     push bx
     push dx
 
+    ; determine how to handle operand
     cmp dl,ins_op_none
-    je .exit            ; none
+    je .exit                ; none
 
     cmp dl,ins_op_ds
     jbe .constreg
@@ -538,6 +543,7 @@ print_opr:
     je .rmx
     add bl,8
 
+    ; R/M
 .rmx:
     shl bl,1
 
@@ -548,6 +554,7 @@ print_opr:
 
     jmp .exit
 
+    ; addressing
 .addr:
     ; TODO
 
@@ -672,7 +679,7 @@ print_end:
     ret
 
 
-; clear
+; clear (reset current instruction)
 ;
 clear:
     ; instruction
@@ -700,7 +707,7 @@ clear:
 
 
 ;======================================================================
-; current instruction
+; data
 ;======================================================================
 
 ; current instruction

@@ -2,17 +2,6 @@
 ; Ferry Hendrikx, June 2024
 ;======================================================================
 
-; segment first and last
-rom_first       equ 08000h
-rom_last        equ 0F000h
-
-rom_size        equ 0400h
-rom_max         equ 8
-
-; segment for relocation
-rom_relocate    equ 01000h
-
-
 ;======================================================================
 ; ROM menu
 ;======================================================================
@@ -21,20 +10,20 @@ rom_menu:
     print rom_welcome
 
     push cs
-    pop ds              ; DS:SI
+    pop ds                  ; DS:SI
     mov si,rom_table
 
-    xor bl,bl           ; counter
+    xor bl,bl               ; counter
 
 .next:
 ; segment
     lodsw
-    cmp ax,0            ; are we done?
+    cmp ax,0                ; are we done?
     je .loop
 
-    push ax             ; store seg
+    push ax                 ; store seg
 
-    mov al,bl           ; counter
+    mov al,bl               ; counter
     inc cl
     call print_hex
 
@@ -45,16 +34,16 @@ rom_menu:
     mov al,' '
     call print_chr
 
-    pop ax              ; restore seg
+    pop ax                  ; restore seg
 
-    call print_word     ; seg
+    call print_word         ; seg
 
     mov al,':'
     call print_chr
 
 ; offset
     lodsw
-    call print_word     ; offset
+    call print_word         ; offset
 
     mov al,' '
     call print_chr
@@ -64,7 +53,7 @@ rom_menu:
     call print_chr
 
 ; size/flags
-    add si,4            ; skip size and flag
+    add si,4                ; skip size and flag
 
 ; name
     call print_str
@@ -72,7 +61,7 @@ rom_menu:
     mov al,0Ah
     call print_chr
 
-    add si,24           ; print char pops DS:SI
+    add si,24               ; print char pops DS:SI
     jmp .next
 
 ; main loop
@@ -81,15 +70,21 @@ rom_menu:
 
     call read_chr
 
+    ; quit to monitor
     cmp al,'Q'
     je .exit
 
+    ; number?
     cmp al,30h
     jae .number
     jmp .loop
 
 .number:
-    sub al,30h          ; '0'
+    sub al,30h              ; '0'
+
+    mov bl,[ cs:rom_cnt ]
+    cmp al,bl               ; too high?
+    ja .loop
 
     call rom_exec
 
@@ -105,10 +100,10 @@ rom_menu:
 rom_exec:
     print rom_select
 
-    push cs             ; CS => DS
+    push cs                 ; CS => DS
     pop ds
 
-    mov bl,32           ; multiply by size of ROM table entry
+    mov bl,32               ; multiply by size of ROM table entry
     mul bl
     mov bx,ax
     mov si,rom_table
@@ -124,7 +119,7 @@ rom_exec:
 
 ; size
     lodsw
-    push ax             ; store size
+    push ax                 ; store size
 
 ; flags
     lodsw
@@ -137,10 +132,10 @@ rom_exec:
     xor si,si
 
     mov ax,rom_relocate
-    mov es,ax           ; ES:DI
+    mov es,ax               ; ES:DI
     xor di,di
 
-    pop ax              ; restore size
+    pop ax                  ; restore size
 
 .copy:
     mov cx,16384
@@ -153,11 +148,11 @@ rom_exec:
     jg .copy
 
 .call:
-    push cs             ; return segment and offset
+    push cs                 ; return segment and offset
     mov bx,.return
     push bx
 
-    push cs             ; CS => DS
+    push cs                 ; CS => DS
     pop ds
 
     call far [ rom_ofs ]
@@ -178,46 +173,64 @@ rom_exec:
 ; scan ROM
 ; Scans from segment rom_first to segment rom_last and store the details
 ; of any ROMs it finds in the rom_table
-; returns number of ROMs found in DL
 ;======================================================================
 
 rom_scan:
+    push ax
+    push bx
+    push cx
+    push dx
     push ds
     push es
 
     xor dl,dl
 
     mov bx,rom_first
-    mov ds,bx           ; DS:SI
+    mov ds,bx               ; DS:SI
     xor si,si
 
     push cs
-    pop es              ; ES:DI
+    pop es                  ; ES:DI
     mov di,rom_table
 
 .scan:
     lodsw
-    cmp ax,0AA55h       ; ROM signature found?
+    cmp ax,0AA55h           ; ROM signature found?
     jne .next
     inc dl
-    mov ax,bx           ; store segment
+    mov ax,bx               ; store segment
     stosw
     mov cx,30/2
 
 ; copy part of signature block
 .copy:
-    movsw               ; DS:SI => ES:DI
+    movsw                   ; DS:SI => ES:DI
     loop .copy
 
 .next:
-    add bx,rom_size     ; next segment to check
-    mov ds,bx           ; DS:SI
+    add bx,rom_size         ; next segment to check
+    mov ds,bx               ; DS:SI
     xor si,si
     cmp bx,rom_last
     jb .scan
 
 .exit:
+    mov byte [ cs:rom_cnt ],dl
+
     pop es
     pop ds
+    pop dx
+    pop cx
+    pop bx
+    pop ax
     ret
+
+
+;======================================================================
+; data
+;======================================================================
+
+; ROM count
+rom_cnt:                    db 000h
+
 

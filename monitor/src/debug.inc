@@ -172,19 +172,19 @@ cmd_jmp:
     call spaces
 
     call inp_word           ; seg
-    mov [ hex_seg ],ax
+    mov [ jmp_seg ],ax
 
     mov al,':'
     call expect
     jne syntax
 
     call inp_word           ; offset
-    mov [ hex_ofs ],ax
+    mov [ jmp_ofs ],ax
 
     print dbg_cmd_jump
 
 ; indirect far jump to CS:IP
-    jmp far [ hex_ofs ]
+    jmp far [ jmp_ofs ]
 
 
 cmd_ihf_load:
@@ -210,7 +210,7 @@ cmd_ihf_exec:
     push ax
     popf
 ; indirect far jump to CS:IP
-    jmp far [ hex_ofs ]
+    jmp far [ ihf_ofs ]
 
 
 syntax:
@@ -223,29 +223,32 @@ syntax:
 ;======================================================================
 
 ; skip over any spaces
+;
 spaces:
     lodsb
     cmp al,20h
-    je spaces           ; keep going if we had a space
-    dec si              ; undo the last load
+    je spaces               ; keep going if we had a space
+    dec si                  ; undo the last load
     ret
 
 
 ; expect character AL
+;
 expect:
     push bx
     mov bl,al
     lodsb
-    cmp al,bl           ; is it what we expected?
+    cmp al,bl               ; is it what we expected?
     pop bx
-    ret                 ; flag not changed on ret
+    ret                     ; flag not changed on ret
 
 
 ; read 2 hex characters into AL from ES:DI
+;
 inp_hex:
     call .nibble
     mov ah,al
-    shl ah,1            ; shl al,4 not possible
+    shl ah,1                ; shl al,4 not possible
     shl ah,1
     shl ah,1
     shl ah,1
@@ -254,18 +257,19 @@ inp_hex:
     ret
 
 .nibble:
-    lodsb               ; read char
+    lodsb                   ; read char
     cmp al,41h
     jae .letter
-    sub al,30h          ; '0'
+    sub al,30h              ; '0'
     ret
 
 .letter:
-    sub al,37h          ; 'A' - 10
+    sub al,37h              ; 'A' - 10
     ret
 
 
 ; read 4 hex characters into AX from ES:DI
+;
 inp_word:
     push bx
     call inp_hex
@@ -281,6 +285,10 @@ inp_word:
 ; data
 ;======================================================================
 
-buffer      times 40    db 000h
+; command line buffer
+buffer      times 40        db 000h
 
+; debug address
+jmp_ofs:                    dw 00h
+jmp_seg:                    dw 00h
 

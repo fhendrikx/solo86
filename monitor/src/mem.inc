@@ -14,13 +14,13 @@ mem_read:
 
 ; print seg:offset
     mov ax,ds
-    call print_word     ; seg
+    call print_word         ; seg
 
     mov al,':'
     call print_chr
 
     mov ax,si
-    call print_word     ; offset
+    call print_word         ; offset
 
     mov al,':'
     call print_chr
@@ -47,10 +47,10 @@ mem_read:
 .loop3:
     ; dump the memory content in ascii
     lodsb
-    cmp al,32       ; space
+    cmp al,32               ; space
     jb .print_dot
 
-    cmp al,126      ; last printable char
+    cmp al,126              ; last printable char
     ja .print_dot
 
     jmp .print_ascii

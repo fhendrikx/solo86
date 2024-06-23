@@ -47,8 +47,8 @@ read_ihf:
     je .rec_start
     jmp .find_record
 
-; record type 0x00 - Data
-; read data to ES:DI, keep going until CL is zero
+    ; record type 0x00 - Data
+    ; read data to ES:DI, keep going until CL is zero
 .rec_data:
     call raw_hex            ; get data (1 byte)
     stosb
@@ -57,14 +57,14 @@ read_ihf:
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
-; record type 0x01 - EOF
-; the end of the road
+    ; record type 0x01 - EOF
+    ; the end of the road
 .rec_eof:
     call raw_hex            ; get checksum (1 byte)
     jmp .clean
 
-; record type 0x02 - Segment
-; read segment into ES
+    ; record type 0x02 - Segment
+    ; read segment into ES
 .rec_segment:
     call raw_hex            ; get segment
     mov bh,al
@@ -75,26 +75,26 @@ read_ihf:
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
-; record type 0x03 - CS:IP
-; read CS:IP into start_segment/start_address
+    ; record type 0x03 - CS:IP
+    ; read CS:IP into start_segment/start_address
 .rec_start:
     call raw_hex            ; get CS
     mov bh,al
     call raw_hex            ; get CS
     mov bl,al
-    mov [ hex_seg ], bx
+    mov [ ihf_seg ], bx
 
     call raw_hex            ; get IP
     mov bh,al
     call raw_hex            ; get IP
     mov bl,al
-    mov [ hex_ofs ], bx
+    mov [ ihf_ofs ], bx
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
-.clean:
 ; clean up any remaining chars in the UART
+.clean:
     call raw_ready
     jz .exit
     call raw_chr
@@ -107,4 +107,13 @@ read_ihf:
     pop bx
     pop ax
     ret
+
+
+;======================================================================
+; data
+;======================================================================
+
+; IHF address
+ihf_ofs:                    dw 00h
+ihf_seg:                    dw 00h
 
