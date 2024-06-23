@@ -26,6 +26,7 @@ putc:
 
 print_hex:
     push ax
+    push ax
     shr al,1            ; shr al,4 not possible
     shr al,1
     shr al,1
@@ -35,6 +36,7 @@ print_hex:
     pop ax
     and al,0fh
     call .nibble
+    pop ax
     ret
 
 .nibble:
