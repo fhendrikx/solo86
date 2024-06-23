@@ -2,7 +2,7 @@
 ; Ferry Hendrikx, June 2024
 ;======================================================================
 ;
-; format of instructions:
+; Format of instructions:
 ;
 ;======================================================================
 ;byte   thing           state
@@ -17,13 +17,10 @@
 ;6      data high       optional
 ;
 ;
-;prefix
-;           repetition
-;           segment override
-;           lock
-;           size override (32 bit only)
+; Detailed breakdown of opcode and addr mode
 ;
 ;           7 6 5 4 3 2 1 0
+;           ===============
 ;opcode     OPCODE      D W
 ;
 ;           OPCODE gives the operation
@@ -39,6 +36,7 @@
 ;                         W=word/byte (1=16-bit, 0=8-bit)
 ;
 ;           7 6 5 4 3 2 1 0
+;           ===============
 ;addr mode  MOD REG   R/M
 ;
 ;           MOD (determines how R/M is interpreted; 2 bits)
@@ -135,6 +133,8 @@ mem_dasm:
     push ds
     push si
 
+    call resetx
+
 ; disassemble an instruction at DS:SI
 
 .loop:
@@ -150,55 +150,64 @@ mem_dasm:
     je .exit
 
     cmp byte [cs:curr_type],ins_type_ext
-    jne .print
+    jne .decode
 
     call load_extended  ; load extended instruction
-
-.print:
-    call print_inst     ; print instruction
 
 
 ; decode operands
 
+.decode:
     cmp byte [cs:curr_opr1],ins_op_r8
-    jb .decode          ; addressing byte only for op_r8 upwards
+    jb .operands        ; addressing byte only for op_r8 upwards
 
     ; addr already loaded?
     cmp byte [cs:addr_load],1
-    je .decode
+    je .operands
 
     call load_addr      ; load addressing
 
-
-.decode:
+.operands:
     ; operand 1
 
     mov dl,[cs:curr_opr1]
     cmp dl,ins_op_none
-    je .next
-
-    mov al,20h
-    call print_chr
+    je .print
 
     call load_opr
-    call print_opr
 
     ; operand 2
 
     mov dl,[cs:curr_opr2]
     cmp dl,ins_op_none
-    je .next
+    je .print
+
+    call load_opr
+    jmp .print
+
+.print:
+    ; instruction and operands
+
+    call print_spaces
+    call print_inst
+
+    mov dl,[cs:curr_opr1]
+    cmp dl,ins_op_none
+    je .print_end
+    call print_opr      ; operand 1
+
+    mov dl,[cs:curr_opr2]
+    cmp dl,ins_op_none
+    je .print_end
 
     mov al,','
     call print_chr
 
-    call load_opr
-    call print_opr
+    call print_opr      ; operand 2
 
-    jmp .next
-
-.next:
+.print_end:
     call print_end
+    call resetx
     loop .loop
 
 .exit:
@@ -228,15 +237,50 @@ print_addr:
     ret
 
 
+; load byte
+;
+load_byte:
+    xor ax,ax
+    lodsb
+
+    push ax
+
+    call print_hex
+
+    mov al,byte [cs:curr_cnt]
+    add al,2
+    mov byte [cs:curr_cnt],al
+
+    pop ax
+
+    ret
+
+
+; load word
+;
+load_word:
+    lodsw
+
+    push ax
+
+    call print_word
+
+    mov al,byte [cs:curr_cnt]
+    add al,4
+    mov byte [cs:curr_cnt],al
+
+    pop ax
+
+    ret
+
+
 ; load instruction (and clear variables)
 ;
 load_inst:
     push bx
     push dx
 
-    xor ax,ax
-
-    lodsb
+    call load_byte
 
     ; instruction
     mov [cs:curr_inst],al
@@ -252,20 +296,11 @@ load_inst:
     mov al,[cs:bx + 2]  ; type
     mov [cs:curr_type],al
 
-    ; addressing
-    mov byte [cs:addr_load],0
-    mov byte [cs:curr_mod],0
-    mov byte [cs:curr_reg],0
-    mov byte [cs:curr_rxm],0
-
     ; operands
     mov al,[cs:bx + 3]  ; opr1
     mov [cs:curr_opr1],al
     mov al,[cs:bx + 4]  ; opr2
     mov [cs:curr_opr2],al
-
-    mov word [cs:curr_imm],0
-    mov word [cs:curr_off],0
 
     pop dx
     pop bx
@@ -279,7 +314,7 @@ load_addr:
     push cx
     push dx
 
-    lodsb
+    call load_byte
 
     mov dl,al
 
@@ -370,14 +405,13 @@ load_opr:
 
     ; displacement 16-bit
 .disp16:
-    lodsw
+    call load_word
     mov [cs:curr_off],ax
     jmp .exit
 
     ; displacement 8-bit
 .disp8:
-    xor ax,ax
-    lodsb
+    call load_byte
     mov [cs:curr_off],ax
     jmp .exit
 
@@ -387,22 +421,22 @@ load_opr:
 
     ; FAR
 .far:
-    lodsw
+    call load_word
     mov [cs:curr_imm],ax
-    lodsw
+
+    call load_word
     mov [cs:curr_off],ax
     jmp .exit
 
     ; IMM16
 .imm16:
-    lodsw
+    call load_word
     mov [cs:curr_imm],ax
     jmp .exit
 
     ; IMM8
 .imm8:
-    xor ax,ax
-    lodsb
+    call load_byte
     mov [cs:curr_imm],ax
     jmp .exit
 
@@ -412,12 +446,37 @@ load_opr:
     ret
 
 
+; print spaces
+;
+print_spaces:
+    push ax
+    push cx
+
+    xor cx,cx
+
+    mov al,byte [cs:curr_cnt]
+    mov cl,16
+    sub cl,al
+
+.loop:
+    mov al,20h
+    call print_chr
+    loop .loop
+
+    pop cx
+    pop ax
+    ret
+
+
 ; print instruction
 ;
 print_inst:
     push si
     mov si,[cs:curr_mnem]
-    call print_str
+    call print_str      ; inst
+
+    mov al,20h
+    call print_chr      ; space
     pop si
     ret
 
@@ -603,6 +662,33 @@ print_end:
     ret
 
 
+; reset
+;
+resetx:
+    ; instruction
+    mov byte [cs:curr_inst],0
+    mov word [cs:curr_mnem],0
+    mov byte [cs:curr_type],0
+
+    ; addressing
+    mov byte [cs:addr_load],0
+    mov byte [cs:curr_mod],0
+    mov byte [cs:curr_reg],0
+    mov byte [cs:curr_rxm],0
+
+    ; operands
+    mov byte [cs:curr_opr1],0
+    mov byte [cs:curr_opr2],0
+
+    mov word [cs:curr_imm],0
+    mov word [cs:curr_off],0
+
+    ; byte count
+    mov byte [cs:curr_cnt],0
+
+    ret
+
+
 ;======================================================================
 ; current instruction
 ;======================================================================
@@ -625,6 +711,9 @@ curr_opr2               db 000h
 
 curr_imm                dw 000h
 curr_off                dw 000h
+
+; current byte count
+curr_cnt                db 000h
 
 
 ;======================================================================
