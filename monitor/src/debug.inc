@@ -71,7 +71,7 @@ cmd_mem_dasm:
     mov si,ax
 
     push ds
-    mov cx,8
+    mov cx,16
     mov ds,bx
     call mem_dasm
     pop ds
