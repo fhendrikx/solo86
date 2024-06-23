@@ -133,7 +133,7 @@ mem_dasm:
     push ds
     push si
 
-    call resetx
+    call clear
 
 ; disassemble an instruction at DS:SI
 
@@ -208,7 +208,7 @@ mem_dasm:
 
 .print_end:
     call print_end
-    call resetx
+    call clear
     loop .loop
 
 .exit:
@@ -672,9 +672,9 @@ print_end:
     ret
 
 
-; reset
+; clear
 ;
-resetx:
+clear:
     ; instruction
     mov byte [cs:curr_inst],0
     mov word [cs:curr_mnem],0
