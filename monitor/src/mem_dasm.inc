@@ -139,20 +139,7 @@ mem_dasm:
 
 .loop:
 
-
-; print seg:offset
-
-    mov ax,ds
-    call print_word     ; seg
-
-    mov al,':'
-    call print_chr
-
-    mov ax,si
-    call print_word     ; offset
-
-    mov al,' '
-    call print_chr
+    call print_addr     ; print seg:offset
 
 
 ; decode instruction
@@ -165,15 +152,10 @@ mem_dasm:
     cmp byte [cs:curr_type],ins_type_ext
     jne .print
 
-; extended instruction
-
-    call load_extended
-
-
-; print instruction mnemonic
+    call load_extended  ; load extended instruction
 
 .print:
-    call print_inst
+    call print_inst     ; print instruction
 
 
 ; decode operands
@@ -228,6 +210,24 @@ mem_dasm:
     ret
 
 
+; print_addr
+;
+print_addr:
+    mov ax,ds
+    call print_word     ; seg
+
+    mov al,':'
+    call print_chr
+
+    mov ax,si
+    call print_word     ; offset
+
+    mov al,' '
+    call print_chr
+
+    ret
+
+
 ; load instruction (and clear variables)
 ;
 load_inst:
@@ -237,8 +237,6 @@ load_inst:
     xor ax,ax
 
     lodsb
-
-    call print_hex
 
     ; instruction
     mov [cs:curr_inst],al
@@ -282,7 +280,6 @@ load_addr:
     push dx
 
     lodsb
-    call print_hex
 
     mov dl,al
 
@@ -490,25 +487,9 @@ print_opr:
 
     ; sreg
 .constreg:
-    push ax
-    mov al,'Z'
-    call print_chr
-    pop ax
-
-
     xor bx,bx
     mov bl,dl
-    ;dec bl
     shl bl,1
-
-
-
-    push ax
-    mov al,bl
-    call print_hex
-    pop ax
-
-
 
     push si
     mov si,[cs:regs_table + bx]
@@ -540,7 +521,6 @@ print_opr:
     cbw
     mov dx,si
     add ax,dx
-    inc ax
     call print_word
     jmp .exit
 
