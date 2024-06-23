@@ -9,7 +9,7 @@
 ; derived from record 0x02, and OFFSET is derived from each record 0x01
 ;======================================================================
 
-read_hex_file:
+read_ihf:
     push ax
     push bx
     push cx

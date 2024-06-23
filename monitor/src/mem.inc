@@ -1,9 +1,9 @@
 
 ;======================================================================
-; memory dump; dump memory content at DS:SI for CX bytes
+; memory read; read memory content at DS:SI for CX bytes
 ;======================================================================
 
-mem_dump:
+mem_read:
     push ax
     push bx
     push cx
@@ -11,24 +11,16 @@ mem_dump:
     push si
 
 .loop1:
-    ; print the segment (DS)
-    mov ax,ds
-    mov al,ah
-    call print_hex
 
+; print seg:offset
     mov ax,ds
-    call print_hex
+    call print_word     ; seg
 
     mov al,':'
     call print_chr
 
-    ; print the offset (SI)
     mov ax,si
-    mov al,ah
-    call print_hex
-
-    mov ax,si
-    call print_hex
+    call print_word     ; offset
 
     mov al,':'
     call print_chr

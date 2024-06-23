@@ -14,73 +14,11 @@ rom_relocate    equ 01000h
 
 
 ;======================================================================
-; scan ROM
-; Scans from segment rom_first to segment rom_last and store the details
-; of any ROMs it finds in the rom_table
-; returns number of ROMs found in DL
+; ROM menu
 ;======================================================================
 
-rom_scan:
-    push bx
-    push cx
-    push di
-    push ds
-    push es
-    push si
-
-    xor dl,dl
-
-    mov bx,rom_first
-    mov ds,bx           ; DS:SI
-    xor si,si
-
-    push cs
-    pop es              ; ES:DI
-    mov di,rom_table
-
-.scan:
-    lodsw
-    cmp ax,0AA55h       ; ROM signature found?
-    jne .next
-    inc dl
-    mov ax,bx           ; store segment
-    stosw
-    mov cx,30/2
-
-; copy part of signature block
-.copy:
-    movsw               ; DS:SI => ES:DI
-    loop .copy
-
-.next:
-    add bx,rom_size     ; next segment to check
-    mov ds,bx           ; DS:SI
-    xor si,si
-    cmp bx,rom_last
-    jb .scan
-
-.exit:
-    pop si
-    pop es
-    pop ds
-    pop di
-    pop cx
-    pop bx
-    ret
-
-
-;======================================================================
-; display ROM table
-; Displays ROMs found and stored in the ROM table.
-;======================================================================
-
-rom_display:
-    push ax
-    push bx
-    push ds
-    push si
-
-    print mesg_rom
+rom_menu:
+    print rom_welcome
 
     push cs
     pop ds              ; DS:SI
@@ -92,7 +30,7 @@ rom_display:
 ; segment
     lodsw
     cmp ax,0            ; are we done?
-    je .exit
+    je .loop
 
     push ax             ; store seg
 
@@ -102,18 +40,26 @@ rom_display:
 
     mov al,' '
     call print_chr
+    mov al,'-'
+    call print_chr
+    mov al,' '
+    call print_chr
 
     pop ax              ; restore seg
 
-    call print_word
+    call print_word     ; seg
 
     mov al,':'
     call print_chr
 
 ; offset
     lodsw
-    call print_word
+    call print_word     ; offset
 
+    mov al,' '
+    call print_chr
+    mov al,'-'
+    call print_chr
     mov al,' '
     call print_chr
 
@@ -126,16 +72,28 @@ rom_display:
     mov al,0Ah
     call print_chr
 
-    add si,24           ; print char restores DS:SI
+    add si,24           ; print char pops DS:SI
     jmp .next
 
-.exit:
-    print mesg_rom_select
+; main loop
+.loop:
+    print rom_prompt
 
-    pop si
-    pop ds
-    pop bx
-    pop ax
+    call read_chr
+
+    cmp al,'Q'
+    je .exit
+
+    cmp al,30h
+    jae .number
+    jmp .loop
+
+.number:
+    sub al,30h          ; '0'
+
+    call rom_exec
+
+.exit:
     ret
 
 
@@ -145,13 +103,7 @@ rom_display:
 ;======================================================================
 
 rom_exec:
-    push ax
-    push bx
-    push ds
-    push di
-    push si
-
-    print mesg_rom_exec
+    print rom_select
 
     push cs             ; CS => DS
     pop ds
@@ -219,10 +171,53 @@ rom_exec:
 ;    retf
 
 .return:
-    pop si
-    pop di
+    ret
+
+
+;======================================================================
+; scan ROM
+; Scans from segment rom_first to segment rom_last and store the details
+; of any ROMs it finds in the rom_table
+; returns number of ROMs found in DL
+;======================================================================
+
+rom_scan:
+    push ds
+    push es
+
+    xor dl,dl
+
+    mov bx,rom_first
+    mov ds,bx           ; DS:SI
+    xor si,si
+
+    push cs
+    pop es              ; ES:DI
+    mov di,rom_table
+
+.scan:
+    lodsw
+    cmp ax,0AA55h       ; ROM signature found?
+    jne .next
+    inc dl
+    mov ax,bx           ; store segment
+    stosw
+    mov cx,30/2
+
+; copy part of signature block
+.copy:
+    movsw               ; DS:SI => ES:DI
+    loop .copy
+
+.next:
+    add bx,rom_size     ; next segment to check
+    mov ds,bx           ; DS:SI
+    xor si,si
+    cmp bx,rom_last
+    jb .scan
+
+.exit:
+    pop es
     pop ds
-    pop bx
-    pop ax
     ret
 

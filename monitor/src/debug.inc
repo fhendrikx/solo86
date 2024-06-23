@@ -3,193 +3,204 @@
 ; debug menu
 ;======================================================================
 
-; prompt
-prompt:
-    print mesg_prompt
+debug_menu:
+    print dbg_welcome
 
-    call read_chr
-    cmp al,'D'
-    je  menu_dump
-    cmp al,'F'
-    je  menu_fill
+; main loop
+.loop:
+    print dbg_prompt
+
+    push cs
+    pop ax
+    mov ds,ax
+    mov es,ax
+
+    mov di,buffer
+    call read_str           ; ES:DI
+
+    mov si,buffer           ; DS:SI
+    lodsb
+
     cmp al,'H'
-    je  menu_help
+    je  cmd_help
+
+    cmp al,'D'
+    je  cmd_mem_dasm
+    cmp al,'F'
+    je  cmd_mem_fill
+    cmp al,'R'
+    je  cmd_mem_read
+
     cmp al,'I'
-    je  menu_inp
-    cmp al,'J'
-    je  menu_jump
-    cmp al,'L'
-    je  menu_load
+    je  cmd_inp
     cmp al,'O'
-    je  menu_out
-    cmp al,'X'
-    je  menu_exe
-    jmp prompt
+    je  cmd_out
+    cmp al,'J'
+    je  cmd_jmp
 
-menu_dump:
-; dump memory
+    cmp al,'L'
+    je  cmd_ihf_load
+    cmp al,'E'
+    je  cmd_ihf_exec
 
-    push bx
-    push cx
+    cmp al,'Q'
+    je .exit
+
+    jmp .loop
+
+.exit:
+    ret
+
+
+cmd_help:
+    print dbg_cmd_help
+    jmp debug_menu.loop
+
+
+cmd_mem_dasm:
+    call spaces
+
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov si,ax
+
     push ds
-    push si
-
-    call read_chr           ; space
-
-    call read_hex           ; get segment
-    mov bh,al
-    call read_hex           ; get segment
-    mov bl,al
+    mov cx,16
     mov ds,bx
-
-    call read_chr           ; colon
-
-    call read_hex           ; get offset
-    mov bh,al
-    call read_hex           ; get offset
-    mov bl,al
-    mov si,bx
-
-    print mesg_dump
-
-    mov cx,256
-    call mem_dump
-
-    pop si
+    call mem_dasm
     pop ds
-    pop cx
-    pop bx
-    jmp prompt
 
-menu_fill:
-; fill memory
+    jmp debug_menu.loop
 
-    push ax
-    push bx
-    push cx
-    push di
-    push es
 
-    call read_chr           ; space
+cmd_mem_fill:
+    call spaces
 
-    call read_hex           ; get segment
-    mov bh,al
-    call read_hex           ; get segment
-    mov bl,al
-    mov es,bx
+    call inp_word           ; seg
+    mov bx,ax
 
-    call read_chr           ; colon
+    mov al,':'
+    call expect
+    jne syntax
 
-    call read_hex           ; get offset
-    mov bh,al
-    call read_hex           ; get offset
-    mov bl,al
-    mov di,bx
+    call inp_word           ; offset
+    mov si,ax
 
-    call read_chr           ; space
+    call spaces
 
-    call read_hex           ; get count
+    call inp_hex            ; count
     xor cx,cx
     mov cl,al
 
-    call read_chr           ; space
+    call inp_hex            ; byte
 
-    call read_hex           ; get hex byte
+    print dbg_cmd_fill
 
-    print mesg_fill
-
+    push es
+    mov es,bx
     call mem_fill
-
     pop es
-    pop di
-    pop cx
-    pop bx
-    pop ax
-    jmp prompt
 
-menu_help:
-; help
-    print mesg_help
-    jmp prompt
+    jmp debug_menu.loop
 
-menu_inp:
-; inp pp
 
-    push dx                 ; save echo state
+cmd_mem_read:
+    call spaces
 
-    call read_chr           ; space
-    call read_hex           ; get port
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov si,ax
+
+    print dbg_cmd_read
+
+    push ds
+    mov ds,bx
+
+    mov cx,256
+    call mem_read
+
+    pop ds
+
+    jmp debug_menu.loop
+
+
+cmd_inp:
+    call spaces
+
+    call inp_hex            ; port
     xor dx,dx
     mov dl,al
 
-    print mesg_inp
+    print dbg_cmd_inp
 
     in al,dx                ; INP
     call print_hex
 
-    pop dx
-    jmp prompt
+    jmp debug_menu.loop
 
-menu_jump:
-; jump
 
-    call read_chr           ; space
+cmd_out:
+    call spaces
 
-    call read_hex           ; get segment
-    mov bh,al
-    call read_hex           ; get segment
-    mov bl,al
-    mov [ hex_seg ], bx
+    call inp_hex            ; port
+    mov dl,al
 
-    call read_chr           ; colon
+    call spaces
 
-    call read_hex           ; get offset
-    mov bh,al
-    call read_hex           ; get offset
-    mov bl,al
-    mov [ hex_ofs ], bx
+    call inp_hex            ; byte
 
-    print mesg_jump
+    print dbg_cmd_out
+
+    out dx,al               ; OUT
+
+    jmp debug_menu.loop
+
+
+cmd_jmp:
+    call spaces
+
+    call inp_word           ; seg
+    mov [ hex_seg ],ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov [ hex_ofs ],ax
+
+    print dbg_cmd_jump
 
 ; indirect far jump to CS:IP
     jmp far [ hex_ofs ]
 
-menu_load:
-; load intel hex file
-    print mesg_load
 
-    call read_hex_file
+cmd_ihf_load:
+    print dbg_cmd_load
 
-    print mesg_load_done
-    jmp prompt
+    call read_ihf
 
-menu_out:
-; out pp xx
+    print dbg_cmd_load_done
 
-    push dx                 ; save echo state
+    jmp debug_menu.loop
 
-    call read_chr           ; space
 
-    call read_hex           ; get port
-    mov bl,al
+cmd_ihf_exec:
+    print dbg_cmd_exec
 
-    call read_chr           ; space
-    call read_hex           ; get hex byte
-
-    xor dx,dx
-    mov dl,bl
-
-    print mesg_out
-
-    out dx,al               ; OUT
-
-    pop dx
-    jmp prompt
-
-menu_exe:
-; execute
-    print mesg_exe
-
+; simulate cold start
     xor ax,ax
     mov ds,ax
     mov es,ax
@@ -200,4 +211,76 @@ menu_exe:
     popf
 ; indirect far jump to CS:IP
     jmp far [ hex_ofs ]
+
+
+syntax:
+    print dbg_syntax
+    jmp debug_menu.loop
+
+
+;======================================================================
+; functions
+;======================================================================
+
+; skip over any spaces
+spaces:
+    lodsb
+    cmp al,20h
+    je spaces           ; keep going if we had a space
+    dec si              ; undo the last load
+    ret
+
+
+; expect character AL
+expect:
+    push bx
+    mov bl,al
+    lodsb
+    cmp al,bl           ; is it what we expected?
+    pop bx
+    ret                 ; flag not changed on ret
+
+
+; read 2 hex characters into AL from ES:DI
+inp_hex:
+    call .nibble
+    mov ah,al
+    shl ah,1            ; shl al,4 not possible
+    shl ah,1
+    shl ah,1
+    shl ah,1
+    call .nibble
+    or al,ah
+    ret
+
+.nibble:
+    lodsb               ; read char
+    cmp al,41h
+    jae .letter
+    sub al,30h          ; '0'
+    ret
+
+.letter:
+    sub al,37h          ; 'A' - 10
+    ret
+
+
+; read 4 hex characters into AX from ES:DI
+inp_word:
+    push bx
+    call inp_hex
+    mov bh,al
+    call inp_hex
+    mov bl,al
+    mov ax,bx
+    pop bx
+    ret
+
+
+;======================================================================
+; data
+;======================================================================
+
+buffer      times 40    db 000h
+
 
