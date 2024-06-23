@@ -62,7 +62,7 @@
 ;                     R/M (register/memory; 3 bits)
 ;
 ;                     R/M Table 1 (MOD=00)
-;                     000=[BX+SI]  010=[BP+SI]  100=[SI]  110=DIRECT (2 operands required)
+;                     000=[BX+SI]  010=[BP+SI]  100=[SI]  110=DIRECT (2 operands)
 ;                     001=[BX+DI]  011=[BP+DI]  101=[DI]  111=[BX]
 ;
 ;                     R/M Table 2 (MOD=01|10) - Add DISP8/16 to register:
@@ -184,6 +184,7 @@ mem_dasm:
 
     call load_opr
     jmp .print
+
 
 .print:
     ; instruction and operands
