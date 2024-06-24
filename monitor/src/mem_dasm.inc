@@ -149,10 +149,17 @@ mem_dasm:
     cmp byte [cs:curr_type],ins_type_unknown
     je .exit
 
+    cmp byte [cs:curr_type],ins_type_extra
+    je .skip
+
     cmp byte [cs:curr_type],ins_type_ext
     jne .decode
 
     call load_extended      ; load extended instruction
+    jmp .decode
+
+.skip:
+    call load_byte          ; skip extra byte
 
 
 ; decode operands
@@ -183,7 +190,6 @@ mem_dasm:
     je .print
 
     call load_opr
-    jmp .print
 
 
 .print:
@@ -846,6 +852,11 @@ ins ins_xlat,           'xlat'
 ins ins_xlatb,          'xlatb'
 ins ins_xor,            'xor'
 
+ins ins_segover_es      'seg es:'
+ins ins_segover_cs      'seg cs:'
+ins ins_segover_ss      'seg ss:'
+ins ins_segover_ds      'seg ds:'
+
 
 ; instructions (extended)
 
@@ -862,7 +873,7 @@ ins_type_normal         equ 001h
 ins_type_ext            equ 002h
 ins_type_segover        equ 003h
 ins_type_prefix         equ 004h
-ins_type_custom         equ 005h
+ins_type_extra          equ 005h
 
 
 ; instruction operands
@@ -954,7 +965,7 @@ inst ins_and,           ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 22
 inst ins_and,           ins_type_normal,    ins_op_r16,     ins_op_rm16     ; 23h
 inst ins_and,           ins_type_normal,    ins_op_al,      ins_op_imm8     ; 24h
 inst ins_and,           ins_type_normal,    ins_op_ax,      ins_op_imm16    ; 25h
-inst ins_op_es,         ins_type_segover,   ins_op_none,    ins_op_none     ; 26h
+inst ins_segover_es,    ins_type_segover,   ins_op_none,    ins_op_none     ; 26h
 inst ins_daa,           ins_type_normal,    ins_op_none,    ins_op_none     ; 27h
 inst ins_sub,           ins_type_normal,    ins_op_rm8,     ins_op_r8       ; 28h
 inst ins_sub,           ins_type_normal,    ins_op_rm16,    ins_op_r16      ; 29h
@@ -962,7 +973,7 @@ inst ins_sub,           ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 2a
 inst ins_sub,           ins_type_normal,    ins_op_r16,     ins_op_rm16     ; 2bh
 inst ins_sub,           ins_type_normal,    ins_op_al,      ins_op_imm8     ; 2ch
 inst ins_sub,           ins_type_normal,    ins_op_ax,      ins_op_imm16    ; 2dh
-inst ins_op_cs,         ins_type_segover,   ins_op_none,    ins_op_none     ; 2eh
+inst ins_segover_cs,    ins_type_segover,   ins_op_none,    ins_op_none     ; 2eh
 inst ins_das,           ins_type_normal,    ins_op_none,    ins_op_none     ; 2fh
 inst ins_xor,           ins_type_normal,    ins_op_rm8,     ins_op_r8       ; 30h
 inst ins_xor,           ins_type_normal,    ins_op_rm16,    ins_op_r16      ; 31h
@@ -970,7 +981,7 @@ inst ins_xor,           ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 32
 inst ins_xor,           ins_type_normal,    ins_op_r16,     ins_op_rm16     ; 33h
 inst ins_xor,           ins_type_normal,    ins_op_al,      ins_op_imm8     ; 34h
 inst ins_xor,           ins_type_normal,    ins_op_ax,      ins_op_imm16    ; 35h
-inst ins_op_ss,         ins_type_segover,   ins_op_none,    ins_op_none     ; 36h
+inst ins_segover_ss,    ins_type_segover,   ins_op_none,    ins_op_none     ; 36h
 inst ins_aaa,           ins_type_normal,    ins_op_none,    ins_op_none     ; 37h
 inst ins_cmp,           ins_type_normal,    ins_op_rm8,     ins_op_r8       ; 38h
 inst ins_cmp,           ins_type_normal,    ins_op_rm16,    ins_op_r16      ; 39h
@@ -978,7 +989,7 @@ inst ins_cmp,           ins_type_normal,    ins_op_r8,      ins_op_rm8      ; 3a
 inst ins_cmp,           ins_type_normal,    ins_op_r16,     ins_op_rm16     ; 3bh
 inst ins_cmp,           ins_type_normal,    ins_op_al,      ins_op_imm8     ; 3ch
 inst ins_cmp,           ins_type_normal,    ins_op_ax,      ins_op_imm16    ; 3dh
-inst ins_op_ds,         ins_type_segover,   ins_op_none,    ins_op_none     ; 3eh
+inst ins_segover_ds,    ins_type_segover,   ins_op_none,    ins_op_none     ; 3eh
 inst ins_aas,           ins_type_normal,    ins_op_none,    ins_op_none     ; 3fh
 inst ins_inc,           ins_type_normal,    ins_op_ax,      ins_op_none     ; 40h
 inst ins_inc,           ins_type_normal,    ins_op_cx,      ins_op_none     ; 41h
@@ -1128,8 +1139,8 @@ inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_const1   ; d0
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_const1   ; d1h
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_cl       ; d2h
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_cl       ; d3h
-inst ins_aam,           ins_type_custom,    ins_op_none,    ins_op_none     ; d4h
-inst ins_aad,           ins_type_custom,    ins_op_none,    ins_op_none     ; d5h
+inst ins_aam,           ins_type_extra,     ins_op_none,    ins_op_none     ; d4h
+inst ins_aad,           ins_type_extra,     ins_op_none,    ins_op_none     ; d5h
 inst ins_unknown,       ins_type_unknown,   ins_op_none,    ins_op_none     ; d6h
 inst ins_xlat,          ins_type_normal,    ins_op_none,    ins_op_none     ; d7h
 inst ins_unknown,       ins_type_unknown,   ins_op_none,    ins_op_none     ; d8h
