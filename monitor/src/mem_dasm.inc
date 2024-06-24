@@ -852,10 +852,10 @@ ins ins_xlat,           'xlat'
 ins ins_xlatb,          'xlatb'
 ins ins_xor,            'xor'
 
-ins ins_segover_es      'seg es:'
-ins ins_segover_cs      'seg cs:'
-ins ins_segover_ss      'seg ss:'
-ins ins_segover_ds      'seg ds:'
+ins ins_segover_es,     'seg es:'
+ins ins_segover_cs,     'seg cs:'
+ins ins_segover_ss,     'seg ss:'
+ins ins_segover_ds,     'seg ds:'
 
 
 ; instructions (extended)
