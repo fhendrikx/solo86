@@ -90,13 +90,15 @@ cmd_mem_fill:
     jne syntax
 
     call inp_word           ; offset
-    mov si,ax
+    mov di,ax
 
     call spaces
 
     call inp_hex            ; count
     xor cx,cx
     mov cl,al
+
+    call spaces
 
     call inp_hex            ; byte
 
@@ -172,35 +174,55 @@ cmd_jmp:
     call spaces
 
     call inp_word           ; seg
-    mov [ jmp_seg ],ax
+    mov [cs:jmp_seg],ax
 
     mov al,':'
     call expect
     jne syntax
 
     call inp_word           ; offset
-    mov [ jmp_ofs ],ax
+    mov [cs:jmp_ofs],ax
 
     print dbg_cmd_jump
 
-; indirect far jump to CS:IP
-    jmp far [ jmp_ofs ]
+    ; indirect far jump to CS:IP
+    jmp far [cs:jmp_ofs]
 
 
 cmd_ihf_load:
     print dbg_cmd_load
 
-    call read_ihf
+    call ihf_load
 
-    print dbg_cmd_load_done
+    print dbg_cmd_load_loc  ; seg
+    mov ax,[cs:ihf_loc]
+    call print_word
+
+    print dbg_cmd_load_jmp  ; seg:offset
+    mov ax,[cs:ihf_seg]
+    call print_word
+
+    mov al,':'
+    call print_chr
+
+    mov ax,[cs:ihf_ofs]
+    call print_word
+
+    mov al,0Ah
+    call print_chr
 
     jmp debug_menu.loop
 
 
 cmd_ihf_exec:
+    ; sanity check
+    mov ax,[cs:ihf_seg]
+    cmp ax,0
+    je .exit
+
     print dbg_cmd_exec
 
-; simulate cold start
+    ; simulate cold start
     xor ax,ax
     mov ds,ax
     mov es,ax
@@ -209,9 +231,13 @@ cmd_ihf_exec:
     mov ax,2h
     push ax
     popf
-; indirect far jump to CS:IP
+
+    ; indirect far jump to CS:IP
     jmp far [ ihf_ofs ]
 
+.exit:
+    print dbg_cmd_exec_err
+    jmp debug_menu.loop
 
 syntax:
     print dbg_syntax

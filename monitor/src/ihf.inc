@@ -9,7 +9,7 @@
 ; derived from record 0x02, and OFFSET is derived from each record 0x01
 ;======================================================================
 
-read_ihf:
+ihf_load:
     push ax
     push bx
     push cx
@@ -17,8 +17,14 @@ read_ihf:
     push di
     push es
 
+; defaults
+    xor ax,ax
+    mov [cs:ihf_seg],ax
+    mov [cs:ihf_ofs],ax
+
 ; defaults for ES:DI (in case there is no 0x02 record present)
     mov ax,cseg
+    mov [cs:ihf_loc],ax
     mov es,ax
     xor di,di
 
@@ -64,31 +70,32 @@ read_ihf:
     jmp .clean
 
     ; record type 0x02 - Segment
-    ; read segment into ES
+    ; read segment into ihf_loc and ES
 .rec_segment:
     call raw_hex            ; get segment
     mov bh,al
     call raw_hex            ; get segment
     mov bl,al
+    mov [cs:ihf_loc],bx
     mov es,bx               ; rec_data uses ES:DI in stosb
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
     ; record type 0x03 - CS:IP
-    ; read CS:IP into start_segment/start_address
+    ; read CS:IP into ihf_seg/ihf_ofs
 .rec_start:
     call raw_hex            ; get CS
     mov bh,al
     call raw_hex            ; get CS
     mov bl,al
-    mov [ ihf_seg ], bx
+    mov [cs:ihf_seg],bx
 
     call raw_hex            ; get IP
     mov bh,al
     call raw_hex            ; get IP
     mov bl,al
-    mov [ ihf_ofs ], bx
+    mov [cs:ihf_ofs],bx
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
@@ -112,6 +119,9 @@ read_ihf:
 ;======================================================================
 ; data
 ;======================================================================
+
+; IHF location
+ihf_loc:                    dw 00h
 
 ; IHF address
 ihf_ofs:                    dw 00h

@@ -47,6 +47,8 @@ dbg_cmd_out         db 0Ah, '[ OUT ]', 0Ah, 00h
 dbg_cmd_jump        db 0Ah, '[ JMP ]', 0Ah, 00h
 
 dbg_cmd_load        db 0Ah, '[ IHF LOAD ]', 0Ah, 00h
-dbg_cmd_load_done   db 0Ah, '[ IHF DONE ]', 0Ah, 00h
+dbg_cmd_load_loc    db 0Ah, '[ IHF SEGMENT ]: ', 00h
+dbg_cmd_load_jmp    db 0Ah, '[ IHF SEG:OFS ]: ', 00h
 dbg_cmd_exec        db 0Ah, '[ IHF EXEC ]', 0Ah, 00h
+dbg_cmd_exec_err    db 0Ah, '[ IHF EXEC Error ]', 0Ah, 00h
 

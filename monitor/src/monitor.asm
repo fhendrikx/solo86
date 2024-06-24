@@ -88,12 +88,14 @@ relocate:
 ; welcome
     print mon_welcome
 
-; find ROMs
+; scan for ROMs
 .scan:
     call rom_scan
 
-    cmp dl,0                ; how many did we find?
-    je .debugger            ; none, jump to monitor debugger
+    ; do we have any?
+    mov dl,[cs:rom_cnt]
+    cmp dl,0                ; did we find any?
+    je .debugger            ; no
 
     call rom_menu
 
