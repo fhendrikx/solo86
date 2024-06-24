@@ -149,8 +149,8 @@ mem_dasm:
     cmp byte [cs:curr_type],ins_type_unknown
     je .exit
 
-    cmp byte [cs:curr_type],ins_type_extra
-    je .skip
+    cmp byte [cs:curr_type],ins_type_special
+    je .special
 
     cmp byte [cs:curr_type],ins_type_ext
     jne .decode
@@ -158,8 +158,8 @@ mem_dasm:
     call load_extended      ; load extended instruction
     jmp .decode
 
-.skip:
-    call load_byte          ; skip extra byte
+.special:
+    call load_byte          ; skip special weird extra byte
 
 
 ; decode operands
@@ -873,7 +873,7 @@ ins_type_normal         equ 001h
 ins_type_ext            equ 002h
 ins_type_segover        equ 003h
 ins_type_prefix         equ 004h
-ins_type_extra          equ 005h
+ins_type_special        equ 005h
 
 
 ; instruction operands
@@ -1139,8 +1139,8 @@ inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_const1   ; d0
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_const1   ; d1h
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm8,     ins_op_cl       ; d2h
 inst ins_ext_d0_d3,     ins_type_ext,       ins_op_rm16,    ins_op_cl       ; d3h
-inst ins_aam,           ins_type_extra,     ins_op_none,    ins_op_none     ; d4h
-inst ins_aad,           ins_type_extra,     ins_op_none,    ins_op_none     ; d5h
+inst ins_aam,           ins_type_special,   ins_op_none,    ins_op_none     ; d4h
+inst ins_aad,           ins_type_special,   ins_op_none,    ins_op_none     ; d5h
 inst ins_unknown,       ins_type_unknown,   ins_op_none,    ins_op_none     ; d6h
 inst ins_xlat,          ins_type_normal,    ins_op_none,    ins_op_none     ; d7h
 inst ins_unknown,       ins_type_unknown,   ins_op_none,    ins_op_none     ; d8h
