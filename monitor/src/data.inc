@@ -8,7 +8,7 @@ rom_ofs:                    dw 00h
 rom_seg:                    dw 00h
 
 ; ROM found count
-rom_cnt:                    db 000h
+rom_cnt:                    db 00h
 
 ; ROM found data (8 entries)
 rom_table:
@@ -22,7 +22,7 @@ rom_table:
 
 
 ; debug command line buffer
-buffer      times 40        db 000h
+buffer      times 40        db 00h
 
 ; debug address
 jmp_ofs:                    dw 00h
@@ -39,24 +39,24 @@ ihf_seg:                    dw 00h
 
 ; current instruction
 
-curr_inst               db 000h
-curr_mnem               dw 000h
-curr_type               db 000h
+inst_curr                   db 00h  ; inst opcode
+inst_mnem                   dw 00h  ; mnemonic
+inst_type                   db 00h  ; inst type
 
 ; addressing
-addr_load               db 000h
-curr_mod                db 000h
-curr_reg                db 000h
-curr_rxm                db 000h
+inst_add                    db 00h  ; addressing loaded?
+inst_mod                    db 00h  ; MOD
+inst_reg                    db 00h  ; REG
+inst_rxm                    db 00h  ; R/M
 
 ; operands
-curr_opr1               db 000h
-curr_opr2               db 000h
+inst_op1                    db 00h
+inst_op2                    db 00h
 
-curr_imm                dw 000h
-curr_off                dw 000h
+inst_imm                    dw 00h  ; immediate
+inst_off                    dw 00h  ; offset
 
 ; current byte count
-curr_cnt                db 000h
+inst_cnt                    db 00h  ; bytes read
 
 
