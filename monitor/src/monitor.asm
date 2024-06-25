@@ -66,16 +66,35 @@ relocate:
 
 ; setup memory banking table
 ; map RAM into the top half of memory
-    mov al,011000b
-    mov dx,bank_table
-    mov cx,8
+    ; mov al,011000b
+    ; mov dx,bank_table
+    ; mov cx,8
 
-.bank_init:
-    out dx,al
-    inc al
-    inc dx
-    inc dx
-    loop .bank_init
+; .bank_init:
+    ; out dx,al
+    ; inc al
+    ; inc dx
+    ; inc dx
+    ; loop .bank_init
+
+; map ROM into the top half of memory, skip monitor
+    mov al,1
+    out bank_row_0,al
+    mov al,2
+    out bank_row_1,al
+    mov al,3
+    out bank_row_2,al
+    mov al,4
+    out bank_row_3,al
+    mov al,5
+    out bank_row_4,al
+    mov al,6
+    out bank_row_5,al
+    mov al,7
+    out bank_row_6,al
+; map RAM into the last segment so that hex loading still works
+    mov al,01Fh
+    out bank_row_7,al
 
 ; enable interrupts
     sti
