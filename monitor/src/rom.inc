@@ -16,7 +16,8 @@ rom_menu:
     xor bl,bl               ; counter
 
 .next:
-; segment
+    ; segment
+
     lodsw
     cmp ax,0                ; are we done?
     je .loop
@@ -24,7 +25,7 @@ rom_menu:
     push ax                 ; store seg
 
     mov al,bl               ; counter
-    inc cl
+    inc bl
     call print_hex
 
     mov al,' '
@@ -41,7 +42,8 @@ rom_menu:
     mov al,':'
     call print_chr
 
-; offset
+    ; offset
+
     lodsw
     call print_word         ; offset
 
@@ -52,10 +54,10 @@ rom_menu:
     mov al,' '
     call print_chr
 
-; size/flags
+    ; size/flags
     add si,4                ; skip size and flag
 
-; name
+    ; name
     call print_str
 
     mov al,0Ah
@@ -64,7 +66,7 @@ rom_menu:
     add si,24               ; print char pops DS:SI
     jmp .next
 
-; main loop
+    ; main loop
 .loop:
     print rom_prompt
 
