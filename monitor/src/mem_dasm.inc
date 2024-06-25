@@ -713,33 +713,6 @@ clear:
 
 
 ;======================================================================
-; data
-;======================================================================
-
-; current instruction
-
-curr_inst               db 000h
-curr_mnem               dw 000h
-curr_type               db 000h
-
-; addressing
-addr_load               db 000h
-curr_mod                db 000h
-curr_reg                db 000h
-curr_rxm                db 000h
-
-; operands
-curr_opr1               db 000h
-curr_opr2               db 000h
-
-curr_imm                dw 000h
-curr_off                dw 000h
-
-; current byte count
-curr_cnt                db 000h
-
-
-;======================================================================
 ; table opcodes
 ;======================================================================
 

@@ -12,8 +12,14 @@ org 0
 ; includes
 ;======================================================================
 
+%include "const.inc"
 %include "macro.inc"
-%include "defines.inc"
+
+
+;======================================================================
+; interrupt vectors
+;======================================================================
+
 %include "vectors.inc"
 
 
@@ -113,7 +119,7 @@ int_dummy:
 
 
 ;======================================================================
-; includes
+; code
 ;======================================================================
 
 %include "debug.inc"
@@ -134,19 +140,7 @@ int_dummy:
 ; padding
 TIMES 65536-1024-($-$$)     db 0FFh
 
-; ROM address
-rom_ofs:                    dw 00h
-rom_seg:                    dw 00h
-
-; ROM data (8 entries)
-rom_table:
-%rep rom_max
-                            dw 00h  ; segment
-                            dw 00h  ; offset
-                            dw 00h  ; size
-                            dw 00h  ; flags
-    TIMES 24                db 00h  ; name (24 bytes)
-%endrep
+%include "data.inc"
 
 
 ;======================================================================
