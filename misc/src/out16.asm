@@ -16,7 +16,7 @@ org 0
 TIMES 256-($-$$)    db 0FFh
 
 
-%include "delay.inc"
+
 
 ; I/O addresses should be even numbers only
 leds_data       equ 08h
@@ -46,4 +46,6 @@ flash:
     jmp flash
 
 
+    
+%include "delay.inc"
 
