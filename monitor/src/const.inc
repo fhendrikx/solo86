@@ -9,6 +9,7 @@ cseg            equ 00000h  ; CS after relocation
 dseg            equ 01000h
 sseg            equ 00000h
 
+
 ; I/O addresses (should be even numbers only)
 ticks_ctrl      equ 04h
 leds_data       equ 08h
@@ -36,6 +37,4 @@ rom_max         equ 8       ; ROM maximum
 
 ; segment for relocation
 rom_relocate    equ 01000h
-
-
 
