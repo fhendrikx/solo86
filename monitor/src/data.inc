@@ -24,10 +24,14 @@ rom_table:
 ; debug command line buffer
 buffer      times 40        db 00h
 
+; debug last command
+dbg_last                    db 00h
+dbg_ofs:                    dw 00h
+dbg_seg:                    dw 00h
+
 ; debug address
 jmp_ofs:                    dw 00h
 jmp_seg:                    dw 00h
-
 
 ; IHF location
 ihf_loc:                    dw 00h
@@ -35,6 +39,9 @@ ihf_loc:                    dw 00h
 ; IHF address
 ihf_ofs:                    dw 00h
 ihf_seg:                    dw 00h
+
+; dasm style
+dasm_style                  db 00h
 
 
 ; current instruction
@@ -56,7 +63,6 @@ inst_op2                    db 00h
 inst_imm                    dw 00h  ; immediate
 inst_off                    dw 00h  ; offset
 
-; current byte count
+; current byte count (used for padding display)
 inst_cnt                    db 00h  ; bytes read
-
 

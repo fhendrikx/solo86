@@ -124,11 +124,11 @@
 
 ;======================================================================
 ; memory dasm; disassemble memory content at DS:SI for CX instructions
+; returns offset in BX
 ;======================================================================
 
 mem_dasm:
     push ax
-    push bx
     push cx
     push ds
     push si
@@ -193,54 +193,27 @@ mem_dasm:
 
 
 .print:
-    ; print instruction and operands
+    ; print padding
 
     call print_spaces
+
+    ; print instruction and operands
+
     call print_inst
-
-    mov dl,[cs:inst_op1]
-    cmp dl,ins_op_none
-    je .print_end
-    call print_opr          ; operand 1
-
-    mov dl,[cs:inst_op2]
-    cmp dl,ins_op_none
-    je .print_end
-
-    mov al,','
-    call print_chr
-
-    call print_opr          ; operand 2
-
-.print_end:
+    call print_operands
     call print_end
+
     call clear
+
     loop .loop
+
+    mov bx,si               ; return SI in BX
 
 .exit:
     pop si
     pop ds
     pop cx
-    pop bx
     pop ax
-    ret
-
-
-; print_addr
-;
-print_addr:
-    mov ax,ds
-    call print_word         ; seg
-
-    mov al,':'
-    call print_chr
-
-    mov ax,si
-    call print_word         ; offset
-
-    mov al,' '
-    call print_chr
-
     ret
 
 
@@ -463,6 +436,24 @@ load_opr:
     ret
 
 
+; print_addr
+;
+print_addr:
+    mov ax,ds
+    call print_word         ; seg
+
+    mov al,':'
+    call print_chr
+
+    mov ax,si
+    call print_word         ; offset
+
+    mov al,' '
+    call print_chr
+
+    ret
+
+
 ; print spaces (add variable number of spaces)
 ;
 print_spaces:
@@ -496,6 +487,49 @@ print_inst:
     mov al,20h
     call print_chr          ; space
     pop si
+    ret
+
+
+; print operands
+;
+print_operands:
+    cmp byte [cs:dasm_style],0
+    jne .attstyle
+
+    ; Intel style
+    mov dl,[cs:inst_op1]
+    cmp dl,ins_op_none
+    je .exit
+    call print_opr          ; operand 1
+
+    mov dl,[cs:inst_op2]
+    cmp dl,ins_op_none
+    je .exit
+
+    mov al,','
+    call print_chr
+
+    call print_opr          ; operand 2
+    jmp .exit
+
+    ; AT&T style
+.attstyle:
+    mov dl,[cs:inst_op2]
+    cmp dl,ins_op_none
+    je .next
+    call print_opr          ; operand 2
+
+    mov al,','
+    call print_chr
+
+.next:
+    mov dl,[cs:inst_op1]
+    cmp dl,ins_op_none
+    je .exit
+
+    call print_opr          ; operand 1
+
+.exit:
     ret
 
 
@@ -551,6 +585,13 @@ print_opr:
 
     ; R/M
 .rmx:
+    cmp byte [cs:dasm_style],0
+    je .rmxint
+
+    mov al,'%'
+    call print_chr
+
+.rmxint:
     shl bl,1
 
     push si
@@ -569,6 +610,13 @@ print_opr:
 
     ; sreg
 .constreg:
+    cmp byte [cs:dasm_style],0
+    je .constregint
+
+    mov al,'%'
+    call print_chr
+
+.constregint:
     xor bx,bx
     mov bl,dl
     shl bl,1
@@ -661,6 +709,13 @@ print_opr:
     add bl,8
 
 .reg_name:
+    cmp byte [cs:dasm_style],0
+    je .intel
+
+    mov al,'%'
+    call print_chr
+
+.intel:
     shl bl,1
 
     push si

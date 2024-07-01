@@ -28,6 +28,7 @@ dbg_syntax          db 0Ah, '[ Syntax Error ]', 0Ah, 00h
 
 dbg_cmd_help        db 0Ah, '[ MON Help ]', 0Ah
                     db 'D SSSS:OOOO         - MEM DASM addr SSSS:OOOO', 0Ah
+                    db 'S                   - MEM DASM style', 0Ah
                     db 'F SSSS:OOOO CC XX   - MEM FILL addr SSSS:OOOO count CC byte XX', 0Ah
                     db 'R SSSS:OOOO         - MEM READ addr SSSS:OOOO', 0Ah
                     db 'I PP                - INP port PP', 0Ah
@@ -39,6 +40,8 @@ dbg_cmd_help        db 0Ah, '[ MON Help ]', 0Ah
                     db 00h
 
 dbg_cmd_dasm        db 0Ah, '[ MEM DASM ]', 0Ah, 00h
+dbg_cmd_dasm_intel  db 0Ah, '[ MEM DASM ]: INTEL style', 0Ah, 00h
+dbg_cmd_dasm_att    db 0Ah, '[ MEM DASM ]: AT&T style', 0Ah, 00h
 dbg_cmd_fill        db 0Ah, '[ MEM FILL ]', 0Ah, 00h
 dbg_cmd_read        db 0Ah, '[ MEM READ ]', 0Ah, 00h
 

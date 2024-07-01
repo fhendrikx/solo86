@@ -21,11 +21,24 @@ debug_menu:
     mov si,buffer           ; DS:SI
     lodsb
 
-    cmp al,'H'
-    je  cmd_help
+
+    ; repeat last command?
+
+    cmp al,0Ah
+    je  cmd_last
+
+
+    ; last command
+
+    mov byte [cs:dbg_last],al
+
+
+    ; which command?
 
     cmp al,'D'
     je  cmd_mem_dasm
+    cmp al,'S'
+    je  cmd_mem_dasm_style
     cmp al,'F'
     je  cmd_mem_fill
     cmp al,'R'
@@ -43,6 +56,9 @@ debug_menu:
     cmp al,'E'
     je  cmd_ihf_exec
 
+    cmp al,'H'
+    je  cmd_help
+
     cmp al,'Q'
     je .exit
 
@@ -50,6 +66,61 @@ debug_menu:
 
 .exit:
     ret
+
+
+cmd_last:
+    mov al,byte [cs:dbg_last]
+
+    cmp al,'D'
+    je .dasm
+    cmp al,'R'
+    je .read
+
+    jmp debug_menu.loop
+
+.dasm:
+    push ds
+
+    ; get last address
+    mov bx,[cs:dbg_ofs]
+    mov si,bx
+    mov bx,[cs:dbg_seg]
+    mov ds,bx
+
+    mov cx,16
+
+    call mem_dasm
+
+    ; store last address
+    mov [cs:dbg_ofs],bx
+    mov bx,ds
+    mov [cs:dbg_seg],bx
+
+    pop ds
+
+    jmp debug_menu.loop
+
+.read:
+    push ds
+
+    ; get last address
+    mov bx,[cs:dbg_ofs]
+    mov si,bx
+    mov bx,[cs:dbg_seg]
+    mov ds,bx
+
+    mov cx,256
+
+    call mem_read
+
+    ; store last address
+    mov [cs:dbg_ofs],bx
+    mov bx,ds
+    mov [cs:dbg_seg],bx
+
+    pop ds
+
+    jmp debug_menu.loop
 
 
 cmd_help:
@@ -71,11 +142,34 @@ cmd_mem_dasm:
     mov si,ax
 
     push ds
-    mov cx,16
     mov ds,bx
+    mov cx,16
+
     call mem_dasm
+
+    ; store last address
+    mov [cs:dbg_ofs],bx
+    mov bx,ds
+    mov [cs:dbg_seg],bx
+
     pop ds
 
+    jmp debug_menu.loop
+
+
+cmd_mem_dasm_style:
+    mov al,byte [cs:dasm_style]
+    not al
+    mov byte [cs:dasm_style],al
+
+    cmp al,0
+    jne .attstyle
+
+    print dbg_cmd_dasm_intel
+    jmp debug_menu.loop
+
+.attstyle:
+    print dbg_cmd_dasm_att
     jmp debug_menu.loop
 
 
@@ -128,10 +222,15 @@ cmd_mem_read:
     print dbg_cmd_read
 
     push ds
+    mov cx,256
     mov ds,bx
 
-    mov cx,256
     call mem_read
+
+    ; store last address
+    mov [cs:dbg_ofs],bx
+    mov bx,ds
+    mov [cs:dbg_seg],bx
 
     pop ds
 

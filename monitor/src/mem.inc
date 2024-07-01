@@ -1,11 +1,11 @@
 
 ;======================================================================
 ; memory read; read memory content at DS:SI for CX bytes
+; returns offset in BX
 ;======================================================================
 
 mem_read:
     push ax
-    push bx
     push cx
     push ds
     push si
@@ -69,11 +69,12 @@ mem_read:
     sub cx,16
     ja .loop1
 
+    mov bx,si               ; return SI in BX
+
 .exit:
     pop si
     pop ds
     pop cx
-    pop bx
     pop ax
     ret
 
