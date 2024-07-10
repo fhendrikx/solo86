@@ -32,9 +32,15 @@ init:
     cli
     cld
 
+    mov al,01b
+    out leds_data,al
+
 ; ensure UART has interrupts disabled
     xor al,al
     out uart_ctrl,al
+
+    mov al,011b
+    out leds_data,al
 
 ; copy ROM to RAM
 ; don't use the stack yet as the ROM copy will overwrite any stored data
@@ -52,6 +58,9 @@ init:
     movsw
     loop .copy
 
+    mov al,0111b
+    out leds_data,al
+
     jmp cseg:relocate       ; here we go!
 
 
@@ -61,6 +70,9 @@ init:
 
 relocate:
 
+    mov al,01111b
+    out leds_data,al
+
 ; initialise DS
     mov ax,dseg
     mov ds,ax
@@ -69,6 +81,9 @@ relocate:
     mov ax,sseg
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
+
+    mov al,011111b
+    out leds_data,al
 
 ; setup memory banking table
 ; map RAM into the top half of memory
@@ -102,9 +117,14 @@ relocate:
     mov al,01Fh
     out bank_row_7,al
 
+    mov al,0111111b
+    out leds_data,al
+
 ; enable interrupts
     sti
 
+    mov al,01111111b
+    out leds_data,al
 
 ;======================================================================
 ; welcome
@@ -112,6 +132,9 @@ relocate:
 
 ; welcome
     print mon_welcome
+
+    mov al,011111111b
+    out leds_data,al
 
 ; scan for ROMs
 .scan:
