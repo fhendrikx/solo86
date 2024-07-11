@@ -10,17 +10,9 @@ entity Control286 is
     i_reset_n       : in std_logic;
     -- i_jp1           : in std_logic;
 
-    -- o_clkout        : buffer std_logic;
-    o_led_latch     : out std_logic;
     o_ale           : buffer std_logic;
     o_warning       : out std_logic;
-
-    -- Bit banged SD card
-    --i_sd_miso       : in std_logic;
-
-    --o_sd_sck        : out std_logic;
-    --o_sd_cs         : out std_logic;
-    --o_sd_mosi       : out std_logic;
+    o_bhe_n         : out std_logic;
 
     -- CPU
     i_addr_high     : in std_logic_vector(3 downto 0); -- A19..A16
@@ -60,21 +52,11 @@ entity Control286 is
     i_irq0_n        : in std_logic;
     i_irq1_n        : in std_logic;
     i_irq2_n        : in std_logic;
-    i_irq3_n        : in std_logic;
-
-    -- Pi
-    o_pdata_en_n    : out std_logic;
-    o_prdwr         : out std_logic;
-    o_pevent        : out std_logic;
-
-    -- i_pint_n        : in std_logic;
-    i_pwait         : in std_logic
+    i_irq3_n        : in std_logic
 
     );
 
-  constant led_latch_addr   : std_logic_vector(7 downto 0) := x"08";
   constant bank_ctrl_addr   : std_logic_vector(7 downto 4) := "0001"; -- 0x10-1F
-  constant piuart_addr      : std_logic_vector(7 downto 5) := "001";  -- 0x20->3F
 
 end Control286;
 
@@ -86,17 +68,9 @@ architecture rtl of Control286 is
   -- Misc
   attribute chip_pin of i_clk           : signal is "83";
   attribute chip_pin of i_reset_n       : signal is "1";
-  -- attribute chip_pin of i_jp1           : signal is "2";
-  -- attribute chip_pin of o_clkout        : signal is "24";
-  attribute chip_pin of o_led_latch     : signal is "4";
   attribute chip_pin of o_ale           : signal is "65";
   attribute chip_pin of o_warning       : signal is "75";
-
-  -- Bit banged SD card
-  --attribute chip_pin of i_sd_miso       : signal is "9";
-  --attribute chip_pin of o_sd_sck        : signal is "5";
-  --attribute chip_pin of o_sd_cs         : signal is "6";
-  --attribute chip_pin of o_sd_mosi       : signal is "8";
+  attribute chip_pin of o_bhe_n         : signal is "8";
 
   -- CPU
   attribute chip_pin of i_addr_high     : signal is "64, 63, 60, 61"; -- A19..A16
@@ -132,30 +106,20 @@ architecture rtl of Control286 is
   attribute chip_pin of i_irq2_n        : signal is "30";
   attribute chip_pin of i_irq3_n        : signal is "28";
 
-  -- Pi
-  attribute chip_pin of o_pdata_en_n    : signal is "77";
-  attribute chip_pin of o_prdwr         : signal is "79";
-  attribute chip_pin of o_pevent        : signal is "80";
-  -- attribute chip_pin of i_pint_n        : signal is "81";
-  attribute chip_pin of i_pwait         : signal is "84";
-
   -- signals
   signal iorq_n               : std_logic;
   signal event_start          : std_logic;
-  signal piuart_wait_n        : std_logic;
   signal inta_cycle           : std_logic;
 
   signal irq0_latch           : std_logic;
   signal irq1_latch           : std_logic;
   signal irq2_latch           : std_logic;
   signal irq3_latch           : std_logic;
-  -- signal pint_latch           : std_logic;
-
+ 
   signal irq0_clear           : std_logic;
   signal irq1_clear           : std_logic;
   signal irq2_clear           : std_logic;
   signal irq3_clear           : std_logic;
-  -- signal pint_clear           : std_logic;
 
   signal wait_states          : integer range 0 to 3;
 
@@ -166,18 +130,10 @@ architecture rtl of Control286 is
   type t_ctrl_state is (TS1, TS2, TC1, TC2);
   signal ctrl_state           : t_ctrl_state;
 
-  type t_piuart_state is (WAIT_FOR_EVENT_START, WAIT_FOR_PI_READY, WAIT_FOR_PI_DONE, WAIT_FOR_EVENT_END);
-  signal piuart_state         : t_piuart_state;
-
   signal ram_enable           : std_logic;
   signal rom_enable           : std_logic;
 
 begin
-
-  -- SD card outputs
-  --o_sd_sck <= '0';
-  --o_sd_cs <= '0';
-  --o_sd_mosi <= '0';
 
   -- interrupt outputs
   o_nmi <= '0';
@@ -186,18 +142,12 @@ begin
             irq2_latch = '1' or irq3_latch = '1'
             else '0';
 
-  -- expansion slot clock
-  -- o_clkout <= i_clk;
-
   -- CPU reset
   o_reset <= not i_reset_n;
 
   -- I/O request signal
   iorq_n <= '1' when o_iowr_n = '1' and o_iord_n = '1'
             else '0';
-
-  -- PiUART read/write control
-  o_prdwr <= '1' when o_iord_n = '0' else '0';
 
   --
   -- edge triggered interrupt latches
@@ -275,11 +225,13 @@ begin
     if i_reset_n = '0' then
 
       o_addr_high <= "0000";
+      o_bhe_n <= '1';
       rom_enable <= '0';
       ram_enable <= '0';
 
     elsif rising_edge(o_ale) then
 
+      o_bhe_n <= i_bhe_n;
       rom_enable <= '0';
       ram_enable <= '0';
 
@@ -332,118 +284,6 @@ begin
 
   end process;
 
-  -- proc_pint_latch: process(i_pint_n, i_reset_n, pint_clear) is
-  -- begin
-
-  --   if i_reset_n = '0' or pint_clear = '1' then
-
-  --     pint_latch <= '0';
-
-  --   elsif falling_edge(i_pint_n) then
-
-  --     pint_latch <= '1';
-
-  --   end if;
-
-  -- end process;
-
-
-  -- the 74HCT273 clk pulse min width ~25ns
-  -- the 74HCT273 data min setup time ~25ns
-  -- o_iowr_n will change during TS2 so will be visible TC1 meeting data setup time
-  -- i_addr_low will change after TC1 meaning latch pulse will only last one clock
-  -- meeting the pulse width requirement
-
-  o_led_latch <= '1' when o_iowr_n = '0' and i_addr_low = led_latch_addr
-                else '0';
-
-
-  --
-  -- manage the PiUART
-  --
-
-  proc_piuart_state_machine: process(i_clk, i_reset_n) is
-  begin
-
-    if i_reset_n = '0' then
-
-      piuart_state <= WAIT_FOR_EVENT_START;
-
-    elsif rising_edge(i_clk) then
-
-      case piuart_state is
-
-        when WAIT_FOR_EVENT_START =>
-
-          if event_start = '1' then
-            if i_pwait = '0' then
-              -- pi is ready
-              piuart_state <= WAIT_FOR_PI_DONE;
-            else
-              -- pi is not ready
-              piuart_state <= WAIT_FOR_PI_READY;
-            end if;
-          end if;
-
-        when WAIT_FOR_PI_READY =>
-
-          if i_pwait = '0' then
-            -- pi is ready
-            piuart_state <= WAIT_FOR_PI_DONE;
-          end if;
-
-        when WAIT_FOR_PI_DONE =>
-
-          if i_pwait = '1' then
-            -- pi is done
-            piuart_state <= WAIT_FOR_EVENT_END;
-          end if;
-
-        when WAIT_FOR_EVENT_END =>
-
-          if iorq_n = '1' then
-            piuart_state <= WAIT_FOR_EVENT_START;
-          end if;
-
-      end case;
-
-    end if;
-
-  end process;
-
-  proc_piuart_state_machine_outputs: process(piuart_state, i_pwait) is
-  begin
-
-    case piuart_state is
-
-      when WAIT_FOR_EVENT_START =>
-
-        o_pevent <= '0';
-        o_pdata_en_n <= i_pwait;
-        piuart_wait_n <= '1';
-
-      when WAIT_FOR_PI_READY =>
-
-        o_pevent <= '0';
-        o_pdata_en_n <= i_pwait;
-        piuart_wait_n <= '0';
-
-      when WAIT_FOR_PI_DONE =>
-
-        o_pevent <= '1';
-        o_pdata_en_n <= '0';
-        piuart_wait_n <= '0';
-
-      when WAIT_FOR_EVENT_END =>
-
-        o_pevent <= '1';
-        o_pdata_en_n <= '0';
-        piuart_wait_n <= '1';
-
-    end case;
-
-  end process;
-
 
   --
   -- The main state machine for controlling the 286 bus
@@ -485,7 +325,6 @@ begin
       irq1_clear <= '0';
       irq2_clear <= '0';
       irq3_clear <= '0';
-      -- pint_clear <= '0';
 
       -- initial output pin state
       o_warning <= '0';
@@ -667,11 +506,6 @@ begin
                 io_data <= "00100011";
                 irq3_clear <= '1';
 
-              -- elsif pint_latch = '1' then
-
-              --   io_data <= "00100100";
-              --   pint_clear <= '1';
-
               end if;
 
             end if;
@@ -690,11 +524,6 @@ begin
 
             if i_addr_low(0) = '0' then
             -- only signal even numbered I/O requests
-
-              -- PiUART
-              if i_addr_low(7 downto 5) = piuart_addr then
-                event_start <= '1';
-              end if;
 
               -- memory banking control
               if i_addr_low(7 downto 4) = bank_ctrl_addr then
@@ -720,11 +549,6 @@ begin
 
             if i_addr_low(0) = '0' then
             -- only signal even numbered I/O requests
-
-              -- PiUART
-              if i_addr_low(7 downto 5) = piuart_addr then
-                event_start <= '1';
-              end if;
 
               -- memory banking control
               if i_addr_low(7 downto 4) = bank_ctrl_addr then
@@ -816,13 +640,12 @@ begin
           irq1_clear <= '0';
           irq2_clear <= '0';
           irq3_clear <= '0';
-          -- pint_clear <= '0';
 
           o_ale <= '0';
           o_ready_n <= '1';
 
-          if i_wait0_n = '1' and i_wait1_n = '1' and piuart_wait_n = '1' and wait_states = 0 then
-            -- no reason to wait, set the ready signal
+          if i_wait0_n = '1' and i_wait1_n = '1' and wait_states = 0 then
+              -- no reason to wait, set the ready signal
 
             o_ready_n <= '0';
 
