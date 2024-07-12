@@ -510,26 +510,10 @@ print_inst:
 ;
 print_operands:
     cmp byte [cs:dasm_style],0
-    jne .attstyle
-
-    ; Intel style
-    mov dl,[cs:inst_op1]
-    cmp dl,ins_op_none
-    je .exit
-    call print_opr          ; operand 1
-
-    mov dl,[cs:inst_op2]
-    cmp dl,ins_op_none
-    je .exit
-
-    mov al,','
-    call print_chr
-
-    call print_opr          ; operand 2
-    jmp .exit
+    je .intel
 
     ; AT&T style
-.attstyle:
+
     mov dl,[cs:inst_op2]
     cmp dl,ins_op_none
     je .next
@@ -544,6 +528,23 @@ print_operands:
     je .exit
 
     call print_opr          ; operand 1
+    jmp .exit
+
+    ; Intel style
+.intel:
+    mov dl,[cs:inst_op1]
+    cmp dl,ins_op_none
+    je .exit
+    call print_opr          ; operand 1
+
+    mov dl,[cs:inst_op2]
+    cmp dl,ins_op_none
+    je .exit
+
+    mov al,','
+    call print_chr
+
+    call print_opr          ; operand 2
 
 .exit:
     ret
@@ -602,13 +603,8 @@ print_opr:
 
     ; R/M
 .rm:
-    cmp byte [cs:dasm_style],0
-    je .rm_std
+    call print_p_reg
 
-    mov al,'%'
-    call print_chr
-
-.rm_std:
     shl bl,1
 
     push si
@@ -635,8 +631,7 @@ print_opr:
     pop si
 
 .addr:
-    mov al,'['
-    call print_chr
+    call print_lb
 
     cmp byte [cs:inst_mod],0
     jne .addr_std
@@ -676,20 +671,14 @@ print_opr:
     call print_hex
 
 .addr_end:
-    mov al,']'
-    call print_chr
+    call print_rb
     jmp .exit
 
 
     ; sreg
 .constreg:
-    cmp byte [cs:dasm_style],0
-    je .constreg_std
+    call print_p_reg
 
-    mov al,'%'
-    call print_chr
-
-.constreg_std:
     xor bx,bx
     mov bl,dl
     dec bl
@@ -704,13 +693,8 @@ print_opr:
 
     ; const 1
 .const1:
-    cmp byte [cs:dasm_style],0
-    je .const1_std
+    call print_p_imm
 
-    mov al,'$'
-    call print_chr
-
-.const1_std:
     mov al,'1'
     call print_chr
     jmp .exit
@@ -718,13 +702,8 @@ print_opr:
 
     ; const 3
 .const3:
-    cmp byte [cs:dasm_style],0
-    je .const3_std
+    call print_p_imm
 
-    mov al,'$'
-    call print_chr
-
-.const3_std:
     mov al,'3'
     call print_chr
     jmp .exit
@@ -732,13 +711,8 @@ print_opr:
 
     ; immediate 8-bit
 .imm8:
-    cmp byte [cs:dasm_style],0
-    je .imm8_std
+    call print_p_imm
 
-    mov al,'$'
-    call print_chr
-
-.imm8_std:
     mov ax,[cs:inst_imm]
     call print_hex
     jmp .exit
@@ -756,13 +730,8 @@ print_opr:
 
     ; immediate 16-bit
 .imm16:
-    cmp byte [cs:dasm_style],0
-    je .imm16_std
+    call print_p_imm
 
-    mov al,'$'
-    call print_chr
-
-.imm16_std:
     mov ax,[cs:inst_imm]
     call print_word
     jmp .exit
@@ -779,33 +748,12 @@ print_opr:
 
     ; mem
 .mem:
-    cmp byte [cs:dasm_style],0
-    je .mem_std
+    call print_lb
 
-    mov al,'('
-    call print_chr
-    jmp .mem_value
-
-.mem_std:
-    mov al,'['
-    call print_chr
-
-.mem_value:
     mov ax,[cs:inst_off]
     call print_word
 
-    cmp byte [cs:dasm_style],0
-    je .mem_end_std
-
-    mov al,')'
-    call print_chr
-    jmp .mem_end
-
-.mem_end_std:
-    mov al,']'
-    call print_chr
-
-.mem_end:
+    call print_rb
     jmp .exit
 
 
@@ -838,13 +786,8 @@ print_opr:
     add bl,8
 
 .reg_name:
-    cmp byte [cs:dasm_style],0
-    je .reg_std
+    call print_p_reg
 
-    mov al,'%'
-    call print_chr
-
-.reg_std:
     shl bl,1
 
     push si
@@ -858,6 +801,76 @@ print_opr:
     pop dx
     pop bx
     pop ax
+    ret
+
+
+; print left bracket
+;
+print_lb:
+    cmp byte [cs:dasm_style],0
+    je .intel
+
+    ; AT&T style
+    mov al,'('
+    call print_chr
+    jmp .end
+
+    ; Intel style
+.intel:
+    mov al,'['
+    call print_chr
+
+.end:
+    ret
+
+
+; print right bracket
+;
+print_rb:
+    cmp byte [cs:dasm_style],0
+    je .intel
+
+    ; AT&T style
+    mov al,')'
+    call print_chr
+    jmp .end
+
+    ; Intel style
+.intel:
+    mov al,']'
+    call print_chr
+
+.end:
+    ret
+
+
+; print prefix for registers
+;
+print_p_reg:
+    cmp byte [cs:dasm_style],0
+    je .end
+
+    ; AT&T style
+    mov al,'%'
+    call print_chr
+
+    ; no prefix for Intel style
+.end:
+    ret
+
+
+; print prefix for immediates
+;
+print_p_imm:
+    cmp byte [cs:dasm_style],0
+    je .end
+
+    ; AT&T style
+    mov al,'$'
+    call print_chr
+
+    ; no prefix for Intel style
+.end:
     ret
 
 
