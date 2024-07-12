@@ -55,6 +55,7 @@ inst_add                    db 00h  ; addressing loaded?
 inst_mod                    db 00h  ; MOD
 inst_reg                    db 00h  ; REG
 inst_rxm                    db 00h  ; R/M
+inst_ovr                    db 00h  ; override
 
 ; operands
 inst_op1                    db 00h

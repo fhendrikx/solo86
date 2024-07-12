@@ -368,11 +368,14 @@ load_opr:
     jae .reg
     cmp dl,ins_op_far
     je .far
+    cmp dl,ins_op_mem
+    je .mem
     cmp dl,ins_op_imm16
     jae .imm16
     cmp dl,ins_op_imm8
     jae .imm8
     jmp .exit
+
 
     ; R/M
 .rm:
@@ -393,9 +396,11 @@ load_opr:
     je .disp16
     jmp .exit
 
-    ; REG
+
+    ; REG (not needed; already defined in the instruction table)
 .reg:
     jmp .exit
+
 
     ; displacement 16-bit
 .disp16:
@@ -403,11 +408,13 @@ load_opr:
     mov [cs:inst_off],ax
     jmp .exit
 
+
     ; displacement 8-bit
 .disp8:
     call load_byte
     mov [cs:inst_off],ax
     jmp .exit
+
 
     ; FAR
 .far:
@@ -418,11 +425,20 @@ load_opr:
     mov [cs:inst_off],ax
     jmp .exit
 
+
+    ; MEM
+.mem:
+    call load_word
+    mov [cs:inst_off],ax
+    jmp .exit
+
+
     ; IMM16
 .imm16:
     call load_word
     mov [cs:inst_imm],ax
     jmp .exit
+
 
     ; IMM8
 .imm8:
@@ -572,26 +588,27 @@ print_opr:
     cmp dl,ins_op_sreg
     jbe .reg
 
-    ; addressing
+    ; effective addressing
     cmp byte [cs:inst_mod],3
-    jne .addr
+    jne .ea
 
     xor bx,bx
     mov bl,byte [cs:inst_rxm]
 
     cmp dl,ins_op_rm8
-    je .rmx
+    je .rm
     add bl,8
 
+
     ; R/M
-.rmx:
+.rm:
     cmp byte [cs:dasm_style],0
-    je .rmxint
+    je .rm_std
 
     mov al,'%'
     call print_chr
 
-.rmxint:
+.rm_std:
     shl bl,1
 
     push si
@@ -601,24 +618,81 @@ print_opr:
 
     jmp .exit
 
-    ; addressing
+
+    ; effective addressing
+.ea:
+    cmp byte [cs:inst_ovr],ins_over_none
+    je .addr
+
+    ; override
+    mov bl,byte [cs:inst_ovr]
+    dec bl
+    shl bl,1
+
+    push si
+    mov si,[cs:over_table + bx]
+    call print_str
+    pop si
+
 .addr:
-    ; TODO
+    mov al,'['
+    call print_chr
 
+    cmp byte [cs:inst_mod],0
+    jne .addr_std
+    cmp byte [cs:inst_rxm],6
+    je .addr_disp
 
+.addr_std:
+    mov bh,0
+    mov bl,byte [cs:inst_rxm]
+    shl bl,1
+
+    push si
+    mov si,[cs:addr_table + bx]
+    call print_str
+    pop si
+
+    cmp byte [cs:inst_mod],0
+    je .addr_end
+
+    mov al,' '
+    call print_chr
+    mov al,'+'
+    call print_chr
+    mov al,' '
+    call print_chr
+
+.addr_disp:
+    cmp byte [cs:inst_mod],1
+    je .addr_byte
+
+    mov ax,[cs:inst_off]
+    call print_word
+    jmp .addr_end
+
+.addr_byte:
+    mov ax,[cs:inst_off]
+    call print_hex
+
+.addr_end:
+    mov al,']'
+    call print_chr
     jmp .exit
+
 
     ; sreg
 .constreg:
     cmp byte [cs:dasm_style],0
-    je .constregint
+    je .constreg_std
 
     mov al,'%'
     call print_chr
 
-.constregint:
+.constreg_std:
     xor bx,bx
     mov bl,dl
+    dec bl
     shl bl,1
 
     push si
@@ -627,23 +701,48 @@ print_opr:
     pop si
     jmp .exit
 
+
     ; const 1
 .const1:
+    cmp byte [cs:dasm_style],0
+    je .const1_std
+
+    mov al,'$'
+    call print_chr
+
+.const1_std:
     mov al,'1'
     call print_chr
     jmp .exit
 
+
     ; const 3
 .const3:
+    cmp byte [cs:dasm_style],0
+    je .const3_std
+
+    mov al,'$'
+    call print_chr
+
+.const3_std:
     mov al,'3'
     call print_chr
     jmp .exit
 
+
     ; immediate 8-bit
 .imm8:
+    cmp byte [cs:dasm_style],0
+    je .imm8_std
+
+    mov al,'$'
+    call print_chr
+
+.imm8_std:
     mov ax,[cs:inst_imm]
     call print_hex
     jmp .exit
+
 
     ; short
 .short:
@@ -654,32 +753,61 @@ print_opr:
     call print_word
     jmp .exit
 
+
     ; immediate 16-bit
 .imm16:
+    cmp byte [cs:dasm_style],0
+    je .imm16_std
+
+    mov al,'$'
+    call print_chr
+
+.imm16_std:
     mov ax,[cs:inst_imm]
     call print_word
     jmp .exit
+
 
     ; near
 .near:
     mov ax,[cs:inst_imm]
     mov dx,si
     add ax,dx
-    inc ax
     call print_word
     jmp .exit
+
 
     ; mem
 .mem:
+    cmp byte [cs:dasm_style],0
+    je .mem_std
+
+    mov al,'('
+    call print_chr
+    jmp .mem_value
+
+.mem_std:
     mov al,'['
     call print_chr
 
+.mem_value:
     mov ax,[cs:inst_off]
     call print_word
 
+    cmp byte [cs:dasm_style],0
+    je .mem_end_std
+
+    mov al,')'
+    call print_chr
+    jmp .mem_end
+
+.mem_end_std:
     mov al,']'
     call print_chr
+
+.mem_end:
     jmp .exit
+
 
     ; FAR
 .far:
@@ -692,6 +820,7 @@ print_opr:
     mov ax,[cs:inst_imm]
     call print_word
     jmp .exit
+
 
     ; REG
 .reg:
@@ -710,12 +839,12 @@ print_opr:
 
 .reg_name:
     cmp byte [cs:dasm_style],0
-    je .intel
+    je .reg_std
 
     mov al,'%'
     call print_chr
 
-.intel:
+.reg_std:
     shl bl,1
 
     push si
@@ -753,6 +882,7 @@ clear:
     mov byte [cs:inst_mod],0
     mov byte [cs:inst_reg],0
     mov byte [cs:inst_rxm],0
+    mov byte [cs:inst_ovr],0
 
     ; operands
     mov byte [cs:inst_op1],0
@@ -902,6 +1032,14 @@ ins_type_ext            equ 002h
 ins_type_segover        equ 003h
 ins_type_prefix         equ 004h
 ins_type_special        equ 005h
+
+
+; override types
+
+ins_over_none           equ 000h
+ins_over_byte           equ 001h
+ins_over_word           equ 002h
+ins_over_dword          equ 003h
 
 
 ; instruction operands
@@ -1247,15 +1385,21 @@ reg add_di,             'di'
 reg add_bp,             'bp'
 reg add_bx,             'bx'
 
+reg ovr_byte,           'byte'
+reg ovr_word,           'word'
+reg ovr_dword,          'dword'
 
 regs_table:
-
-                        dw reg_al, reg_cl, reg_dl, reg_bl, reg_ah, reg_ch, reg_dh, reg_bh
-                        dw reg_ax, reg_cx, reg_dx, reg_bx, reg_sp, reg_bp, reg_si, reg_di
-                        dw reg_es, reg_cs, reg_ss, reg_ds
+                        dw reg_al,      reg_cl,     reg_dl,     reg_bl,
+                        dw reg_ah,      reg_ch,     reg_dh,     reg_bh
+                        dw reg_ax,      reg_cx,     reg_dx,     reg_bx,
+                        dw reg_sp,      reg_bp,     reg_si,     reg_di
+                        dw reg_es,      reg_cs,     reg_ss,     reg_ds
 
 addr_table:
-
                         dw add_bx_si,   add_bx_di,  add_bp_si,  add_bp_di
                         dw add_si,      add_di,     add_bp,     add_bx
+
+over_table:
+                        dw ovr_byte,    ovr_word,   ovr_dword
 
