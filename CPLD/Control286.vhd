@@ -1,62 +1,68 @@
 library ieee;
-use ieee.std_logic_1164.all;
+use ieee.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
 entity Control286 is
   port (
 
     -- Misc
-    i_clk           : in std_logic;
-    i_reset_n       : in std_logic;
-    -- i_jp1           : in std_logic;
+    i_clk           : in STD_LOGIC;
+    i_reset_n       : in STD_LOGIC;
+    i_jp1           : in STD_LOGIC;
 
-    o_ale           : buffer std_logic;
-    o_warning       : out std_logic;
-    o_bhe_n         : out std_logic;
+    o_ale           : buffer STD_LOGIC;
+    o_warning       : out STD_LOGIC;
+    o_bhe_n         : out STD_LOGIC;
 
     -- CPU
-    i_addr_high     : in std_logic_vector(3 downto 0); -- A19..A16
-    i_addr_low      : in std_logic_vector(7 downto 0); -- A7..A0
-    io_data         : inout std_logic_vector(7 downto 0); -- D7..D0
+    i_addr_high     : in STD_LOGIC_VECTOR(3 downto 0); -- A19..A16
+    i_addr_low      : in STD_LOGIC_VECTOR(7 downto 0); -- A7..A0
+    io_data         : inout STD_LOGIC_VECTOR(7 downto 0); -- D7..D0
 
-    i_s0_n          : in std_logic;
-    i_s1_n          : in std_logic;
-    i_bhe_n         : in std_logic;
-    i_m_io          : in std_logic;
+    i_s0_n          : in STD_LOGIC;
+    i_s1_n          : in STD_LOGIC;
+    i_bhe_n         : in STD_LOGIC;
+    i_m_io          : in STD_LOGIC;
 
-    o_reset         : out std_logic;
-    o_ready_n       : buffer std_logic;
-    o_nmi           : out std_logic;
-    o_intr          : out std_logic;
+    o_ready_n       : buffer STD_LOGIC;
+    o_nmi           : out STD_LOGIC;
+    o_intr          : out STD_LOGIC;
 
     -- Memory
-    o_rom_ce_n      : out std_logic;
-    o_rom_oe_n      : out std_logic;
+    i_rom_wr_en     : in STD_LOGIC;
 
-    o_ram_we_low_n  : out std_logic;
-    o_ram_we_high_n : out std_logic;
-    o_ram_oe_n      : out std_logic;
-    o_ram_ce_n      : out std_logic;
+    o_mem_ce_n      : out STD_LOGIC;
+    o_rom_oe_n      : out STD_LOGIC;
+    o_ram_oe_n      : out STD_LOGIC;
+    o_rom_we_low_n  : out STD_LOGIC;
+    o_rom_we_high_n : out STD_LOGIC;
+    o_ram_we_low_n  : out STD_LOGIC;
+    o_ram_we_high_n : out STD_LOGIC;
 
-    o_addr_high     : buffer std_logic_vector(3 downto 0); -- AC19..AC16
+    o_addr_high     : buffer STD_LOGIC_VECTOR(3 downto 0); -- AC19..AC16
 
     -- Expansion slot
-    o_memrd_n       : out std_logic;
-    o_memwr_n       : out std_logic;
-    o_iord_n        : buffer std_logic;
-    o_iowr_n        : buffer std_logic;
+    o_memrd_n       : out STD_LOGIC;
+    o_memwr_n       : out STD_LOGIC;
+    o_iord_n        : buffer STD_LOGIC;
+    o_iowr_n        : buffer STD_LOGIC;
 
-    i_wait0_n       : in std_logic;
-    i_wait1_n       : in std_logic;
+    i_wait0_n       : in STD_LOGIC;
+    i_wait1_n       : in STD_LOGIC;
 
-    i_irq0_n        : in std_logic;
-    i_irq1_n        : in std_logic;
-    i_irq2_n        : in std_logic;
-    i_irq3_n        : in std_logic
+    i_irq0_n        : in STD_LOGIC;
+    i_irq1_n        : in STD_LOGIC;
+    i_irq2_n        : in STD_LOGIC;
+    i_irq3_n        : in STD_LOGIC;
+
+    i_user1         : in STD_LOGIC;
+    i_user2         : in STD_LOGIC;
+    i_user3         : in STD_LOGIC;
+    i_user4         : in STD_LOGIC
 
     );
 
-  constant bank_ctrl_addr   : std_logic_vector(7 downto 4) := "0001"; -- 0x10-1F
+  constant bank_ctrl_addr   : STD_LOGIC_VECTOR(7 downto 4) := "0001"; -- 0x10-1F
 
 end Control286;
 
@@ -68,85 +74,95 @@ architecture rtl of Control286 is
   -- Misc
   attribute chip_pin of i_clk           : signal is "83";
   attribute chip_pin of i_reset_n       : signal is "1";
-  attribute chip_pin of o_ale           : signal is "65";
-  attribute chip_pin of o_warning       : signal is "75";
-  attribute chip_pin of o_bhe_n         : signal is "8";
+  attribute chip_pin of i_jp1           : signal is "20";
+
+  attribute chip_pin of o_ale           : signal is "79";
+  attribute chip_pin of o_warning       : signal is "18";
+  attribute chip_pin of o_bhe_n         : signal is "29";
 
   -- CPU
-  attribute chip_pin of i_addr_high     : signal is "64, 63, 60, 61"; -- A19..A16
-  attribute chip_pin of i_addr_low      : signal is "44, 45, 46, 48, 49, 50, 51, 52"; -- A7..A0
-  attribute chip_pin of io_data         : signal is "33, 34, 35, 36, 37, 39, 40, 41"; -- D7..D0
-  attribute chip_pin of i_s0_n          : signal is "68";
-  attribute chip_pin of i_s1_n          : signal is "69";
-  attribute chip_pin of i_bhe_n         : signal is "67";
-  attribute chip_pin of i_m_io          : signal is "70";
-  attribute chip_pin of o_reset         : signal is "55";
-  attribute chip_pin of o_ready_n       : signal is "73";
-  attribute chip_pin of o_nmi           : signal is "74";
-  attribute chip_pin of o_intr          : signal is "76";
+  attribute chip_pin of i_addr_high     : signal is "68, 67, 65, 64"; -- A19..A16
+  attribute chip_pin of i_addr_low      : signal is "63, 61, 60, 58, 57, 56, 55, 54"; -- A7..A0
+  attribute chip_pin of io_data         : signal is "44, 45, 46, 48, 49, 50, 51, 52"; -- D7..D0
+
+  attribute chip_pin of i_s0_n          : signal is "69";
+  attribute chip_pin of i_s1_n          : signal is "70";
+  attribute chip_pin of i_bhe_n         : signal is "76";
+  attribute chip_pin of i_m_io          : signal is "73";
+
+  attribute chip_pin of o_ready_n       : signal is "74";
+  attribute chip_pin of o_nmi           : signal is "75";
+  attribute chip_pin of o_intr          : signal is "77";
 
   -- Memory
-  attribute chip_pin of o_rom_ce_n      : signal is "10";
-  attribute chip_pin of o_rom_oe_n      : signal is "11";
-  attribute chip_pin of o_ram_we_low_n  : signal is "12";
-  attribute chip_pin of o_ram_we_high_n : signal is "15";
-  attribute chip_pin of o_ram_oe_n      : signal is "16";
-  attribute chip_pin of o_ram_ce_n      : signal is "17";
-  attribute chip_pin of o_addr_high     : signal is "18, 22, 20, 21"; -- AC19..AC16
+  attribute chip_pin of i_rom_wr_en     : signal is "2";
+
+  attribute chip_pin of o_mem_ce_n      : signal is "16";
+  attribute chip_pin of o_rom_oe_n      : signal is "9";
+  attribute chip_pin of o_ram_oe_n      : signal is "6";
+  attribute chip_pin of o_rom_we_low_n  : signal is "11";
+  attribute chip_pin of o_rom_we_high_n : signal is "8";
+  attribute chip_pin of o_ram_we_low_n  : signal is "10";
+  attribute chip_pin of o_ram_we_high_n : signal is "5";
+
+  attribute chip_pin of o_addr_high     : signal is "15, 17, 12, 4"; -- AC19..AC16
 
   -- Expansion slot
-  attribute chip_pin of o_memrd_n       : signal is "54";
-  attribute chip_pin of o_memwr_n       : signal is "56";
-  attribute chip_pin of o_iord_n        : signal is "57";
-  attribute chip_pin of o_iowr_n        : signal is "58";
-  attribute chip_pin of i_wait0_n       : signal is "27";
-  attribute chip_pin of i_wait1_n       : signal is "25";
+  attribute chip_pin of o_memrd_n       : signal is "27";
+  attribute chip_pin of o_memwr_n       : signal is "25";
+  attribute chip_pin of o_iord_n        : signal is "28";
+  attribute chip_pin of o_iowr_n        : signal is "24";
+
+  attribute chip_pin of i_wait0_n       : signal is "35";
+  attribute chip_pin of i_wait1_n       : signal is "36";
+
   attribute chip_pin of i_irq0_n        : signal is "31";
-  attribute chip_pin of i_irq1_n        : signal is "29";
+  attribute chip_pin of i_irq1_n        : signal is "33";
   attribute chip_pin of i_irq2_n        : signal is "30";
-  attribute chip_pin of i_irq3_n        : signal is "28";
+  attribute chip_pin of i_irq3_n        : signal is "34";
+
+  attribute chip_pin of i_user4         : signal is "37";
+  attribute chip_pin of i_user2         : signal is "39";
+  attribute chip_pin of i_user3         : signal is "40";
+  attribute chip_pin of i_user1         : signal is "41";
 
   -- signals
-  signal iorq_n               : std_logic;
-  signal event_start          : std_logic;
-  signal inta_cycle           : std_logic;
+  signal inta_cycle           : STD_LOGIC;
 
-  signal irq0_latch           : std_logic;
-  signal irq1_latch           : std_logic;
-  signal irq2_latch           : std_logic;
-  signal irq3_latch           : std_logic;
- 
-  signal irq0_clear           : std_logic;
-  signal irq1_clear           : std_logic;
-  signal irq2_clear           : std_logic;
-  signal irq3_clear           : std_logic;
+  signal irq0_latch           : STD_LOGIC;
+  signal irq1_latch           : STD_LOGIC;
+  signal irq2_latch           : STD_LOGIC;
+  signal irq3_latch           : STD_LOGIC;
 
-  signal wait_states          : integer range 0 to 3;
+  signal irq0_clear           : STD_LOGIC;
+  signal irq1_clear           : STD_LOGIC;
+  signal irq2_clear           : STD_LOGIC;
+  signal irq3_clear           : STD_LOGIC;
 
-  type t_bank_table is array (0 to 7) of std_logic_vector(4 downto 0);
+  signal wait_states          : INTEGER range 0 to 3;
+
+  type t_bank_table is array (0 to 7) of STD_LOGIC_VECTOR(4 downto 0);
   signal bank_table           : t_bank_table;
-  signal bank_write           : std_logic;
+  signal bank_write           : STD_LOGIC;
 
   type t_ctrl_state is (TS1, TS2, TC1, TC2);
   signal ctrl_state           : t_ctrl_state;
 
-  signal ram_enable           : std_logic;
-  signal rom_enable           : std_logic;
+  signal ram_enable           : STD_LOGIC;
+  signal rom_enable           : STD_LOGIC;
 
 begin
+
+  -- unused outputs
+
+  o_rom_we_low_n <= '1';
+  o_rom_we_high_n <= '1';
 
   -- interrupt outputs
   o_nmi <= '0';
 
   o_intr <= '1' when irq0_latch = '1' or irq1_latch = '1' or
             irq2_latch = '1' or irq3_latch = '1'
-            else '0';
-
-  -- CPU reset
-  o_reset <= not i_reset_n;
-
-  -- I/O request signal
-  iorq_n <= '1' when o_iowr_n = '1' and o_iord_n = '1'
             else '0';
 
   --
@@ -218,8 +234,8 @@ begin
   --
 
   proc_addr_high: process(i_reset_n, o_ale) is
-    variable bank           : std_logic_vector(4 downto 0);
-    variable bank_index     : integer;
+    variable bank           : STD_LOGIC_VECTOR(4 downto 0);
+    variable bank_index     : INTEGER;
   begin
 
     if i_reset_n = '0' then
@@ -266,7 +282,7 @@ begin
   --
 
   proc_bank_write: process(i_reset_n, bank_write) is
-    variable bank_index     : integer;
+    variable bank_index     : INTEGER;
   begin
 
     if i_reset_n = '0' then
@@ -308,7 +324,7 @@ begin
   -- at the end of the TS1 cycle
 
   proc_ctrl_state_machine: process(i_clk, i_reset_n) is
-    variable bank_index     : integer;
+    variable bank_index     : INTEGER;
   begin
 
     if i_reset_n = '0' then
@@ -317,7 +333,6 @@ begin
       ctrl_state <= TS1;
       wait_states <= 0;
 
-      event_start <= '0';
       bank_write <= '0';
       inta_cycle <= '0';
 
@@ -332,11 +347,10 @@ begin
       o_ready_n <= '1';
 
       o_rom_oe_n <= '1';
-      o_rom_ce_n <= '1';
       o_ram_we_low_n <= '1';
       o_ram_we_high_n <= '1';
       o_ram_oe_n <= '1';
-      o_ram_ce_n <= '1';
+      o_mem_ce_n <= '1';
 
       o_memrd_n <= '1';
       o_iord_n <= '1';
@@ -354,7 +368,6 @@ begin
 
           wait_states <= 0;
 
-          event_start <= '0';
           bank_write <= '0';
 
           irq0_clear <= '0';
@@ -365,11 +378,10 @@ begin
           o_ready_n <= '1';
 
           o_rom_oe_n <= '1';
-          o_rom_ce_n <= '1';
           o_ram_we_low_n <= '1';
           o_ram_we_high_n <= '1';
           o_ram_oe_n <= '1';
-          o_ram_ce_n <= '1';
+          o_mem_ce_n <= '1';
 
           o_memrd_n <= '1';
           o_iord_n <= '1';
@@ -420,10 +432,9 @@ begin
 
               -- at this point we don't know if this read is from RAM, ROM,
               -- or an external peripheral so enable both RAM and ROM and
-              -- use the OE/WE controls to determine which is used during 
+              -- use the OE/WE controls to determine which is used during
               -- the TS2 cycle
-              o_ram_ce_n <= '0';
-              o_rom_ce_n <= '0';
+              o_mem_ce_n <= '0';
 
             elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
               -- Mem Write
@@ -431,7 +442,7 @@ begin
               -- at this point we don't know if this write is to RAM or an
               -- external peripheral so enable RAM and use the OE/WE
               -- controls to determine which is used during the TS2 cycle
-              o_ram_ce_n <= '0';
+              o_mem_ce_n <= '0';
 
             end if;
 
@@ -443,7 +454,6 @@ begin
           ctrl_state <= TC1;
           wait_states <= 0;
 
-          event_start <= '0';
           bank_write <= '0';
 
           irq0_clear <= '0';
@@ -478,7 +488,7 @@ begin
             -- interrupt ack to allow the intel interrupt controllers to do their
             -- thing and to add one wait state during the second interrupt ack
             -- to allow the CPU to output an address correctly.
-            -- the first doesn't apply (no intel interrupt controller) but the 
+            -- the first doesn't apply (no intel interrupt controller) but the
             -- second does so apply one wait state regardless of first/second
             -- ack to simplify CPLD logic
             wait_states <= 1;
@@ -528,7 +538,7 @@ begin
               -- memory banking control
               if i_addr_low(7 downto 4) = bank_ctrl_addr then
                 bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
-                -- don't use "000", adds three more macro cells and results 
+                -- don't use "000", adds three more macro cells and results
                 -- in flaky behaviour elsewhere in the CPLD (fitter bug?)
                 io_data(7 downto 5) <= "111";
                 io_data(4 downto 0) <= bank_table(bank_index);
@@ -633,7 +643,6 @@ begin
 
           ctrl_state <= TC2;
 
-          event_start <= '0';
           bank_write <= '0';
 
           irq0_clear <= '0';
@@ -667,7 +676,6 @@ begin
           -- last phase in the TC cycle. Either we're done or we'll repeat
           -- because of wait states
 
-          event_start <= '0';
           bank_write <= '0';
 
           irq0_clear <= '0';
@@ -690,11 +698,10 @@ begin
             o_ready_n <= '1';
 
             o_rom_oe_n <= '1';
-            o_rom_ce_n <= '1';
             o_ram_we_low_n <= '1';
             o_ram_we_high_n <= '1';
             o_ram_oe_n <= '1';
-            o_ram_ce_n <= '1';
+            o_mem_ce_n <= '1';
 
             o_memrd_n <= '1';
             o_iord_n <= '1';
