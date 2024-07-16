@@ -155,6 +155,7 @@ mem_dasm:
     cmp byte [cs:inst_type],ins_type_ext
     jne .decode
 
+    ; extended instruction handling
     call load_extended      ; load extended instruction
     jmp .decode
 
@@ -304,7 +305,7 @@ load_addr:
     shr al,cl
     mov [cs:inst_mod],al
 
-    mov al,dl               ; REG / Ext. Opcode
+    mov al,dl               ; REG or Extended inst.
     and al,038h
     shr al,1
     shr al,1
@@ -332,15 +333,43 @@ load_extended:
 
     call load_addr          ; load addr
 
-    ; inst_reg is actually the extended inst
+    ; instruction
+    mov dl,byte [cs:inst_curr]
+
+    ; extended instruction
     xor ax,ax
     mov al,byte [cs:inst_reg]
 
+    cmp dl,0f6h
+    je .instf6
+    cmp dl,0f7h
+    je .instf7
+    cmp dl,0ffh
+    je .mnem
+    jmp .dword
 
-    ; TODO
+.instf6:
+    cmp al,0
+    jne .dword
+    mov byte [cs:inst_op2],ins_op_imm8
+    jmp .dword
 
+.instf7:
+    cmp al,0
+    jne .dword
+    mov byte [cs:inst_op2],ins_op_imm16
 
-    shl al,1                ; word sized
+.dword:
+    cmp al,3
+    je .dword_ptr
+    cmp al,5
+    jne .mnem
+
+.dword_ptr:
+    mov byte [cs:inst_ovr],ins_over_word
+
+.mnem:
+    shl al,1
 
     ; points to extended inst, shift into list
     mov bx,[cs:inst_mnem]
@@ -651,11 +680,7 @@ print_opr:
     cmp byte [cs:inst_mod],0
     je .addr_end
 
-    mov al,' '
-    call print_chr
     mov al,'+'
-    call print_chr
-    mov al,' '
     call print_chr
 
 .addr_disp:
@@ -1398,9 +1423,9 @@ reg add_di,             'di'
 reg add_bp,             'bp'
 reg add_bx,             'bx'
 
-reg ovr_byte,           'byte'
-reg ovr_word,           'word'
-reg ovr_dword,          'dword'
+reg ovr_byte,           'byte '
+reg ovr_word,           'word '
+reg ovr_dword,          'dword '
 
 regs_table:
                         dw reg_al,      reg_cl,     reg_dl,     reg_bl,
