@@ -17,12 +17,12 @@ rom_table:
                             dw 00h  ; offset
                             dw 00h  ; size
                             dw 00h  ; flags
-    TIMES 24                db 00h  ; name (24 bytes)
+            TIMES 24        db 00h  ; name (24 bytes)
 %endrep
 
 
 ; debug command line buffer
-buffer      times 40        db 00h
+buffer      TIMES 40        db 00h
 
 ; debug last command
 dbg_last                    db 00h
