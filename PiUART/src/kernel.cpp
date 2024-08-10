@@ -41,20 +41,20 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_pBuffer0 = NULL;
     m_pBuffer1 = NULL;
     m_bBufferSwapped = true;
-    
+
     m_nMode = MODE_CON;
     m_nPrevMode = MODE_CON;
     m_nReadyForSwap = 1;
 
     m_bUartIntEnable = false;
     m_bUartIntActive = false;
-    
+
     memset(m_pRam, 0, RAM_SIZE * 2);
     m_pBusRam = m_pRam;
     m_pDisRam = &m_pRam[RAM_SIZE];
 
     m_nTestPort = 0;
-    
+
 }
 
 CKernel::~CKernel(void) {}
@@ -62,17 +62,17 @@ CKernel::~CKernel(void) {}
 bool CKernel::Initialize() {
 
     if (!m_InterruptSystem.Initialize())
-	return false;
-    
+        return false;
+
     if (!m_Timer.Initialize())
-	return false;
+        return false;
 
     if (!m_I2C.Initialize())
-	return false;
+        return false;
 
 #ifndef NDEBUG
     if (!m_Logger.Initialize(&m_I2CLogger))
-	return false;
+        return false;
 #endif
 
     // now we have a working logging system
@@ -81,37 +81,37 @@ bool CKernel::Initialize() {
     klog(LogNotice, "Compile time: " __DATE__ " " __TIME__);
     klog(LogNotice, "Temperature: %u", CCPUThrottle::Get()->GetTemperature());
     klog(LogNotice, "Clock: %u MHz", CCPUThrottle::Get()->GetClockRate() / 1000000);
-    
+
     if (!InitFB(m_CmdLine.GetWidth(), m_CmdLine.GetHeight())) {
-	    klog(LogError, "FrameBuffer init failed");
-	    return false;
+            klog(LogError, "FrameBuffer init failed");
+            return false;
     } else
-	klog(LogNotice, "FrameBuffer init complete");
-    
+        klog(LogNotice, "FrameBuffer init complete");
+
     m_nScreenWidth = m_pFrameBuffer->GetWidth();
     m_nScreenHeight = m_pFrameBuffer->GetHeight();
     m_nScreenPitch = m_pFrameBuffer->GetPitch();
-    
+
     klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
     klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
     klog(LogNotice, "ScreenPitch %u", m_nScreenPitch);
     klog(LogNotice, "DEPTH %u", DEPTH);
-	
+
     if (!m_Terminal.Initialize(m_nScreenWidth, m_nScreenHeight, m_nScreenPitch)) {
-	klog(LogError, "Terminal init failed");
-	return false;
+        klog(LogError, "Terminal init failed");
+        return false;
     } else
-	klog(LogNotice, "Terminal init complete");
+        klog(LogNotice, "Terminal init complete");
 
     // fails if deferred :(
     if (!m_USBHCI.Initialize(false)) {
-	klog(LogError, "USBHCI init failed");
-	return false;
+        klog(LogError, "USBHCI init failed");
+        return false;
     } else
-	klog(LogNotice, "USBHCI init complete");
-    
+        klog(LogNotice, "USBHCI init complete");
+
     // all other initialisation is deferred and handled by the MAIN core
-    
+
     return CMultiCoreSupport::Initialize();
 
 }
@@ -119,78 +119,78 @@ bool CKernel::Initialize() {
 bool CKernel::DeferredInitialize() {
 
     if (!m_LCD.Initialize()) {
-	klog(LogError, "LCD init failed");
-	return false;
+        klog(LogError, "LCD init failed");
+        return false;
     } else
-	klog(LogNotice, "LCD init complete");
+        klog(LogNotice, "LCD init complete");
 
     // put something on the LCD display so we know it's working
     m_LCD.Write(VERSION "\n", strlen(VERSION) + 1);
-    
+
     if (!m_EMMC.Initialize()) {
-	klog(LogError, "EMMC init failed");
-	return false;
+        klog(LogError, "EMMC init failed");
+        return false;
     } else
-	klog(LogNotice, "EMMC init complete");
+        klog(LogNotice, "EMMC init complete");
 
     if (f_mount (&m_FileSystem, DRIVE, 1) != FR_OK) {
-	klog(LogError, "Cannot mount drive: %s", DRIVE);
-	return false;
+        klog(LogError, "Cannot mount drive: %s", DRIVE);
+        return false;
     } else
-	klog(LogNotice, "Filesystem %s mounted", DRIVE);
+        klog(LogNotice, "Filesystem %s mounted", DRIVE);
 
     if (!m_WLAN.Initialize()) {
-	klog(LogError, "WLAN init failed");
-	return false;
+        klog(LogError, "WLAN init failed");
+        return false;
     } else
-	klog(LogNotice, "WLAN init complete");
+        klog(LogNotice, "WLAN init complete");
 
     if (!m_Net.Initialize(false)) {
-	klog(LogError, "Net init failed");
-	return false;
+        klog(LogError, "Net init failed");
+        return false;
     } else
-	klog(LogNotice, "Net init complete");
+        klog(LogNotice, "Net init complete");
 
     if (!m_WPASupplicant.Initialize()) {
-	klog(LogError, "WPA Supplicant init failed");
-	return false;
+        klog(LogError, "WPA Supplicant init failed");
+        return false;
     } else
-	klog(LogNotice, "WPA Supplicant init complete");
+        klog(LogNotice, "WPA Supplicant init complete");
 
     return true;
 }
-    
+
 void CKernel::Run(unsigned nCore) {
 
     switch(nCore) {
 
     case CORE_MAIN:
 
-	klog(LogNotice, "CKernel::Run CORE_MAIN");
-	Main();
-	
-	break;
+        klog(LogNotice, "CKernel::Run CORE_MAIN");
+        Main();
+
+        break;
 
     case CORE_DISPLAY:
 
-	klog(LogNotice, "CKernel::Run CORE_DISPLAY");
-	Display();
-	
-	break;
+        klog(LogNotice, "CKernel::Run CORE_DISPLAY");
+        Display();
+
+        break;
 
     case CORE_GPIO:
 
-	klog(LogNotice, "CKernel::Run CORE_GPIO");
-	GPIO();
-	
-	break;
-	
+        klog(LogNotice, "CKernel::Run CORE_GPIO");
+        GPIO();
+
+        break;
+
     default:
-	klog(LogNotice, "CKernel::Run default");
-	break;
-    
+        klog(LogNotice, "CKernel::Run default");
+        break;
+
     }
-    
+
 }
 
 //
@@ -201,90 +201,90 @@ void CKernel::Display() {
 
     while(true) {
 
-	// make a local copy of Mode, we don't want it changing midway through
-	// updating the screen
-	u8 nLocalMode = m_nMode;
-	
-	// check for mode change
-	if (nLocalMode != m_nPrevMode) {
+        // make a local copy of Mode, we don't want it changing midway through
+        // updating the screen
+        u8 nLocalMode = m_nMode;
 
-	    klog(LogNotice, "Mode switch %u", nLocalMode);
-	    
-	    switch(nLocalMode) {
+        // check for mode change
+        if (nLocalMode != m_nPrevMode) {
 
-	    case MODE_CON:
+            klog(LogNotice, "Mode switch %u", nLocalMode);
 
-		if (InitFB(m_nScreenWidth, m_nScreenHeight)) {
-		    
-		    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
+            switch(nLocalMode) {
 
-		} else {
-		    // framebuffer object is unusable, bomb out
-		    klog(LogPanic, "Mode switch failed to init FB");
-		    CMultiCoreSupport::HaltAll();
-		}
+            case MODE_CON:
 
-		break;
+                if (InitFB(m_nScreenWidth, m_nScreenHeight)) {
 
-	    case MODE_160x100:
-	    case MODE_160x100_DB:
+                    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
 
-		if (ResizeFB(m_nScreenWidth, m_nScreenHeight, 160, 100)) {
+                } else {
+                    // framebuffer object is unusable, bomb out
+                    klog(LogPanic, "Mode switch failed to init FB");
+                    CMultiCoreSupport::HaltAll();
+                }
 
-		    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
-		    
-		} else {
-		    // framebuffer object is unusable, bomb out
-		    klog(LogPanic, "Mode switch failed to resize FB");
-		    CMultiCoreSupport::HaltAll();
-		}
-		    
-		break;
+                break;
 
-	    default:
-		break;
-	    }
+            case MODE_160x100:
+            case MODE_160x100_DB:
 
-	    m_nPrevMode = nLocalMode;
-	    
-	}
+                if (ResizeFB(m_nScreenWidth, m_nScreenHeight, 160, 100)) {
 
-	// update the screen
-	switch(nLocalMode) {
-	
-	case MODE_CON:
+                    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
 
-	    m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
-	    UpdateFB();
-	    break;
-	    
-	case MODE_160x100:
-	    
-	    UpdateMode160x100(m_pBusRam);
-	    UpdateFB();
-	    break;
-	    
-	case MODE_160x100_DB:
+                } else {
+                    // framebuffer object is unusable, bomb out
+                    klog(LogPanic, "Mode switch failed to resize FB");
+                    CMultiCoreSupport::HaltAll();
+                }
 
-	    if (m_nReadyForSwap == 0) {
+                break;
 
-		UpdateMode160x100(m_pDisRam);
-		UpdateFB();
+            default:
+                break;
+            }
 
-		// clear the buffer
-		memset(m_pDisRam, 0, RAM_SIZE);
+            m_nPrevMode = nLocalMode;
 
-		// signal redraw is done
-		m_nReadyForSwap = 1;
+        }
 
-	    }
-		
-	    break;
-	    
-	default:
-	    CTimer::SimpleMsDelay(1);
-	    break;
-	}
+        // update the screen
+        switch(nLocalMode) {
+
+        case MODE_CON:
+
+            m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
+            UpdateFB();
+            break;
+
+        case MODE_160x100:
+
+            UpdateMode160x100(m_pBusRam);
+            UpdateFB();
+            break;
+
+        case MODE_160x100_DB:
+
+            if (m_nReadyForSwap == 0) {
+
+                UpdateMode160x100(m_pDisRam);
+                UpdateFB();
+
+                // clear the buffer
+                memset(m_pDisRam, 0, RAM_SIZE);
+
+                // signal redraw is done
+                m_nReadyForSwap = 1;
+
+            }
+
+            break;
+
+        default:
+            CTimer::SimpleMsDelay(1);
+            break;
+        }
 
     }
 }
@@ -293,72 +293,72 @@ void CKernel::GPIO() {
 
     // setup the GPIO pins
     GPIOInit();
-    
+
     // set PWAIT output to 0 to indicate we're ready
     GPIOPWaitReady();
-    
+
     // main GPIO loop
     while (true) {
-	
-	// raise an interrupt if necessary
-	if (m_bUartIntEnable and not m_bUartIntActive and
-	    m_ToSerial.GetCount() > 0) {
 
-	    m_bUartIntActive = true;
-	    GPIOInterruptRaise();
-	    
-	}
+        // raise an interrupt if necessary
+        if (m_bUartIntEnable and not m_bUartIntActive and
+            m_ToSerial.GetCount() > 0) {
 
-	// check for an event
-	u32 pins = GPIORead();
-	
-	if (pins & PEVENT) {
-	    
-	    u32 address = (pins >> 4) & 0xf; // A3-A0
-	    u32 prdwr = pins & PRDWR; // true == read, false == write
+            m_bUartIntActive = true;
+            GPIOInterruptRaise();
 
-	    if (prdwr) {
-		// bus io read
+        }
 
-		// fetch the data
-		u32 data = BusIORead(address);
+        // check for an event
+        u32 pins = GPIORead();
 
-		// output the data
-		GPIODataOutput(data);
-		
-		// release the wait signal
-		GPIOPWaitBusy();
+        if (pins & PEVENT) {
 
-	    } else {
-		// bus io write
+            u32 address = (pins >> 4) & 0xf; // A3-A0
+            u32 prdwr = pins & PRDWR; // true == read, false == write
 
-		// release the wait signal as we have everything we need
-		GPIOPWaitBusy();
+            if (prdwr) {
+                // bus io read
 
-		// grab the data
-		u8 data = (pins >> 20) & 0xff;
+                // fetch the data
+                u32 data = BusIORead(address);
 
-		// process the data
-		BusIOWrite(address, data);
+                // output the data
+                GPIODataOutput(data);
 
-	    }
-	    
-	    // wait for event to finish
-	    while (GPIORead() & PEVENT);
+                // release the wait signal
+                GPIOPWaitBusy();
 
-	    if (prdwr) {
-		// bus read
+            } else {
+                // bus io write
 
-		// set data pins back to input mode
-		GPIODataInput();
-	    }
+                // release the wait signal as we have everything we need
+                GPIOPWaitBusy();
 
-	    // signal that we're done with the bus and are safe
-	    GPIOPWaitReady();
-	    	    
-	}
+                // grab the data
+                u8 data = (pins >> 20) & 0xff;
+
+                // process the data
+                BusIOWrite(address, data);
+
+            }
+
+            // wait for event to finish
+            while (GPIORead() & PEVENT);
+
+            if (prdwr) {
+                // bus read
+
+                // set data pins back to input mode
+                GPIODataInput();
+            }
+
+            // signal that we're done with the bus and are safe
+            GPIOPWaitReady();
+
+        }
     }
-    
+
 }
 
 void CKernel::Main() {
@@ -373,22 +373,22 @@ void CKernel::Main() {
 
     // finish the rest of the initialisation
     if (!DeferredInitialize())
-	return;
+        return;
 
     klog(LogNotice, "Deferred init complete");
 
     // launch the task that looks after the USB keyboard
     new CKeyboardTask(&m_USBHCI, &m_ToSerial);
-    
+
     // dodgy hack, stop new tasks from running so the DHCP process doesn't start
     // also interferes with the netphy task
     m_Scheduler.SuspendNewTasks();
-    
+
     klog(LogNotice, "WPA waiting for connection");
 
     // wait for WPA to become connected
     while(!m_WPASupplicant.IsConnected()) {
-	m_Scheduler.MsSleep(100);
+        m_Scheduler.MsSleep(100);
     }
 
     klog(LogNotice, "WPA connected");
@@ -398,7 +398,7 @@ void CKernel::Main() {
 
     // wait for the network (dhcp) to be ready
     while(!m_Net.IsRunning()) {
-	m_Scheduler.MsSleep(100);
+        m_Scheduler.MsSleep(100);
     }
 
     // do one-off work now the network is available
@@ -422,61 +422,61 @@ void CKernel::Main() {
       a stream of 1 byte packets being sent.
       Instead wait a bit before sending so we can accumulate more data.
     */
-    
+
     // main loop
     while(true) {
 
-	//m_Scheduler.ListTasks(&m_I2CLogger);
+        //m_Scheduler.ListTasks(&m_I2CLogger);
 
-	nBytesWaiting = m_ToNetwork.GetCount();
-	unsigned nNow = CTimer::GetClockTicks();
-	
-	if (nBytesWaiting > 0) {
+        nBytesWaiting = m_ToNetwork.GetCount();
+        unsigned nNow = CTimer::GetClockTicks();
 
-	    if (nNetworkDelayClockTicks == 0)
-		nNetworkDelayClockTicks = nNow;
-	    
-	    if (nBytesWaiting >= NETWORK_DELAY_BYTES or
-		(nNow - nNetworkDelayClockTicks) >= NETWORK_DELAY_US) {
-	    
-		if (RawListener->IsConnected()) {
+        if (nBytesWaiting > 0) {
 
-		    m_ToNetwork.Lock();
-		    nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-		    m_ToNetwork.Unlock();
-		    
-		    RawListener->Write(Buffer, nBytesSent);
-		    nNetworkDelayClockTicks = 0;
-		    
-		    klog(LogDebug, "Sent raw bytes %d", nBytesSent);
-		    /*
-		      for (int i = 0; i < nBytesSent; i++) {
-		      u8 c = Buffer[i];
-		      klog(LogDebug, "Sent byte: 0x%x", c);
-		      }
-		    */
-		    
-		} else if (TelnetListener->IsConnected()) {
-		    
-		    m_ToNetwork.Lock();
-		    nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-		    m_ToNetwork.Unlock();
-		    
-		    TelnetListener->Write(Buffer, nBytesSent);
-		    nNetworkDelayClockTicks = 0;
-		    
-		    klog(LogDebug, "Sent telnet bytes %d", nBytesSent);
-		}
-		
-	    }
+            if (nNetworkDelayClockTicks == 0)
+                nNetworkDelayClockTicks = nNow;
 
-	}
+            if (nBytesWaiting >= NETWORK_DELAY_BYTES or
+                (nNow - nNetworkDelayClockTicks) >= NETWORK_DELAY_US) {
 
-	m_Scheduler.MsSleep(1);
-	//m_Scheduler.Yield();
+                if (RawListener->IsConnected()) {
+
+                    m_ToNetwork.Lock();
+                    nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
+                    m_ToNetwork.Unlock();
+
+                    RawListener->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks = 0;
+
+                    klog(LogDebug, "Sent raw bytes %d", nBytesSent);
+                    /*
+                      for (int i = 0; i < nBytesSent; i++) {
+                      u8 c = Buffer[i];
+                      klog(LogDebug, "Sent byte: 0x%x", c);
+                      }
+                    */
+
+                } else if (TelnetListener->IsConnected()) {
+
+                    m_ToNetwork.Lock();
+                    nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
+                    m_ToNetwork.Unlock();
+
+                    TelnetListener->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks = 0;
+
+                    klog(LogDebug, "Sent telnet bytes %d", nBytesSent);
+                }
+
+            }
+
+        }
+
+        m_Scheduler.MsSleep(1);
+        //m_Scheduler.Yield();
 
     }
-	
+
 }
 
 //
@@ -484,19 +484,19 @@ void CKernel::Main() {
 //
 
 void CKernel::UpdateMode160x100(u8 *pRam) {
-    
+
     //unsigned nStartTime = CTimer::GetClockTicks();
 
     unsigned nModeWidth = 160;
     unsigned nModeHeight = 100;
-    
+
     unsigned nFBWidth = m_pFrameBuffer->GetWidth();
     unsigned nFBHeight = m_pFrameBuffer->GetHeight();
-    
+
     unsigned nHorizMult = nFBWidth / nModeWidth;
     unsigned nVertMult = nFBHeight / nModeHeight;
     unsigned nMult = min(nHorizMult, nVertMult);
-    
+
     unsigned nHorizGutter = (nFBWidth - (nMult * nModeWidth)) / 2;
     unsigned nVertGutter = (nFBHeight - (nMult * nModeHeight)) / 2;
 
@@ -515,35 +515,35 @@ void CKernel::UpdateMode160x100(u8 *pRam) {
 
     for (unsigned nY = 0; nY < nModeHeight; nY++) {
 
-	unsigned nIdxZZ = 0;
-	
-	for (unsigned nYY = 0; nYY < nMult; nYY++) {
+        unsigned nIdxZZ = 0;
 
-	    nIdxZZ = nIdxZ;
-	    nIdxP += nHorizGutter;
+        for (unsigned nYY = 0; nYY < nMult; nYY++) {
 
-	    for (unsigned nX = 0; nX < nModeWidth; nX++) {
+            nIdxZZ = nIdxZ;
+            nIdxP += nHorizGutter;
+
+            for (unsigned nX = 0; nX < nModeWidth; nX++) {
 
 #if DEPTH == 8
-		TPixel nC = pRam[nIdxZZ++];
+                TPixel nC = pRam[nIdxZZ++];
 #elif DEPTH == 16
-		TPixel nC = pCMap[pRam[nIdxZZ++]];
+                TPixel nC = pCMap[pRam[nIdxZZ++]];
 #endif
-		
-		for (unsigned nXX = 0; nXX < nMult; nXX++) {
-		    
-		    m_pBuffer[nIdxP++] = nC;
-		    
-		}
 
-	    }
+                for (unsigned nXX = 0; nXX < nMult; nXX++) {
 
-	    nIdxP += nHorizGutter;
-	    
-	}
+                    m_pBuffer[nIdxP++] = nC;
 
-	nIdxZ = nIdxZZ;
-	
+                }
+
+            }
+
+            nIdxP += nHorizGutter;
+
+        }
+
+        nIdxZ = nIdxZZ;
+
     }
 
     //unsigned nEndTime = CTimer::GetClockTicks();
@@ -554,40 +554,40 @@ void CKernel::UpdateMode160x100(u8 *pRam) {
 bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 
     klog(LogDebug, "InitFB");
-    
+
     if (m_pFrameBuffer != NULL)
-	delete m_pFrameBuffer;
+        delete m_pFrameBuffer;
 
     m_pFrameBuffer = new CBcmFrameBuffer (nWidth, nHeight, DEPTH, 0, 0, 0, true);
 
     if (m_pFrameBuffer == NULL) {
-	klog(LogError, "FrameBuffer alloc failed");
-	return FALSE;
+        klog(LogError, "FrameBuffer alloc failed");
+        return FALSE;
     }
-	
+
 #if DEPTH == 8
 
     // set the palette
     for (int i=0; i < 256; i++) {
-	m_pFrameBuffer->SetPalette(i, pCMap[i]);
+        m_pFrameBuffer->SetPalette(i, pCMap[i]);
     }
-    
+
 #endif
 
     if (!m_pFrameBuffer->Initialize())
-	return false;
+        return false;
 
     // setup the buffer pointers
     m_pBuffer0 = (TPixel *) m_pFrameBuffer->GetBuffer();
     m_pBuffer1 = m_pBuffer0 + m_pFrameBuffer->GetWidth() * m_pFrameBuffer->GetHeight();
     m_pBuffer = m_pBuffer1;
-    
+
     m_bBufferSwapped = true;
 
     memset(m_pBuffer0, 0, m_pFrameBuffer->GetSize());
-    
+
     return true;
-    
+
 }
 
 
@@ -601,28 +601,28 @@ bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth,
     unsigned nHorizMult = nNextWidth / nTargetWidth;
     unsigned nVertMult = nNextHeight / nTargetHeight;
     unsigned nMult = min(nHorizMult, nVertMult);
-    
+
     unsigned nHorizGutter = (nNextWidth - (nMult * nTargetWidth)) / 2;
     unsigned nVertGutter = (nNextHeight - (nMult * nTargetHeight)) / 2;
 
-    unsigned nHorizGutterRatio = (nHorizGutter * 100) / nNextWidth; 
+    unsigned nHorizGutterRatio = (nHorizGutter * 100) / nNextWidth;
     unsigned nVertGutterRatio = (nVertGutter * 100) / nNextHeight;
 
     klog(LogDebug, "ResizeFB %u %u %u %u", nWidth, nHeight, nTargetWidth, nTargetHeight);
-    
+
     bool bModeSet = false;
 
     // if the next size is greater than the target and the gutters are less than 10%
     // then try the next size
     if ((nNextWidth >= nTargetWidth) and nNextHeight >= nTargetHeight and
-	min(nHorizGutterRatio, nVertGutterRatio) <= 10) {
+        min(nHorizGutterRatio, nVertGutterRatio) <= 10) {
 
-	bModeSet = ResizeFB(nNextWidth, nNextHeight, nTargetWidth, nTargetHeight);
+        bModeSet = ResizeFB(nNextWidth, nNextHeight, nTargetWidth, nTargetHeight);
 
     }
 
     if (not bModeSet) {
-	bModeSet = InitFB(nWidth, nHeight);
+        bModeSet = InitFB(nWidth, nHeight);
     }
 
     return bModeSet;
@@ -635,7 +635,7 @@ void CKernel::UpdateFB() {
     m_pBuffer = m_bBufferSwapped ? m_pBuffer0 : m_pBuffer1;
     m_pFrameBuffer->WaitForVerticalSync();
     m_bBufferSwapped = !m_bBufferSwapped;
-    
+
 }
 
 u32 CKernel::BusIORead(u32 address) {
@@ -643,43 +643,43 @@ u32 CKernel::BusIORead(u32 address) {
     u32 data;
 
     switch(address) {
-	
+
     case UART_CONTROL:
-	// read UART control register
+        // read UART control register
 
-	// return 0x1 if there are bytes waiting
-	data = m_ToSerial.GetCount() > 0;
-	
-	break;
-	    
+        // return 0x1 if there are bytes waiting
+        data = m_ToSerial.GetCount() > 0;
+
+        break;
+
     case UART_DATA:
-	// read UART data register
+        // read UART data register
 
-	m_ToSerial.Lock();
-	data = m_ToSerial.RemoveChar();
-	m_ToSerial.Unlock();
+        m_ToSerial.Lock();
+        data = m_ToSerial.RemoveChar();
+        m_ToSerial.Unlock();
 
-	if (m_bUartIntActive) {
-	    m_bUartIntActive = false;
-	    GPIOInterruptRelease();
+        if (m_bUartIntActive) {
+            m_bUartIntActive = false;
+            GPIOInterruptRelease();
 
-	}
-	
-	break;
-	
+        }
+
+        break;
+
     case VC_MODE:
-	data = m_nMode;
-	break;
-	    
+        data = m_nMode;
+        break;
+
     case VC_FB_SWAP:
-	data = m_nReadyForSwap;
-	break;
-	    
+        data = m_nReadyForSwap;
+        break;
+
     default:
-	    
-	data = m_nTestPort;
-	break;
-	    
+
+        data = m_nTestPort;
+        break;
+
     }
 
     klog(LogDebug, "IO_READ Address: 0x%x, Data: 0x%x", address, data);
@@ -692,56 +692,62 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
     switch(address) {
 
     case UART_CONTROL:
-	// write UART control register
+        // write UART control register
 
-	m_bUartIntEnable = data & UART_INT_ENABLE;
-	
-	break;
-	    
+        klog(LogNotice, "UART control write %u", data);
+        m_bUartIntEnable = data & UART_INT_ENABLE;
+
+        break;
+
     case UART_DATA:
-	// write UART data register
-	m_ToTerminal.Lock();
-	m_ToTerminal.AddChar(data);
-	m_ToTerminal.Unlock();
-	    
-	m_ToNetwork.Lock();
-	m_ToNetwork.AddChar(data);
-	m_ToNetwork.Unlock();
-	    
-	break;
+        // write UART data register
+        m_ToTerminal.Lock();
+        m_ToTerminal.AddChar(data);
+        m_ToTerminal.Unlock();
+
+        m_ToNetwork.Lock();
+        m_ToNetwork.AddChar(data);
+        m_ToNetwork.Unlock();
+
+        break;
 
     case VC_MODE:
-	// set video mode
-	
-	klog(LogNotice, "Setting mode %u", data);
-	m_nMode = data;
-	
-	break;
-	
+        // set video mode
+
+        if (data <= MODE_160x100_DB) {
+            klog(LogNotice, "Setting mode %u", data);
+            m_nMode = data;
+        } else {
+            klog(LogWarning, "Bad mode %u", data);
+        }
+
+        break;
+
     case VC_FB_SWAP:
-	// double buffer swap
-	if ((m_nMode == MODE_160x100_DB) && m_nReadyForSwap) {
-	    
-	    u8 *tmp = m_pBusRam;
-	    m_pBusRam = m_pDisRam;
-	    m_pDisRam = tmp;
-	    
-	    m_nReadyForSwap = 0;
-	    
-	} else {
-	    klog(LogNotice, "Bad Swap");
-	}
-	    
-	break;
+        // double buffer swap
+        if ((m_nMode == MODE_160x100_DB) && m_nReadyForSwap) {
+
+            u8 *tmp = m_pBusRam;
+            m_pBusRam = m_pDisRam;
+            m_pDisRam = tmp;
+
+            m_nReadyForSwap = 0;
+
+        } else {
+            klog(LogWarning, "Bad Swap");
+        }
+
+        break;
 
     default:
-	    
-	m_nTestPort = data;
-	    
-	break;
+
+        klog(LogNotice, "default write");
+        m_nTestPort = data;
+
+        break;
 
     }
-	
+
     klog(LogDebug, "IO_WRITE Address: 0x%x Data: 0x%x", address, data);
 
 }
@@ -754,21 +760,21 @@ void CKernel::GPIOInit() {
 
     // set Interrupt HIGH
     GPIOInterruptRelease();
-    
+
     // set GPIO pin mode
     write32(ARM_GPIO_GPFSEL0, 0x901); // GPIO 0 output (PWAIT), GPIO 1,4-9 input, GPIO 2,3 I2C
     write32(ARM_GPIO_GPFSEL1, 0x1040000); // GPIO 10-15, 17, 19 input, GPIO 16, 18 output
     write32(ARM_GPIO_GPFSEL2, 0x8000000); // GPIO 20-28 input, GPIO 29 output (ActLED)
-    
+
     // disable GPIO pullups (see CGPIOPin::SetPullMode), only works for Pi <= 3
     // also see bcm2835-peripherals.pdf page 101
     // there are physical pullups on the I2C pins, so safe to disable here
     write32(ARM_GPIO_GPPUD, 0); // pullups off
     CTimer::SimpleusDelay(5);
-    write32(ARM_GPIO_GPPUDCLK0, 0xfffffff); // GPIO 0-27 
+    write32(ARM_GPIO_GPPUDCLK0, 0xfffffff); // GPIO 0-27
     CTimer::SimpleusDelay(5);
     write32(ARM_GPIO_GPPUD, 0);
-    write32(ARM_GPIO_GPPUDCLK0, 0);	
+    write32(ARM_GPIO_GPPUDCLK0, 0);
 
     // mess with slew rates and drive strength (GPIO 0-27)
     // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#gpio-pads-control
@@ -810,26 +816,26 @@ inline void CKernel::GPIODataOutput(u32 data) {
       the data pins but this creates complications.
       If we set the output mode first then the previous value is outputted,
       then rapidly switched to the new value.
-      If we set the output mode second then we're raising PWAIT before 
+      If we set the output mode second then we're raising PWAIT before
       we're finished so there's a small window for a race condition.
       Playing it safe and doing this in three steps:
       1. set the output values
       2. enable output
       3. raise PWAIT
     */
-    
+
     data = data << 20;
-    
+
     u32 data_clear = ~data & DATA_MASK;
     u32 data_set = data & DATA_MASK;
-    
+
     // set the output pin values
     write32(ARM_GPIO_GPCLR0, data_clear);
     write32(ARM_GPIO_GPSET0, data_set);
-    
+
     // set data pins to output mode
     write32(ARM_GPIO_GPFSEL2, 0x8249249); // GPIO 20-27, 29 output, GPIO 28 input
-    
+
 }
 
 // set data pins to input mode
