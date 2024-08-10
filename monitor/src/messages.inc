@@ -1,7 +1,7 @@
 
 ; monitor
 
-mon_welcome         db 0Ah
+mon_welcome         db 0Ah, 'Solo/86 Release 1.0.0',0Ah,0Ah
                     db ' _____       _         _____   ____ ',0Ah
                     db '/  ___|     | |       |  _  | / ___|',0Ah
                     db '\ `--.  ___ | | ___    \ V / / /___ ',0Ah

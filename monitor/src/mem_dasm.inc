@@ -713,6 +713,7 @@ print_opr:
     mov si,[cs:regs_table + bx]
     call print_str
     pop si
+
     jmp .exit
 
 
@@ -1093,19 +1094,19 @@ ins_op_ch               equ 006h
 ins_op_dh               equ 007h
 ins_op_bh               equ 008h
 
-ins_op_ax               equ 008h        ; 16-bit registers
-ins_op_cx               equ 009h
-ins_op_dx               equ 00ah
-ins_op_bx               equ 00bh
-ins_op_sp               equ 00ch
-ins_op_bp               equ 00dh
-ins_op_si               equ 00eh
-ins_op_di               equ 00fh
+ins_op_ax               equ 009h        ; 16-bit registers
+ins_op_cx               equ 00ah
+ins_op_dx               equ 00bh
+ins_op_bx               equ 00ch
+ins_op_sp               equ 00dh
+ins_op_bp               equ 00eh
+ins_op_si               equ 00fh
+ins_op_di               equ 010h
 
-ins_op_es               equ 010h        ; segment registers
-ins_op_cs               equ 011h
-ins_op_ss               equ 012h
-ins_op_ds               equ 013h
+ins_op_es               equ 011h        ; segment registers
+ins_op_cs               equ 012h
+ins_op_ss               equ 013h
+ins_op_ds               equ 014h
 
 ins_op_const1           equ 01ah        ; constant values
 ins_op_const3           equ 01bh
