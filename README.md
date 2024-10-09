@@ -20,3 +20,26 @@ The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to R
 However, the top half of the address space (0x80000->FFFFF) is broken into 8 x 64kB pages. These can be mapped
 to ROM or an external peripheral.
 
+
+## Building Solo86
+
+## What tools do I need to build Solo86?
+
+You'll need to install the following:
+- make
+- nasm
+- perl
+
+
+### Building
+
+Load the environment for building:
+
+    source env.sh
+
+Then build the system:
+
+    make
+
+The final binaries will be in out/ along with Intel Hex Files.
+
