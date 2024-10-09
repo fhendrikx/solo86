@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 ######################################################################
-# bin2hex - convert binary to intel hex
+# bin2hex - convert binary to Intel Hex File
+#
 # Ferry Hendrikx, May 2024
 ######################################################################
 
