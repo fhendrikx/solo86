@@ -1,0 +1,6 @@
+*.bin
+*.hex
+*.img
+*.map
+out/*
+!out/Makefile
