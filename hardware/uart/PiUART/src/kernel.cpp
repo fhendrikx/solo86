@@ -315,9 +315,9 @@ void CKernel::GPIO() {
         if (pins & PEVENT) {
 
             u32 address = (pins >> 4) & 0x7; // A2-A0
-            u32 prdwr = pins & PRDWR; // true == read, false == write
+            u32 prdwr = pins & PRDWR; // 0 == read
 
-            if (prdwr) {
+            if (prdwr == 0) {
                 // bus io read
 
                 // fetch the data
@@ -346,7 +346,7 @@ void CKernel::GPIO() {
             // wait for event to finish
             while (GPIORead() & PEVENT);
 
-            if (prdwr) {
+            if (prdwr == 0) {
                 // bus read
 
                 // set data pins back to input mode

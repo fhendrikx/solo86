@@ -36,8 +36,6 @@
   GPIO 3 SCL
   GPIO 18 Interrupt
   GPIO 19 PRDWR
-
-  PRDWR  high == read, low == write
 */
 
 #define PWAIT 0x1
