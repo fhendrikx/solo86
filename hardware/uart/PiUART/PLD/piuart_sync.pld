@@ -20,17 +20,17 @@ PIN  9 = !IORD;
 PIN 10 = !A0;
 PIN 11 = !RESET;
 // PIN 12 = GND;
-PIN 13 = JP0;
-PIN 14 = IRQ;        /* output */
-PIN 15 = WAIT;       /* output */
-PIN 16 = PRDWR;      /* output */
-PIN 17 = PEVENT;     /* output */
-PIN 18 = !PDATA_EN;  /* output */
-PIN 19 = S0;
-PIN 20 = S1;
-PIN 21 = S2;
-PIN 22 = PWAIT;      /* buffered version of PWAIT */
-PIN 23 = !PDATA_DIR; /* output */
+PIN 13 = !BHE;
+PIN 14 = IRQ;         /* output */
+PIN 15 = WAIT;        /* output */
+PIN 16 = !PATTERN_EN; /* output */
+PIN 17 = PEVENT;      /* output */
+PIN 18 = S0;
+PIN 19 = S1;
+PIN 20 = S2;
+PIN 21 = PWAIT;       /* buffered version of PWAIT */
+PIN 22 = !PDATA_DIR;  /* output */
+PIN 23 = !PDATA_EN;   /* output */
 // PIN 24 = VCC;
 
 $DEFINE WAIT_FOR_EVENT_START  0
@@ -42,17 +42,14 @@ $DEFINE WAIT_FOR_EVENT_END    4
 FIELD IOADDR = [A7..4];
 FIELD STATE  = [S2..0];
 
-/* valid I/O address based on jumper selection */
-// ADDRMATCH = !JP0 & IOADDR:[020..03F]
-//           # JP0 & IOADDR:[040..05F];
+/* valid I/O address */
+ADDRMATCH = IOADDR:[020..02F];
 
-// EVENT = (IORD # IOWR) & ADDRMATCH & A0;
-EVENT = (IORD # IOWR) & IOADDR:[020..02F] & A0;
+/* respond with our signature on the high data bus */
+PATTERN_EN = ADDRMATCH & IORD & BHE;
 
-// PRDWR  HIGH == IORD, LOW == IOWR or idle
-PRDWR.D = IORD;
-PRDWR.AR = RESET;
-PRDWR.SP = 'b'0;
+/* event for the PI */
+EVENT = (IORD # IOWR) & ADDRMATCH & A0;
 
 /*
   74LVC245A
@@ -64,13 +61,14 @@ PDATA_DIR.D = IORD;
 PDATA_DIR.AR = RESET;
 PDATA_DIR.SP = 'b'0;
 
-// buffer this input for 3.3V -> 5V conversion
+/* buffer this input for 3.3V -> 5V conversion */
 IRQ = PINT;
 
 /*
+    PWAIT can change at any time. If this occurs just before the rising
+    edge of the clock the state machine gets an inconsistent view of PWAIT.
 
-    TODO
-
+    buffer PWAIT so it changes in a controlled manner
 */
 PWAIT.D = PWAIT_UNBUFF;
 PWAIT.AR = RESET;
