@@ -314,7 +314,7 @@ void CKernel::GPIO() {
 
         if (pins & PEVENT) {
 
-            u32 address = (pins >> 4) & 0xf; // A3-A0
+            u32 address = (pins >> 4) & 0x7; // A2-A0
             u32 prdwr = pins & PRDWR; // true == read, false == write
 
             if (prdwr) {

@@ -70,6 +70,7 @@
  - 06h Timer Ctrl
 
  - 08h LED
+ - 09h LED signature 0xAA
 
  - 10h Bank table; row 0
  - 12h Bank table; row 1
@@ -83,7 +84,21 @@
  - XXh Clock            -- TBD
 
  - 20h UART Ctrl
+ - 21h UART signature 0xAA
  - 22h UART Data
+ - 23h UART signature 0xAA
+ - 24h UART reserved
+ - 25h UART signature 0xAA
+ - 26h UART reserved
+ - 27h UART signature 0xAA
+ - 28h UART reserved
+ - 29h UART signature 0xAA
+ - 2Ah UART reserved
+ - 2Bh UART signature 0xAA
+ - 2Ch UART reserved
+ - 2Dh UART signature 0xAA
+ - 2Eh UART reserved
+ - 2Fh UART signature 0xAA
 
  - 80h Delay
 
