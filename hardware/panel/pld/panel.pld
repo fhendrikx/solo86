@@ -20,7 +20,7 @@ PIN 9  = A0;
 // PIN 10 = GND;
 PIN 11 = !IORD;
 PIN 12 = !IOWR;
-PIN 13 = JP0;
+PIN 13 = !PATTERN_EN;
 PIN 14 = LED_LATCH_HIGH;
 // PIN 15 = UNUSED;
 // PIN 16 = UNUSED;
@@ -32,11 +32,11 @@ PIN 19 = LED_LATCH_LOW;
 /* I/O address */
 FIELD IOADDR = [A7..1];
 
-/* valid I/O address based on jumper selection */
-ADDRMATCH = !JP0 & IOADDR:['h'08]
-           # JP0 & IOADDR:['h'00];
+/* valid I/O address */
+ADDRMATCH = IOADDR:['h'08];
 
 /* output functions */
 LED_LATCH_HIGH = ADDRMATCH & IOWR & BHE;
 LED_LATCH_LOW = ADDRMATCH & IOWR & !A0;
 SW_EN = ADDRMATCH & IORD & !A0;
+PATTERN_EN = ADDRMATCH & IORD & BHE;

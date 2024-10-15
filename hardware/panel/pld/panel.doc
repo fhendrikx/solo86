@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g16v8s  Library DLIB-h-40-9
-Created         Tue Jun 18 20:29:40 2024
+Created         Tue Oct 15 22:17:22 2024
 Name            panel 
 Partno          ATF16V8C 
 Revision        01 
@@ -20,23 +20,22 @@ Location
 ===============================================================================
 
 ADDRMATCH =>
-    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & !JP0
-  # !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & JP0
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7
 
 IOADDR =>
     A7 , A6 , A5 , A4 , A3 , A2 , A1
 
 LED_LATCH_HIGH =>
-    !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & JP0
-  # !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR & !JP0
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR
 
 LED_LATCH_LOW =>
-    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR & JP0
-  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR & !JP0
+    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR
+
+PATTERN_EN =>
+    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IORD
 
 SW_EN =>
-    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD & JP0
-  # !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD & !JP0
+    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD
 
 
 ===============================================================================
@@ -55,15 +54,15 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
     A5                          5        V        -       -       -     
     A6                          6        V        -       -       -     
     A7                          7        V        -       -       -     
-    ADDRMATCH                   0        I        2       -       -     
+    ADDRMATCH                   0        I        1       -       -     
  !  BHE                         8        V        -       -       -     
     IOADDR                      0        F        -       -       -     
  !  IORD                        11       V        -       -       -     
  !  IOWR                        12       V        -       -       -     
-    JP0                         13       V        -       -       -     
-    LED_LATCH_HIGH              14       V        2       8       1     
-    LED_LATCH_LOW               19       V        2       8       1     
- !  SW_EN                       18       V        2       8       1     
+    LED_LATCH_HIGH              14       V        1       8       1     
+    LED_LATCH_LOW               19       V        1       8       1     
+ !  PATTERN_EN                  13       V        1       8       1     
+ !  SW_EN                       18       V        1       8       1     
 
 
 LEGEND    D : default variable         F : field      G : group
@@ -79,8 +78,8 @@ LEGEND    D : default variable         F : field      G : group
 Syn   02192 - Ac0   02193 x 
 
 Pin #19  02048  Pol -  02120  Ac1 x 
- 00000 -x-x-x---x---x---x---xx----x-x-- 
- 00032 -x-xx----x---x---x---x-x---x-x-- 
+ 00000 -x-xx----x---x---x---x-----x-x-- 
+ 00032 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00064 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00096 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00128 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -88,8 +87,8 @@ Pin #19  02048  Pol -  02120  Ac1 x
  00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #18  02049  Pol x  02121  Ac1 x 
- 00256 -x-x-x---x---x---x---xx------x-x 
- 00288 -x-xx----x---x---x---x-x-----x-x 
+ 00256 -x-xx----x---x---x---x-------x-x 
+ 00288 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00320 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00352 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00384 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -124,16 +123,16 @@ Pin #15  02052  Pol x  02124  Ac1 -
  01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #14  02053  Pol -  02125  Ac1 x 
- 01280 -x-x-x---x---x---x---xx--x-x---- 
- 01312 -x-xx----x---x---x---x-x-x-x---- 
+ 01280 -x-xx----x---x---x---x---x-x---- 
+ 01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01408 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01440 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #13  02054  Pol x  02126  Ac1 - 
- 01536 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #13  02054  Pol x  02126  Ac1 x 
+ 01536 -x-xx----x---x---x---x---x-----x 
  01568 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01600 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01632 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -168,7 +167,7 @@ LEGEND    X : fuse not blown
                        A5 x---|5           16|---x                          
                        A6 x---|6           15|---x                          
                        A7 x---|7           14|---x LED_LATCH_HIGH           
-                     !BHE x---|8           13|---x JP0                      
+                     !BHE x---|8           13|---x !PATTERN_EN              
                        A0 x---|9           12|---x !IOWR                    
                       GND x---|10          11|---x !IORD                    
                               |______________|
