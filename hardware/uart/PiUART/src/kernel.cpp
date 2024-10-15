@@ -714,7 +714,7 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
     case VC_MODE:
         // set video mode
 
-        if (data <= MODE_160x100_DB) {
+        if (data <= MODE_CON) {
             klog(LogNotice, "Setting mode %u", data);
             m_nMode = data;
         } else {
@@ -741,7 +741,7 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     default:
 
-        klog(LogNotice, "default write");
+        klog(LogNotice, "default write Address: 0x%x Data: 0x%x", address, data);
         m_nTestPort = data;
 
         break;

@@ -13,7 +13,7 @@ PIN  2 = A4;
 PIN  3 = A5;
 PIN  4 = A6;
 PIN  5 = A7;
-PIN  6 = PWAIT;
+PIN  6 = PWAIT_UNBUFF;
 PIN  7 = !PINT;
 PIN  8 = !IOWR;
 PIN  9 = !IORD;
@@ -22,14 +22,14 @@ PIN 11 = !RESET;
 // PIN 12 = GND;
 PIN 13 = JP0;
 PIN 14 = IRQ;        /* output */
-PIN 15 = !WAIT;      /* output */
+PIN 15 = WAIT;       /* output */
 PIN 16 = PRDWR;      /* output */
 PIN 17 = PEVENT;     /* output */
 PIN 18 = !PDATA_EN;  /* output */
 PIN 19 = S0;
 PIN 20 = S1;
 PIN 21 = S2;
-// PIN 22 = UNUSED;
+PIN 22 = PWAIT;      /* buffered version of PWAIT */
 PIN 23 = !PDATA_DIR; /* output */
 // PIN 24 = VCC;
 
@@ -43,10 +43,11 @@ FIELD IOADDR = [A7..4];
 FIELD STATE  = [S2..0];
 
 /* valid I/O address based on jumper selection */
-ADDRMATCH = !JP0 & IOADDR:[020..03F]
-           # JP0 & IOADDR:[040..05F];
+// ADDRMATCH = !JP0 & IOADDR:[020..03F]
+//           # JP0 & IOADDR:[040..05F];
 
-EVENT = (IORD # IOWR) & ADDRMATCH & A0;
+// EVENT = (IORD # IOWR) & ADDRMATCH & A0;
+EVENT = (IORD # IOWR) & IOADDR:[020..02F] & A0;
 
 // PRDWR  HIGH == IORD, LOW == IOWR or idle
 PRDWR.D = IORD;
@@ -65,6 +66,15 @@ PDATA_DIR.SP = 'b'0;
 
 // buffer this input for 3.3V -> 5V conversion
 IRQ = PINT;
+
+/*
+
+    TODO
+
+*/
+PWAIT.D = PWAIT_UNBUFF;
+PWAIT.AR = RESET;
+PWAIT.SP = 'b'0;
 
 /*
     the state-machine drives the following outputs: PEVENT, PDATA_EN, WAIT
