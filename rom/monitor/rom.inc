@@ -111,11 +111,11 @@ rom_exec:
     mov si,rom_table
     add si,bx
 
-; segment
+; src segment
     lodsw
     mov [ rom_seg ],ax
 
-; offset
+; src offset
     lodsw
     mov [ rom_ofs ],ax
 
@@ -123,24 +123,25 @@ rom_exec:
     lodsw
     push ax                 ; store size
 
-; flags
+; dst segment
     lodsw
-    cmp ax,0
+    cmp ax,0                ; only copy ROM to RAM if dst segment > 0
     je .call
+    push ax                 ; store dst segment
 
 ; copy ROM to RAM
     mov ax,[ rom_seg ]
-    mov ds,ax
+    mov ds,ax               ; DS:SI src segment
     xor si,si
 
-    mov ax,rom_relocate
-    mov es,ax               ; ES:DI
+    pop ax                  ; load dst segment
+    mov es,ax               ; ES:DI dst segment
     xor di,di
 
     pop ax                  ; restore size
 
 .copy:
-    mov cx,16384
+    mov cx,8192             ; size in words
 
 .copy_rom:
     movsw
