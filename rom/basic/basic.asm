@@ -64,8 +64,8 @@ sseg                equ 01000h
                     db 0AAh
                     dw entry
                     dw 04h
-                    dw 01h
-                    db 'Tiny Basic              ', 00h
+                    dw 1000h
+                    db 'Tiny Basic', 00h
 
 TIMES 256-($-$$)    db 0FFh
 
