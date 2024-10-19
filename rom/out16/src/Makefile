@@ -1,6 +1,6 @@
 
 AS=nasm
-BH=../../utils/hex/bin2hex
+BH=../../../bin/bin2hex
 
 OUT_SRC = out16.asm
 OUT_BIN = out16.bin
