@@ -8,7 +8,7 @@ CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBu
     m_Name.Format("tcplistenertask-%u", nListenPort);
     From = m_Name;
     SetName(m_Name);
-    
+
     m_pNet = pNet;
     m_nListenPort = nListenPort;
     m_pToSerial = pToSerial;
@@ -28,7 +28,7 @@ void CTCPListenerTask::Run() {
     case telnet:
         klog(LogNotice, "Starting TCP Listener Task (telnet)");
         break;
-        
+
     case raw:
         klog(LogNotice, "Starting TCP Listener Task (raw)");
         break;
@@ -37,15 +37,15 @@ void CTCPListenerTask::Run() {
         assert(false);
 
     }
-    
+
     assert(m_pNet != NULL);
-    
+
     m_pListenSocket = new CSocket (m_pNet, IPPROTO_TCP);
 
     assert(m_pListenSocket != NULL);
 
     if (m_pListenSocket->Bind(m_nListenPort) < 0) {
-        
+
         klog(LogError, "Error binding socket to port %u", m_nListenPort);
         delete m_pListenSocket;
         m_pListenSocket = NULL;
@@ -61,7 +61,7 @@ void CTCPListenerTask::Run() {
         return;
 
     }
-    
+
     while(true) {
 
         CIPAddress RemoteIP;
@@ -84,7 +84,7 @@ void CTCPListenerTask::Run() {
             klog(LogWarning, "Rejecting connection, already connected");
             delete pConnection;
             continue;
-            
+
         }
 
         if (m_TMode == telnet)
@@ -92,7 +92,7 @@ void CTCPListenerTask::Run() {
 
         if (m_TMode == raw)
             m_pRawTask = new CTCPRawTask(pConnection, m_pToSerial);
-        
+
     }
 
 }
@@ -106,7 +106,7 @@ bool CTCPListenerTask::IsConnected() {
         return CScheduler::Get()->IsValidTask(m_pRawTask);
 
     return false;
-    
+
 }
 
 void CTCPListenerTask::Write(const void *pBuffer, unsigned nLength) {
@@ -118,7 +118,7 @@ void CTCPListenerTask::Write(const void *pBuffer, unsigned nLength) {
 
         if (m_TMode == raw)
             m_pRawTask->Write(pBuffer, nLength);
-        
+
     }
-        
+
 }
