@@ -40,9 +40,7 @@ void CTCPRawTask::Run() {
         }
         */
 
-        m_pToSerial->Lock();
-        m_pToSerial->Add(Buffer, nBytesReceived);
-        m_pToSerial->Unlock();
+        m_pToSerial->AddSafe(Buffer, nBytesReceived);
 
     }
 

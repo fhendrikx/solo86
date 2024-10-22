@@ -1,5 +1,7 @@
 #include "ringbuf.h"
 
+#include <circle/sched/scheduler.h>
+
 CRingBuf::CRingBuf(int nSize) {
 
     m_pBuffer = new u8[nSize];
@@ -45,6 +47,57 @@ int CRingBuf::Add(u8 *c, int nLen) {
 
 }
 
+int CRingBuf::AddCharSafe(u8 c) {
+
+    bool bWritten = false;
+
+    do {
+
+        Lock();
+
+        if (GetFree() > 0) {
+            AddChar(c);
+            Unlock();
+            bWritten = true;
+        } else {
+            Unlock();
+            if (CScheduler::IsActive())
+                CScheduler::Get()->MsSleep(1);
+        }
+
+    } while (bWritten == false);
+
+    return 1;
+
+}
+
+int CRingBuf::AddSafe(u8 *c, int nLen) {
+
+    if (nLen > m_nSize)
+        return 0;
+
+    bool bWritten = false;
+
+    do {
+
+        Lock();
+
+        if (GetFree() >= nLen) {
+            Add(c, nLen);
+            Unlock();
+            bWritten = true;
+        } else {
+            Unlock();
+            if (CScheduler::IsActive())
+                CScheduler::Get()->MsSleep(1);
+        }
+
+    } while (bWritten == false);
+
+    return nLen;
+
+}
+
 u8 CRingBuf::RemoveChar() {
 
     u8 c = 0;
@@ -77,6 +130,10 @@ int CRingBuf::Remove(u8 *c, int nSize) {
 
 int CRingBuf::GetCount() {
     return m_nCount;
+}
+
+int CRingBuf::GetFree() {
+    return m_nSize - m_nCount;
 }
 
 void CRingBuf::Lock() {

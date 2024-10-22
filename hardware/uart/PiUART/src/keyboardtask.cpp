@@ -93,9 +93,7 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
         if (c == 0x7f)
             c = 0x8; // ascii backspace
 
-        s_pThis->m_pKeyBuf->Lock();
-        s_pThis->m_pKeyBuf->AddChar(c);
-        s_pThis->m_pKeyBuf->Unlock();
+        s_pThis->m_pKeyBuf->AddCharSafe(c);
 
     }
 

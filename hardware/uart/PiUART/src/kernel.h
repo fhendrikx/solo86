@@ -80,7 +80,7 @@
 
 #define RAM_SIZE 16384
 
-#define RING_BUF_SIZE 2097152
+#define RING_BUF_SIZE 262144
 
 #define NETWORK_DELAY_US 30000 // 30 ms
 #define NETWORK_DELAY_BYTES 132 // one xmodem packet
@@ -92,13 +92,13 @@ public:
 
     bool Initialize();
     void Run(unsigned nCore);
-        
+
 private:
     // Cores
     void GPIO();
     void Display();
     void Main();
-    
+
     // Helper functions
     bool DeferredInitialize();
     void UpdateMode160x100(u8 *pRam);
@@ -108,7 +108,7 @@ private:
 
     inline u32 BusIORead(u32 address);
     inline void BusIOWrite(u32 address, u8 data);
-    
+
     void GPIOInit();
     inline u32 GPIORead();
     inline void GPIOPWaitReady();
@@ -132,7 +132,7 @@ private:
     // handle exceptions more elegantly
     CExceptionHandler m_ExceptionHandler;
     #endif
-    
+
     // make interrupts work
     CInterruptSystem m_InterruptSystem;
 
@@ -143,7 +143,7 @@ private:
     // system logger
     CLogger m_Logger;
     #endif
-    
+
     // I2C master
     CI2CMaster m_I2C;
 
@@ -154,7 +154,7 @@ private:
 
     // Simple multi-tasking that runs on Core 0
     CScheduler m_Scheduler;
-    
+
     // HDMI display
     CBcmFrameBuffer *m_pFrameBuffer;
     TPixel *m_pBuffer;
@@ -164,7 +164,7 @@ private:
 
     // Terminal emulator
     CTerminal m_Terminal;
-  
+
     // OLED/LCD display
     CSSD1306Device m_LCD;
 
@@ -179,12 +179,12 @@ private:
     CBcm4343Device m_WLAN;
     CNetSubSystem m_Net;
     CWPASupplicant m_WPASupplicant;
-    
+
     // ring buffers
     CRingBuf m_ToSerial; // data for the UART to output
     CRingBuf m_ToTerminal; // data for the terminal to display
     CRingBuf m_ToNetwork; // data for the network to send
-    
+
     unsigned m_nLogLevel;
     u8 m_pRam[RAM_SIZE * 2];
 
@@ -196,13 +196,13 @@ private:
 
     bool m_bUartIntEnable;
     bool m_bUartIntActive;
-    
+
     unsigned m_nScreenWidth;
     unsigned m_nScreenHeight;
     unsigned m_nScreenPitch;
 
     u8 m_nTestPort;
-    
+
 };
 
 #endif
