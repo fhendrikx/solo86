@@ -89,7 +89,7 @@ int CRingBuf::AddSafe(u8 *c, int nLen) {
         } else {
             Unlock();
             if (CScheduler::IsActive())
-                CScheduler::Get()->MsSleep(1);
+                CScheduler::Get()->MsSleep(10);
         }
 
     } while (bWritten == false);
