@@ -28,7 +28,7 @@ typedef u16 TPixel;
 #define klog(level, ...) ((void) 0)
 #else
 #define klog(level, ...) if (level <= CKernelOptions::Get()->GetLogLevel()) \
-	CLogger::Get()->Write(From, level, __VA_ARGS__)   
+        CLogger::Get()->Write(From, level, __VA_ARGS__)
 #endif
 
 #endif

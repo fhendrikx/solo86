@@ -7,8 +7,8 @@ int main() {
 
     // initialise kernel and start cores 1-3
     if (!Kernel.Initialize()) {
-	CMultiCoreSupport::HaltAll();
-	return EXIT_HALT;
+        CMultiCoreSupport::HaltAll();
+        return EXIT_HALT;
     }
 
     // start core 0
@@ -17,5 +17,5 @@ int main() {
     // we should never get here
     CMultiCoreSupport::HaltAll();
     return EXIT_HALT;
-    
+
 }

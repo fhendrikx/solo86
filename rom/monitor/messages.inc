@@ -36,6 +36,7 @@ dbg_cmd_help        db 0Ah, '[ MON Help ]', 0Ah
                     db 'J SSSS:OOOO         - JMP addr SSSS:OOOO', 0Ah
                     db 'L                   - IHF LOAD', 0Ah
                     db 'E                   - IHF EXEC', 0Ah
+                    db 'X                   - HALT CPU', 0Ah
                     db 0Ah, 'All values are given in HEX', 0Ah
                     db 00h
 
@@ -54,4 +55,5 @@ dbg_cmd_load_loc    db 0Ah, '[ IHF SEGMENT ]: ', 00h
 dbg_cmd_load_jmp    db 0Ah, '[ IHF SEG:OFS ]: ', 00h
 dbg_cmd_exec        db 0Ah, '[ IHF EXEC ]', 0Ah, 00h
 dbg_cmd_exec_err    db 0Ah, '[ IHF EXEC Error ]', 0Ah, 00h
+dbg_cmd_halt        db 0Ah, '[ HALTING CPU ]', 0Ah, 00h
 

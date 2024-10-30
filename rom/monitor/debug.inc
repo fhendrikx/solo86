@@ -59,6 +59,9 @@ debug_menu:
     cmp al,'H'
     je  cmd_help
 
+    cmp al,'X'
+    je  cmd_halt
+
     cmp al,'Q'
     je .exit
 
@@ -336,6 +339,15 @@ cmd_ihf_exec:
 
 .exit:
     print dbg_cmd_exec_err
+    jmp debug_menu.loop
+
+cmd_halt:
+    call spaces
+
+    print dbg_cmd_halt
+
+    hlt
+
     jmp debug_menu.loop
 
 syntax:
