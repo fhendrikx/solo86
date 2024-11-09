@@ -35,10 +35,10 @@ private:
 
     CSpinLock m_Lock;
     u8 *m_pBuffer;
-    int m_nSize;
-    int m_nReadPos;
-    int m_nWritePos;
-    int m_nCount;
+    volatile int m_nSize;
+    volatile int m_nReadPos;
+    volatile int m_nWritePos;
+    volatile int m_nCount;
 
 };
 
