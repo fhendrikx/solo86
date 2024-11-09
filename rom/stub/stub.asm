@@ -15,8 +15,8 @@ org 0
                     db 0AAh
                     dw init
                     dw 04h
-                    dw 01h
-                    db 'Stub                    ', 00h
+                    dw 1000h
+                    db 'Stub', 00h
 
 TIMES 256-($-$$)    db 0FFh
 

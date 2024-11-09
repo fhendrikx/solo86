@@ -35,6 +35,3 @@ rom_last        equ 0F000h
 rom_size        equ 0400h   ; ROM size
 rom_max         equ 8       ; ROM maximum
 
-; segment for relocation
-rom_relocate    equ 01000h
-

@@ -13,10 +13,10 @@ rom_cnt:                    db 00h
 ; ROM found data (8 entries)
 rom_table:
 %rep rom_max
-                            dw 00h  ; segment
-                            dw 00h  ; offset
+                            dw 00h  ; src segment
+                            dw 00h  ; src offset
                             dw 00h  ; size
-                            dw 00h  ; flags
+                            dw 00h  ; dst segment
             TIMES 24        db 00h  ; name (24 bytes)
 %endrep
 
