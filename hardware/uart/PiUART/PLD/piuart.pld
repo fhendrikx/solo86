@@ -1,0 +1,130 @@
+Name     piuart ;
+PartNo   ATF22V10C ;
+Date     2024-06-05 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly  ;
+Location  ;
+Device   g22v10 ;
+
+PIN  1 = CLK;
+PIN  2 = A4;
+PIN  3 = A5;
+PIN  4 = A6;
+PIN  5 = A7;
+PIN  6 = PWAIT_UNBUFF;
+PIN  7 = !PINT;
+PIN  8 = !IOWR;
+PIN  9 = !IORD;
+PIN 10 = !A0;
+PIN 11 = !RESET;
+// PIN 12 = GND;
+PIN 13 = !BHE;
+PIN 14 = IRQ;         /* output */
+PIN 15 = WAIT;        /* output */
+PIN 16 = !PATTERN_EN; /* output */
+PIN 17 = PEVENT;      /* output */
+PIN 18 = S0;
+PIN 19 = S1;
+PIN 20 = S2;
+PIN 21 = PWAIT;       /* buffered version of PWAIT */
+PIN 22 = !PDATA_DIR;  /* output */
+PIN 23 = !PDATA_EN;   /* output */
+// PIN 24 = VCC;
+
+$DEFINE WAIT_FOR_EVENT_START  0
+$DEFINE WAIT_FOR_PI_READY     1
+$DEFINE DATA_ENABLE           2
+$DEFINE WAIT_FOR_PI_DONE      3
+$DEFINE WAIT_FOR_EVENT_END    4
+
+FIELD IOADDR = [A7..4];
+FIELD STATE  = [S2..0];
+
+/* valid I/O address */
+ADDRMATCH = IOADDR:[020..02F];
+
+/* respond with our signature on the high data bus */
+PATTERN_EN = ADDRMATCH & IORD & BHE;
+
+/* event for the PI */
+EVENT = (IORD # IOWR) & ADDRMATCH & A0;
+
+/*
+  74LVC245A
+  HIGH A -> B  IOWR or idle
+  LOW  B -> A  IORD
+  pin polarity inverted so it's HIGH on reset
+*/
+PDATA_DIR.D = IORD;
+PDATA_DIR.AR = RESET;
+PDATA_DIR.SP = 'b'0;
+
+/* buffer this input for 3.3V -> 5V conversion */
+IRQ = PINT;
+
+/*
+    PWAIT can change at any time. If this occurs just before the rising
+    edge of the clock the state machine gets an inconsistent view of PWAIT.
+
+    buffer PWAIT so it changes in a controlled manner
+*/
+PWAIT.D = PWAIT_UNBUFF;
+PWAIT.AR = RESET;
+PWAIT.SP = 'b'0;
+
+/*
+    the state-machine drives the following outputs: PEVENT, PDATA_EN, WAIT
+
+    PWAIT  LOW == ready, HIGH == not ready
+
+    PEVENT should only be active after PDATA_EN so the data on the bus
+    is stable before the Pi tries to read it (hence the DATA_ENABLE state)
+
+    PDATA_EN should only be enabled during an event while the Pi is ready. If
+    enabled too soon the Pi may still be writing to the bus from a previous
+    event and collide with the 74LVC245A. PDATA_EN and PDATA_DIR should change
+    at the same time at the end of an event to prevent a collision.
+
+    WAIT should be enabled as early as possible in theory, however
+    in practice 3 wait states are added to all I/O events so there's
+    plenty of time to assert it
+
+*/
+
+// synchronous outputs
+SEQUENCE STATE {
+    PRESENT WAIT_FOR_EVENT_START
+        IF EVENT & PWAIT NEXT WAIT_FOR_PI_READY OUT WAIT;         // pi not ready
+        IF EVENT & !PWAIT NEXT DATA_ENABLE OUT WAIT OUT PDATA_EN; // pi ready
+        DEFAULT NEXT WAIT_FOR_EVENT_START;
+
+    PRESENT WAIT_FOR_PI_READY
+        IF !PWAIT NEXT DATA_ENABLE OUT WAIT OUT PDATA_EN;         // pi ready
+        DEFAULT NEXT WAIT_FOR_PI_READY OUT WAIT;
+
+    PRESENT DATA_ENABLE
+        NEXT WAIT_FOR_PI_DONE OUT WAIT OUT PEVENT OUT PDATA_EN;
+
+    PRESENT WAIT_FOR_PI_DONE
+        IF PWAIT NEXT WAIT_FOR_EVENT_END OUT PEVENT OUT PDATA_EN; // pi ack event
+        DEFAULT NEXT WAIT_FOR_PI_DONE OUT WAIT OUT PEVENT OUT PDATA_EN;
+
+    PRESENT WAIT_FOR_EVENT_END
+        IF !EVENT NEXT WAIT_FOR_EVENT_START;
+        DEFAULT NEXT WAIT_FOR_EVENT_END OUT PEVENT OUT PDATA_EN;
+}
+
+STATE.AR = RESET;
+STATE.SP = 'b'0;
+
+WAIT.AR = RESET;
+WAIT.SP = 'b'0;
+
+PEVENT.AR = RESET;
+PEVENT.SP = 'b'0;
+
+PDATA_EN.AR = RESET;
+PDATA_EN.SP = 'b'0;
+
