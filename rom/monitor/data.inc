@@ -12,7 +12,7 @@ rom_cnt:                    db 00h
 
 ; ROM found data (8 entries)
 rom_table:
-%rep rom_max
+%rep ROM_MAX
                             dw 00h  ; src segment
                             dw 00h  ; src offset
                             dw 00h  ; size

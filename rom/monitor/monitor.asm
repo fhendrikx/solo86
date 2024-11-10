@@ -36,17 +36,17 @@ init:
 
 ; ensure UART has interrupts disabled
     xor al,al
-    out uart_ctrl,al
+    out UART_CMD,al
 
     leds 011b
 
 ; copy ROM to RAM
 ; don't use the stack yet as the ROM copy will overwrite any stored data
-    mov ax,cseg_init
+    mov ax,CSEG_INIT
     mov ds,ax
     xor si,si
 
-    mov ax,cseg
+    mov ax,CSEG
     mov es,ax
     xor di,di
 
@@ -58,7 +58,7 @@ init:
 
     leds 0111b
 
-    jmp cseg:relocate       ; here we go!
+    jmp CSEG:relocate       ; here we go!
 
 
 ;======================================================================
@@ -70,11 +70,11 @@ relocate:
     leds 01111b
 
 ; initialise DS
-    mov ax,dseg
+    mov ax,DSEG
     mov ds,ax
 
 ; initialise stack
-    mov ax,sseg
+    mov ax,SSEG
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
@@ -83,7 +83,7 @@ relocate:
 ; setup memory banking table
 ; map RAM into the top half of memory
     ; mov al,011000b
-    ; mov dx,bank_table
+    ; mov dx,BANK_TABLE
     ; mov cx,8
 
 ; .bank_init:
@@ -95,22 +95,22 @@ relocate:
 
 ; map ROM into the top half of memory, skip monitor
     mov al,1
-    out bank_row_0,al
+    out BANK_ROW_0,al
     mov al,2
-    out bank_row_1,al
+    out BANK_ROW_1,al
     mov al,3
-    out bank_row_2,al
+    out BANK_ROW_2,al
     mov al,4
-    out bank_row_3,al
+    out BANK_ROW_3,al
     mov al,5
-    out bank_row_4,al
+    out BANK_ROW_4,al
     mov al,6
-    out bank_row_5,al
+    out BANK_ROW_5,al
     mov al,7
-    out bank_row_6,al
+    out BANK_ROW_6,al
 ; map RAM into the last segment so that hex loading still works
     mov al,01Fh
-    out bank_row_7,al
+    out BANK_ROW_7,al
 
     leds 0111111b
 
@@ -184,7 +184,7 @@ TIMES 65536-1024-($-$$)     db 0FFh
 TIMES 65536-16-($-$$)       db 0FFh
 
 reset:
-    jmp cseg_init:init
+    jmp CSEG_INIT:init
 
 
 ;======================================================================

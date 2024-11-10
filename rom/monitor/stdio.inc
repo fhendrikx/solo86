@@ -12,7 +12,7 @@
 
 print_chr:
 putc:
-    out uart_data,al
+    out UART_DATA,al
     ret
 
 
@@ -39,12 +39,12 @@ print_hex:
     cmp al,9
     jg .letter
     add al,30h              ; '0'
-    out uart_data,al
+    out UART_DATA,al
     ret
 
 .letter:
     add al,37h              ; 'A' - 10
-    out uart_data,al
+    out UART_DATA,al
     ret
 
 
@@ -82,7 +82,7 @@ puts:
     cmp al,0                ; are we done?
     jz .exit
 
-    out uart_data,al
+    out UART_DATA,al
     jmp .loop
 
 .exit:
@@ -102,7 +102,7 @@ puts:
 ;======================================================================
 
 raw_ready:
-    in al,uart_ctrl         ; any bytes?
+    in al,UART_CMD         ; any bytes?
     ret
 
 
@@ -112,10 +112,10 @@ raw_ready:
 
 raw_chr:
 getc:
-    in al,uart_ctrl         ; any characters?
+    in al,UART_CMD         ; any characters?
     cmp al,0
     jz raw_chr
-    in al,uart_data         ; read character
+    in al,UART_DATA         ; read character
     ret
 
 
@@ -136,11 +136,11 @@ raw_hex:
     ret
 
 .nibble:
-    in al,uart_ctrl         ; any characters?
+    in al,UART_CMD         ; any characters?
     cmp al,0
     jz .nibble
 
-    in al,uart_data         ; read character
+    in al,UART_DATA         ; read character
     cmp al,41h
     jae .letter
     sub al,30h              ; '0'
@@ -163,11 +163,11 @@ gets:
     cld
 
 .loop:
-    in al,uart_ctrl         ; any characters?
+    in al,UART_CMD         ; any characters?
     cmp al,0
     jz .loop
 
-    in al,uart_data         ; read character
+    in al,UART_DATA         ; read character
     stosb
     cmp al,0Ah              ; are we done?
     jne .loop
@@ -192,7 +192,7 @@ gets:
 ;======================================================================
 
 read_ready:
-    in al,uart_ctrl         ; any bytes?
+    in al,UART_CMD         ; any bytes?
     ret
 
 
@@ -202,7 +202,7 @@ read_ready:
 
 read_chr:
     call raw_chr
-    out uart_data,al
+    out UART_DATA,al
     ret
 
 
@@ -212,7 +212,7 @@ read_chr:
 
 read_hex:
     call raw_hex
-    out uart_data,al
+    out UART_DATA,al
     ret
 
 
@@ -227,13 +227,13 @@ read_str:
     cld
 
 .loop:
-    in al,uart_ctrl         ; any characters?
+    in al,UART_CMD         ; any characters?
     cmp al,0
     jz .loop
 
-    in al,uart_data         ; read character
+    in al,UART_DATA         ; read character
     stosb
-    out uart_data,al
+    out UART_DATA,al
 
     cmp al,0Ah              ; are we done?
     jne .loop

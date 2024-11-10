@@ -174,7 +174,7 @@ rom_exec:
 
 ;======================================================================
 ; scan ROM
-; Scans from segment rom_first to segment rom_last and store the details
+; Scans from segment ROM_FIRST to segment ROM_LAST and store the details
 ; of any ROMs it finds in the rom_table
 ;======================================================================
 
@@ -188,7 +188,7 @@ rom_scan:
 
     xor dl,dl
 
-    mov bx,rom_first
+    mov bx,ROM_FIRST
     mov ds,bx               ; DS:SI
     xor si,si
 
@@ -211,10 +211,10 @@ rom_scan:
     loop .copy
 
 .next:
-    add bx,rom_size         ; next segment to check
+    add bx,ROM_SIZE         ; next segment to check
     mov ds,bx               ; DS:SI
     xor si,si
-    cmp bx,rom_last
+    cmp bx,ROM_LAST
     jb .scan
 
 .exit:

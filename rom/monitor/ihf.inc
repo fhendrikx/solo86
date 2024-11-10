@@ -23,7 +23,7 @@ ihf_load:
     mov [cs:ihf_ofs],ax
 
 ; defaults for ES:DI (in case there is no 0x02 record present)
-    mov ax,cseg
+    mov ax,CSEG
     mov [cs:ihf_loc],ax
     mov es,ax
     xor di,di

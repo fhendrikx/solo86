@@ -16,7 +16,7 @@
 
 %imacro leds 1
     mov al,%1
-    out leds_data,al
+    out LEDS_DATA,al
 %endm
 
 
