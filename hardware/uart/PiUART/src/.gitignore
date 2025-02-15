@@ -1,0 +1,4 @@
+*.o
+*.d
+kernel8-32.elf
+kernel8-32.lst
