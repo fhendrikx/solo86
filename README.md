@@ -41,5 +41,5 @@ Then build the system:
 
     make
 
-The final binaries will be in out/ along with Intel Hex Files in hex/
+The final binaries will be in rom/ along with Intel Hex Files in ihf/
 
