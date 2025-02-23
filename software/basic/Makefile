@@ -7,7 +7,7 @@ all: $(NAME)
 
 $(NAME): $(CODE)
 	$(AS) $(CODE) -O9 -f bin -o $(NAME) -l basic.lst
-	$(CP) $(NAME) $(TOPDIR)/out
+	$(CP) $(NAME) $(TOPDIR)/rom
 
 clean:
 	rm -f $(NAME)
