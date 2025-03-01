@@ -47,13 +47,13 @@ entity Control286 is
     o_iord_n        : buffer STD_LOGIC;
     o_iowr_n        : buffer STD_LOGIC;
 
-    i_wait0_n       : in STD_LOGIC;
-    i_wait1_n       : in STD_LOGIC;
+    i_wait0         : in STD_LOGIC;
+    i_wait1         : in STD_LOGIC;
 
-    i_irq0_n        : in STD_LOGIC;
-    i_irq1_n        : in STD_LOGIC;
-    i_irq2_n        : in STD_LOGIC;
-    i_irq3_n        : in STD_LOGIC;
+    i_irq0          : in STD_LOGIC;
+    i_irq1          : in STD_LOGIC;
+    i_irq2          : in STD_LOGIC;
+    i_irq3          : in STD_LOGIC;
 
     i_user1         : in STD_LOGIC;
     i_user2         : in STD_LOGIC;
@@ -74,57 +74,57 @@ architecture rtl of Control286 is
   -- Misc
   attribute chip_pin of i_clk           : signal is "83";
   attribute chip_pin of i_reset_n       : signal is "1";
-  attribute chip_pin of i_jp1           : signal is "20";
+  attribute chip_pin of i_jp1           : signal is "15";
 
-  attribute chip_pin of o_ale           : signal is "79";
-  attribute chip_pin of o_warning       : signal is "18";
-  attribute chip_pin of o_bhe_n         : signal is "29";
+  attribute chip_pin of o_ale           : signal is "81";
+  attribute chip_pin of o_warning       : signal is "12";
+  attribute chip_pin of o_bhe_n         : signal is "24";
 
   -- CPU
-  attribute chip_pin of i_addr_high     : signal is "68, 67, 65, 64"; -- A19..A16
-  attribute chip_pin of i_addr_low      : signal is "63, 61, 60, 58, 57, 56, 55, 54"; -- A7..A0
-  attribute chip_pin of io_data         : signal is "44, 45, 46, 48, 49, 50, 51, 52"; -- D7..D0
+  attribute chip_pin of i_addr_high     : signal is "70, 69, 68, 67"; -- A19..A16
+  attribute chip_pin of i_addr_low      : signal is "65, 64, 63, 61, 60, 58, 57, 56"; -- A7..A0
+  attribute chip_pin of io_data         : signal is "46, 48, 49, 50, 51, 52, 54, 55"; -- D7..D0
 
-  attribute chip_pin of i_s0_n          : signal is "69";
-  attribute chip_pin of i_s1_n          : signal is "70";
-  attribute chip_pin of i_bhe_n         : signal is "76";
-  attribute chip_pin of i_m_io          : signal is "73";
+  attribute chip_pin of i_s0_n          : signal is "73";
+  attribute chip_pin of i_s1_n          : signal is "74";
+  attribute chip_pin of i_bhe_n         : signal is "75";
+  attribute chip_pin of i_m_io          : signal is "76";
 
-  attribute chip_pin of o_ready_n       : signal is "74";
-  attribute chip_pin of o_nmi           : signal is "75";
-  attribute chip_pin of o_intr          : signal is "77";
+  attribute chip_pin of o_ready_n       : signal is "77";
+  attribute chip_pin of o_nmi           : signal is "79";
+  attribute chip_pin of o_intr          : signal is "80";
 
   -- Memory
   attribute chip_pin of i_rom_wr_en     : signal is "2";
 
-  attribute chip_pin of o_mem_ce_n      : signal is "16";
-  attribute chip_pin of o_rom_oe_n      : signal is "9";
-  attribute chip_pin of o_ram_oe_n      : signal is "6";
-  attribute chip_pin of o_rom_we_low_n  : signal is "11";
-  attribute chip_pin of o_rom_we_high_n : signal is "8";
-  attribute chip_pin of o_ram_we_low_n  : signal is "10";
-  attribute chip_pin of o_ram_we_high_n : signal is "5";
+  attribute chip_pin of o_mem_ce_n      : signal is "4";
+  attribute chip_pin of o_rom_oe_n      : signal is "6";
+  attribute chip_pin of o_ram_oe_n      : signal is "10";
+  attribute chip_pin of o_rom_we_low_n  : signal is "5";
+  attribute chip_pin of o_rom_we_high_n : signal is "11";
+  attribute chip_pin of o_ram_we_low_n  : signal is "8";
+  attribute chip_pin of o_ram_we_high_n : signal is "9";
 
-  attribute chip_pin of o_addr_high     : signal is "15, 17, 12, 4"; -- AC19..AC16
+  attribute chip_pin of o_addr_high     : signal is "30, 31, 33, 34";
 
   -- Expansion slot
-  attribute chip_pin of o_memrd_n       : signal is "27";
-  attribute chip_pin of o_memwr_n       : signal is "25";
-  attribute chip_pin of o_iord_n        : signal is "28";
-  attribute chip_pin of o_iowr_n        : signal is "24";
+  attribute chip_pin of o_memrd_n       : signal is "35";
+  attribute chip_pin of o_memwr_n       : signal is "36";
+  attribute chip_pin of o_iord_n        : signal is "21";
+  attribute chip_pin of o_iowr_n        : signal is "22";
 
-  attribute chip_pin of i_wait0_n       : signal is "35";
-  attribute chip_pin of i_wait1_n       : signal is "36";
+  attribute chip_pin of i_wait0         : signal is "18";
+  attribute chip_pin of i_wait1         : signal is "20";
 
-  attribute chip_pin of i_irq0_n        : signal is "31";
-  attribute chip_pin of i_irq1_n        : signal is "33";
-  attribute chip_pin of i_irq2_n        : signal is "30";
-  attribute chip_pin of i_irq3_n        : signal is "34";
+  attribute chip_pin of i_irq0          : signal is "29";
+  attribute chip_pin of i_irq1          : signal is "28";
+  attribute chip_pin of i_irq2          : signal is "27";
+  attribute chip_pin of i_irq3          : signal is "25";
 
-  attribute chip_pin of i_user4         : signal is "37";
+  attribute chip_pin of i_user1         : signal is "41";
   attribute chip_pin of i_user2         : signal is "39";
   attribute chip_pin of i_user3         : signal is "40";
-  attribute chip_pin of i_user1         : signal is "41";
+  attribute chip_pin of i_user4         : signal is "37";
 
   -- signals
   signal inta_cycle           : STD_LOGIC;
@@ -153,11 +153,6 @@ architecture rtl of Control286 is
 
 begin
 
-  -- unused outputs
-
-  o_rom_we_low_n <= '1';
-  o_rom_we_high_n <= '1';
-
   -- interrupt outputs
   o_nmi <= '0';
 
@@ -169,14 +164,14 @@ begin
   -- edge triggered interrupt latches
   --
 
-  proc_irq0_latch: process(i_irq0_n, i_reset_n, irq0_clear) is
+  proc_irq0_latch: process(i_irq0, i_reset_n, irq0_clear) is
   begin
 
     if i_reset_n = '0' or irq0_clear = '1' then
 
       irq0_latch <= '0';
 
-    elsif falling_edge(i_irq0_n) then
+    elsif rising_edge(i_irq0) then
 
       irq0_latch <= '1';
 
@@ -184,14 +179,14 @@ begin
 
   end process;
 
-  proc_irq1_latch: process(i_irq1_n, i_reset_n, irq1_clear) is
+  proc_irq1_latch: process(i_irq1, i_reset_n, irq1_clear) is
   begin
 
     if i_reset_n = '0' or irq1_clear = '1' then
 
       irq1_latch <= '0';
 
-    elsif falling_edge(i_irq1_n) then
+    elsif rising_edge(i_irq1) then
 
       irq1_latch <= '1';
 
@@ -199,14 +194,14 @@ begin
 
   end process;
 
-  proc_irq2_latch: process(i_irq2_n, i_reset_n, irq2_clear) is
+  proc_irq2_latch: process(i_irq2, i_reset_n, irq2_clear) is
   begin
 
     if i_reset_n = '0' or irq2_clear = '1' then
 
       irq2_latch <= '0';
 
-    elsif falling_edge(i_irq2_n) then
+    elsif rising_edge(i_irq2) then
 
       irq2_latch <= '1';
 
@@ -214,14 +209,14 @@ begin
 
   end process;
 
-  proc_irq3_latch: process(i_irq3_n, i_reset_n, irq3_clear) is
+  proc_irq3_latch: process(i_irq3, i_reset_n, irq3_clear) is
   begin
 
     if i_reset_n = '0' or irq3_clear = '1' then
 
       irq3_latch <= '0';
 
-    elsif falling_edge(i_irq3_n) then
+    elsif rising_edge(i_irq3) then
 
       irq3_latch <= '1';
 
@@ -347,6 +342,8 @@ begin
       o_ready_n <= '1';
 
       o_rom_oe_n <= '1';
+      o_rom_we_low_n <= '1';
+      o_rom_we_high_n <= '1';
       o_ram_we_low_n <= '1';
       o_ram_we_high_n <= '1';
       o_ram_oe_n <= '1';
@@ -378,6 +375,8 @@ begin
           o_ready_n <= '1';
 
           o_rom_oe_n <= '1';
+          o_rom_we_low_n <= '1';
+          o_rom_we_high_n <= '1';
           o_ram_we_low_n <= '1';
           o_ram_we_high_n <= '1';
           o_ram_oe_n <= '1';
@@ -465,6 +464,8 @@ begin
           o_ready_n <= '1';
 
           o_rom_oe_n <= '1';
+          o_rom_we_low_n <= '1';
+          o_rom_we_high_n <= '1';
           o_ram_we_low_n <= '1';
           o_ram_we_high_n <= '1';
           o_ram_oe_n <= '1';
@@ -604,7 +605,28 @@ begin
 
             -- write to ROM
             if rom_enable = '1' then
-              -- do nothing, we don't write to ROM
+
+              if i_rom_wr_en = '1' then
+
+                -- write enable (WE) the flash chips (e.g. tell them to read a
+                -- value from the data bus)
+                -- use BHE/A0 to work out which banks (high/low) need to be enabled
+
+                if i_bhe_n = '0' then
+                  -- write to the high bank
+                  o_rom_we_high_n <= '0';
+                end if;
+
+                if i_addr_low(0) = '0' then
+                  -- write to the low bank
+                  o_rom_we_low_n <= '0';
+                end if;
+
+              else
+                -- do nothing, ROM in safe mode
+
+              end if;
+
             end if;
 
             -- write to RAM
@@ -653,7 +675,7 @@ begin
           o_ale <= '0';
           o_ready_n <= '1';
 
-          if i_wait0_n = '1' and i_wait1_n = '1' and wait_states = 0 then
+          if i_wait0 = '0' and i_wait1 = '0' and wait_states = 0 then
               -- no reason to wait, set the ready signal
 
             o_ready_n <= '0';
@@ -698,6 +720,8 @@ begin
             o_ready_n <= '1';
 
             o_rom_oe_n <= '1';
+            o_rom_we_low_n <= '1';
+            o_rom_we_high_n <= '1';
             o_ram_we_low_n <= '1';
             o_ram_we_high_n <= '1';
             o_ram_oe_n <= '1';
