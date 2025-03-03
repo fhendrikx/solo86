@@ -2,7 +2,7 @@
 
 ## LEDs and Switches
 
-Basic version modeled on the RC2014 module, e.g.
+Basic version modelled on the RC2014 module, e.g.
   - Address decode
   - 74HCT245 buffer Switches
   - 74HCT273 drive LEDs
