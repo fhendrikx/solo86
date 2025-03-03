@@ -66,10 +66,26 @@
 
 ### 00h - 9Fh reserved; System
 
+ - 00h PIT Counter 0 register (read/write)
+ - 01h PIT Counter 0 enable latch (write)
+ - 01h PIT signature/latch state 0x10101... (read)
+ - 02h PIT Counter 1 register (read/write)
+ - 03h PIT Counter 1 enable latch (write)
+ - 03h PIT signature/latch state 0x10101... (read) (alias)
+ - 04h PIT Counter 2 register (read/write)
+ - 05h PIT Counter 2 enable latch (write)
+ - 05h PIT signature/latch state 0x10101... (read) (alias)
+ - 06h PIT Control Word register (read/write)
+ - 07h PIT unused latch (write)
+ - 07h PIT signature/latch state 0x10101... (read) (alias)
+
  - 08h LED red LEDs (write)
  - 08h LED switches (read)
  - 09h LED multi-colour LEDs (write)
  - 09h LED signature 0xAA (read)
+
+ - 0Ah RTC Address latch (write)
+ - 0Ch RTC Data (read/write)
 
  - 10h Bank table; row 0
  - 12h Bank table; row 1
@@ -96,24 +112,6 @@
  - 2Dh UART signature 0xAA (read) (alias)
  - 2Eh UART reserved
  - 2Fh UART signature 0xAA (read) (alias)
-
- - 30h PIT Counter 0 register (read/write)
- - 31h PIT Counter 0 enable latch (write)
- - 31h PIT signature/latch state 0x10101... (read)
- - 32h PIT Counter 1 register (read/write)
- - 33h PIT Counter 1 enable latch (write)
- - 33h PIT signature/latch state 0x10101... (read) (alias)
- - 34h PIT Counter 2 register (read/write)
- - 35h PIT Counter 2 enable latch (write)
- - 35h PIT signature/latch state 0x10101... (read) (alias)
- - 36h PIT Control Word register (read/write)
- - 37h PIT unused latch (write)
- - 37h PIT signature/latch state 0x10101... (read) (alias)
-
- - 38h RTC Address latch (write)
- - 3Ah RTC Data (read/write)
- - 3Ch RTC Address latch (write) (alias)
- - 3Eh RTC Data (read/write) (alias)
 
  - 80h Delay
 
