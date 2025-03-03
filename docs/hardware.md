@@ -84,8 +84,8 @@
  - 09h LED multi-colour LEDs (write)
  - 09h LED signature 0xAA (read)
 
- - 0Ah RTC Address latch (write)
- - 0Ch RTC Data (read/write)
+ - 0Ch RTC Address latch (write)
+ - 0Eh RTC Data (read/write)
 
  - 10h Bank table; row 0
  - 12h Bank table; row 1
