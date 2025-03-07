@@ -1,0 +1,47 @@
+Name     epoch ;
+PartNo   ATF16V8C ;
+Date     2025-03-06 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly None ;
+Location  ;
+Device   g16v8 ;
+
+PIN 1  = A1;
+PIN 2  = A2;
+PIN 3  = A3;
+PIN 4  = A4;
+PIN 5  = A5;
+PIN 6  = A6;
+PIN 7  = A7;
+PIN 8  = !BHE;
+PIN 9  = A0;
+// PIN 10 = GND;
+PIN 11 = !IORD;
+PIN 12 = !IOWR;
+// PIN 13 = UNUSED;
+PIN 14 = !RTC_RD;
+PIN 15 = !RTC_WR;
+PIN 16 = RTC_AS;
+PIN 17 = !PATTERN_EN;
+PIN 18 = !PIT_CS;
+PIN 19 = !PIT_LATCH;
+// PIN 20 = VCC;
+
+/* I/O address */
+FIELD PIT_ADDR = [A7..3];
+FIELD RTC_ADDR = [A7..2];
+
+/* valid I/O address */
+PIT_ADDR_MATCH = PIT_ADDR:['h'00];
+RTC_ADDR_MATCH = RTC_ADDR:['h'0C];
+
+/* output functions */
+PIT_CS = PIT_ADDR_MATCH & (IORD # IOWR) & !A0;
+PIT_LATCH = PIT_ADDR_MATCH & IOWR & BHE;
+PATTERN_EN = PIT_ADDR_MATCH & IORD & BHE;
+
+RTC_AS = RTC_ADDR_MATCH & IOWR & !A1 & !A0;
+RTC_RD = RTC_ADDR_MATCH & IORD & A1 & !A0;
+RTC_WR = RTC_ADDR_MATCH & IOWR & A1 & !A0;

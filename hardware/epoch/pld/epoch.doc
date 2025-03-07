@@ -1,0 +1,191 @@
+
+*******************************************************************************
+                                     epoch
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# MW-10400000
+Device          g16v8s  Library DLIB-h-40-9
+Created         Fri Mar 07 22:53:23 2025
+Name            epoch 
+Partno          ATF16V8C 
+Revision        01 
+Date            2025-03-06 
+Designer        Dylan 
+Company         
+Assembly        None 
+Location        
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+PATTERN_EN =>
+    !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IORD
+
+PIT_ADDR =>
+    A7 , A6 , A5 , A4 , A3
+
+PIT_ADDR_MATCH =>
+    !A3 & !A4 & !A5 & !A6 & !A7
+
+PIT_CS =>
+    !A0 & !A3 & !A4 & !A5 & !A6 & !A7 & IOWR
+  # !A0 & !A3 & !A4 & !A5 & !A6 & !A7 & IORD
+
+PIT_LATCH =>
+    !A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR
+
+RTC_ADDR =>
+    A7 , A6 , A5 , A4 , A3 , A2
+
+RTC_ADDR_MATCH =>
+    A2 & A3 & !A4 & !A5 & !A6 & !A7
+
+RTC_AS =>
+    !A0 & !A1 & A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR
+
+RTC_RD =>
+    !A0 & A1 & A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD
+
+RTC_WR =>
+    !A0 & A1 & A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    A0                          9        V        -       -       -     
+    A1                          1        V        -       -       -     
+    A2                          2        V        -       -       -     
+    A3                          3        V        -       -       -     
+    A4                          4        V        -       -       -     
+    A5                          5        V        -       -       -     
+    A6                          6        V        -       -       -     
+    A7                          7        V        -       -       -     
+ !  BHE                         8        V        -       -       -     
+ !  IORD                        11       V        -       -       -     
+ !  IOWR                        12       V        -       -       -     
+ !  PATTERN_EN                  17       V        1       8       1     
+    PIT_ADDR                    0        F        -       -       -     
+    PIT_ADDR_MATCH              0        I        1       -       -     
+ !  PIT_CS                      18       V        2       8       1     
+ !  PIT_LATCH                   19       V        1       8       1     
+    RTC_ADDR                    0        F        -       -       -     
+    RTC_ADDR_MATCH              0        I        1       -       -     
+    RTC_AS                      16       V        1       8       1     
+ !  RTC_RD                      14       V        1       8       1     
+ !  RTC_WR                      15       V        1       8       1     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+
+
+===============================================================================
+                                   Fuse Plot
+===============================================================================
+
+Syn   02192 - Ac0   02193 x 
+
+Pin #19  02048  Pol x  02120  Ac1 x 
+ 00000 -----x---x---x---x---x---x-x---- 
+ 00032 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00064 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00096 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00128 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00160 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #18  02049  Pol x  02121  Ac1 x 
+ 00256 -----x---x---x---x---x-----x-x-- 
+ 00288 -----x---x---x---x---x-------x-x 
+ 00320 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00352 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00384 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00416 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00448 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00480 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #17  02050  Pol x  02122  Ac1 x 
+ 00512 -----x---x---x---x---x---x-----x 
+ 00544 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00576 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00608 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00640 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00672 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00704 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00736 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #16  02051  Pol -  02123  Ac1 x 
+ 00768 x--xx----x---x---x---x-----x-x-- 
+ 00800 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00832 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00864 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00896 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00928 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00960 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00992 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #15  02052  Pol x  02124  Ac1 x 
+ 01024 x-x-x----x---x---x---x-----x-x-- 
+ 01056 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01088 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01120 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01152 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01184 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #14  02053  Pol x  02125  Ac1 x 
+ 01280 x-x-x----x---x---x---x-------x-x 
+ 01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01408 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01440 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #13  02054  Pol x  02126  Ac1 - 
+ 01536 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01568 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01600 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01632 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01664 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01696 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01728 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01760 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #12  02055  Pol x  02127  Ac1 - 
+ 01792 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01824 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01856 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01888 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01920 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01952 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 01984 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 02016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+
+
+LEGEND    X : fuse not blown 
+          - : fuse blown 
+
+===============================================================================
+                                 Chip Diagram
+===============================================================================
+
+                               ______________
+                              |    epoch     |
+                       A1 x---|1           20|---x Vcc                      
+                       A2 x---|2           19|---x !PIT_LATCH               
+                       A3 x---|3           18|---x !PIT_CS                  
+                       A4 x---|4           17|---x !PATTERN_EN              
+                       A5 x---|5           16|---x RTC_AS                   
+                       A6 x---|6           15|---x !RTC_WR                  
+                       A7 x---|7           14|---x !RTC_RD                  
+                     !BHE x---|8           13|---x                          
+                       A0 x---|9           12|---x !IOWR                    
+                      GND x---|10          11|---x !IORD                    
+                              |______________|
+
