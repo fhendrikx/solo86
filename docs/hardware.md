@@ -66,6 +66,8 @@
 
 ### 00h - 9Fh reserved; System
 
+#### Epoch module (PIT)
+
  - 00h PIT Counter 0 register (read/write)
  - 01h PIT Counter 0 enable latch (write)
  - 01h PIT signature/latch state 0x10101... (read)
@@ -79,13 +81,19 @@
  - 07h PIT unused latch (write)
  - 07h PIT signature/latch state 0x10101... (read) (alias)
 
+#### Panel module
+
  - 08h LED red LEDs (write)
  - 08h LED switches (read)
  - 09h LED multi-colour LEDs (write)
  - 09h LED signature 0xAA (read)
 
+#### Epoch module (RTC)
+
  - 0Ch RTC Address latch (write)
  - 0Eh RTC Data (read/write)
+
+#### Mainboard memory banking (CPLD)
 
  - 10h Bank table; row 0
  - 12h Bank table; row 1
@@ -95,6 +103,8 @@
  - 1Ah Bank table; row 5
  - 1Ch Bank table; row 6
  - 1Eh Bank table; row 7
+
+#### PiUART module
 
  - 20h UART Ctrl
  - 21h UART signature 0xAA (read)
