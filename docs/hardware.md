@@ -40,9 +40,9 @@
  - 1Fh Reserved
 
 
-### 20h - 2Fh reserved; System
+### 20h - 30h reserved; System
 
- - 20h IRQ0 Timer
+ - 20h IRQ0 Timer channel 0
  - 21h IRQ1 Reserved; Expansion board
  - 22h IRQ2 Reserved; Expansion board
  - 23h IRQ3 UART
@@ -58,7 +58,6 @@
  - 2Dh Reserved
  - 2Eh Reserved
  - 2Fh Reserved
-
  - 30h System Call
 
 
@@ -122,8 +121,6 @@
  - 2Dh UART signature 0xAA (read) (alias)
  - 2Eh UART reserved
  - 2Fh UART signature 0xAA (read) (alias)
-
- - 80h Delay
 
 
 ### A0h - FFh reserved; Expansion boards
