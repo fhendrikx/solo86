@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g16v8s  Library DLIB-h-40-9
-Created         Fri Mar 07 22:53:23 2025
+Created         Sat Mar 08 22:13:38 2025
 Name            epoch 
 Partno          ATF16V8C 
 Revision        01 
@@ -70,16 +70,16 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
  !  BHE                         8        V        -       -       -     
  !  IORD                        11       V        -       -       -     
  !  IOWR                        12       V        -       -       -     
- !  PATTERN_EN                  17       V        1       8       1     
+ !  PATTERN_EN                  18       V        1       8       1     
     PIT_ADDR                    0        F        -       -       -     
     PIT_ADDR_MATCH              0        I        1       -       -     
- !  PIT_CS                      18       V        2       8       1     
- !  PIT_LATCH                   19       V        1       8       1     
+ !  PIT_CS                      19       V        2       8       1     
+ !  PIT_LATCH                   13       V        1       8       1     
     RTC_ADDR                    0        F        -       -       -     
     RTC_ADDR_MATCH              0        I        1       -       -     
-    RTC_AS                      16       V        1       8       1     
- !  RTC_RD                      14       V        1       8       1     
- !  RTC_WR                      15       V        1       8       1     
+    RTC_AS                      17       V        1       8       1     
+ !  RTC_RD                      15       V        1       8       1     
+ !  RTC_WR                      16       V        1       8       1     
 
 
 LEGEND    D : default variable         F : field      G : group
@@ -95,8 +95,8 @@ LEGEND    D : default variable         F : field      G : group
 Syn   02192 - Ac0   02193 x 
 
 Pin #19  02048  Pol x  02120  Ac1 x 
- 00000 -----x---x---x---x---x---x-x---- 
- 00032 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00000 -----x---x---x---x---x-----x-x-- 
+ 00032 -----x---x---x---x---x-------x-x 
  00064 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00096 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00128 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -104,16 +104,16 @@ Pin #19  02048  Pol x  02120  Ac1 x
  00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #18  02049  Pol x  02121  Ac1 x 
- 00256 -----x---x---x---x---x-----x-x-- 
- 00288 -----x---x---x---x---x-------x-x 
+ 00256 -----x---x---x---x---x---x-----x 
+ 00288 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00320 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00352 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00384 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00416 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00448 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00480 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #17  02050  Pol x  02122  Ac1 x 
- 00512 -----x---x---x---x---x---x-----x 
+Pin #17  02050  Pol -  02122  Ac1 x 
+ 00512 x--xx----x---x---x---x-----x-x-- 
  00544 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00576 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00608 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -121,8 +121,8 @@ Pin #17  02050  Pol x  02122  Ac1 x
  00672 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00704 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00736 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #16  02051  Pol -  02123  Ac1 x 
- 00768 x--xx----x---x---x---x-----x-x-- 
+Pin #16  02051  Pol x  02123  Ac1 x 
+ 00768 x-x-x----x---x---x---x-----x-x-- 
  00800 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00832 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00864 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -131,7 +131,7 @@ Pin #16  02051  Pol -  02123  Ac1 x
  00960 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00992 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #15  02052  Pol x  02124  Ac1 x 
- 01024 x-x-x----x---x---x---x-----x-x-- 
+ 01024 x-x-x----x---x---x---x-------x-x 
  01056 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01088 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01120 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -139,8 +139,8 @@ Pin #15  02052  Pol x  02124  Ac1 x
  01184 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #14  02053  Pol x  02125  Ac1 x 
- 01280 x-x-x----x---x---x---x-------x-x 
+Pin #14  02053  Pol x  02125  Ac1 - 
+ 01280 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -148,8 +148,8 @@ Pin #14  02053  Pol x  02125  Ac1 x
  01440 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #13  02054  Pol x  02126  Ac1 - 
- 01536 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #13  02054  Pol x  02126  Ac1 x 
+ 01536 -----x---x---x---x---x---x-x---- 
  01568 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01600 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01632 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -178,13 +178,13 @@ LEGEND    X : fuse not blown
                                ______________
                               |    epoch     |
                        A1 x---|1           20|---x Vcc                      
-                       A2 x---|2           19|---x !PIT_LATCH               
-                       A3 x---|3           18|---x !PIT_CS                  
-                       A4 x---|4           17|---x !PATTERN_EN              
-                       A5 x---|5           16|---x RTC_AS                   
-                       A6 x---|6           15|---x !RTC_WR                  
-                       A7 x---|7           14|---x !RTC_RD                  
-                     !BHE x---|8           13|---x                          
+                       A2 x---|2           19|---x !PIT_CS                  
+                       A3 x---|3           18|---x !PATTERN_EN              
+                       A4 x---|4           17|---x RTC_AS                   
+                       A5 x---|5           16|---x !RTC_WR                  
+                       A6 x---|6           15|---x !RTC_RD                  
+                       A7 x---|7           14|---x                          
+                     !BHE x---|8           13|---x !PIT_LATCH               
                        A0 x---|9           12|---x !IOWR                    
                       GND x---|10          11|---x !IORD                    
                               |______________|
