@@ -41,7 +41,7 @@ sseg            equ 00000h
 ; I/O addresses should be even numbers only
 ticks_ctrl      equ 04h
 mem_toggle      equ 06h
-leds_data       equ 08h
+leds_data       equ 30h
 uart_ctrl       equ 20h
 uart_data       equ 22h
 

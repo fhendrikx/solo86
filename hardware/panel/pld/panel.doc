@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g16v8s  Library DLIB-h-40-9
-Created         Tue Oct 15 22:17:22 2024
+Created         Sat Mar 08 21:31:25 2025
 Name            panel 
 Partno          ATF16V8C 
 Revision        01 
@@ -20,22 +20,22 @@ Location
 ===============================================================================
 
 ADDRMATCH =>
-    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7
+    !A1 & !A2 & !A3 & A4 & A5 & !A6 & !A7
 
 IOADDR =>
     A7 , A6 , A5 , A4 , A3 , A2 , A1
 
 LED_LATCH_HIGH =>
-    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IOWR
+    !A1 & !A2 & !A3 & A4 & A5 & !A6 & !A7 & BHE & IOWR
 
 LED_LATCH_LOW =>
-    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IOWR
+    !A0 & !A1 & !A2 & !A3 & A4 & A5 & !A6 & !A7 & IOWR
 
 PATTERN_EN =>
-    !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & BHE & IORD
+    !A1 & !A2 & !A3 & A4 & A5 & !A6 & !A7 & BHE & IORD
 
 SW_EN =>
-    !A0 & !A1 & !A2 & A3 & !A4 & !A5 & !A6 & !A7 & IORD
+    !A0 & !A1 & !A2 & !A3 & A4 & A5 & !A6 & !A7 & IORD
 
 
 ===============================================================================
@@ -78,7 +78,7 @@ LEGEND    D : default variable         F : field      G : group
 Syn   02192 - Ac0   02193 x 
 
 Pin #19  02048  Pol -  02120  Ac1 x 
- 00000 -x-xx----x---x---x---x-----x-x-- 
+ 00000 -x-x-x--x---x----x---x-----x-x-- 
  00032 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00064 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00096 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -87,7 +87,7 @@ Pin #19  02048  Pol -  02120  Ac1 x
  00192 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00224 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #18  02049  Pol x  02121  Ac1 x 
- 00256 -x-xx----x---x---x---x-------x-x 
+ 00256 -x-x-x--x---x----x---x-------x-x 
  00288 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00320 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00352 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -123,7 +123,7 @@ Pin #15  02052  Pol x  02124  Ac1 -
  01216 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01248 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #14  02053  Pol -  02125  Ac1 x 
- 01280 -x-xx----x---x---x---x---x-x---- 
+ 01280 -x-x-x--x---x----x---x---x-x---- 
  01312 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01344 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01376 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -132,7 +132,7 @@ Pin #14  02053  Pol -  02125  Ac1 x
  01472 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01504 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #13  02054  Pol x  02126  Ac1 x 
- 01536 -x-xx----x---x---x---x---x-----x 
+ 01536 -x-x-x--x---x----x---x---x-----x 
  01568 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01600 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01632 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 

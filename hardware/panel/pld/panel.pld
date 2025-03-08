@@ -33,7 +33,7 @@ PIN 19 = LED_LATCH_LOW;
 FIELD IOADDR = [A7..1];
 
 /* valid I/O address */
-ADDRMATCH = IOADDR:['h'08];
+ADDRMATCH = IOADDR:['h'30];
 
 /* output functions */
 LED_LATCH_HIGH = ADDRMATCH & IOWR & BHE;

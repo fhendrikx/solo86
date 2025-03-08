@@ -19,7 +19,7 @@ TIMES 256-($-$$)    db 0FFh
 
 
 ; I/O addresses should be even numbers only
-leds_data       equ 08h
+leds_data       equ 30h
 
 init:
 ; initialise SS/SP

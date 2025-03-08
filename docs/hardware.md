@@ -80,13 +80,6 @@
  - 07h PIT unused latch (write)
  - 07h PIT signature/latch state 0x10101... (read) (alias)
 
-#### Panel module
-
- - 08h LED red LEDs (write)
- - 08h LED switches (read)
- - 09h LED multi-colour LEDs (write)
- - 09h LED signature 0xAA (read)
-
 #### Epoch module (RTC)
 
  - 0Ch RTC Address latch (write)
@@ -121,6 +114,13 @@
  - 2Dh UART signature 0xAA (read) (alias)
  - 2Eh UART reserved
  - 2Fh UART signature 0xAA (read) (alias)
+
+#### Panel module
+
+ - 30h LED red LEDs (write)
+ - 30h LED switches (read)
+ - 31h LED multi-colour LEDs (write)
+ - 31h LED signature 0xAA (read)
 
 
 ### A0h - FFh reserved; Expansion boards

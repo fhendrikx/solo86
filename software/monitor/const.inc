@@ -12,7 +12,7 @@ SSEG            equ 00000h
 
 ; I/O addresses (should be even numbers only)
 TICK_CMD        equ 04h
-LEDS_DATA       equ 08h
+LEDS_DATA       equ 30h
 
 BANK_TABLE      equ 10h
 BANK_ROW_0      equ 10h
