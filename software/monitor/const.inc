@@ -11,8 +11,17 @@ SSEG            equ 00000h
 
 
 ; I/O addresses (should be even numbers only)
-TICK_CMD        equ 04h
-LEDS_DATA       equ 30h
+PIT_COUNTER_0   equ 00h
+PIT_ENABLE_0    equ 01h
+PIT_COUNTER_1   equ 02h
+PIT_ENABLE_1    equ 03h
+PIT_COUNTER_2   equ 04h
+PIT_ENABLE_2    equ 05h
+PIT_CNTR        equ 06h
+PIT_LATCH       equ 07h
+
+RTC_ADDR        equ 0Ch
+RTC_DATA        equ 0Eh
 
 BANK_TABLE      equ 10h
 BANK_ROW_0      equ 10h
@@ -26,6 +35,8 @@ BANK_ROW_7      equ 1Eh
 
 UART_CMD        equ 20h
 UART_DATA       equ 22h
+
+LEDS_DATA       equ 30h
 
 
 ; ROM scanning (first and last segment to check)
