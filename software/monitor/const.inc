@@ -9,8 +9,9 @@ CSEG            equ 00000h  ; CS after relocation
 DSEG            equ 01000h
 SSEG            equ 00000h
 
+PIT_FREQ        equ 1000000 ; 1 MHz clock
 
-; I/O addresses (should be even numbers only)
+; I/O addresses
 PIT_COUNTER_0   equ 00h
 PIT_ENABLE_0    equ 01h
 PIT_COUNTER_1   equ 02h

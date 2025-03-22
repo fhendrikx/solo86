@@ -4,9 +4,9 @@ beep:
     out PIT_CNTR, al
 
     ; set 1000Hz frequency
-    mov al,0E8h
+    mov ax,PIT_FREQ/1000
     out PIT_COUNTER_2,al
-    mov al,03h
+    mv al,ah
     out PIT_COUNTER_2,al
 
     ; enable counter 2 output
