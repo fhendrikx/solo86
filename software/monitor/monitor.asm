@@ -33,7 +33,13 @@ init:
     cld
 
     leds 01b
-    call beep
+
+    ; set DS and SS
+    mov ax,cs
+    mov ds,ax
+    mov ss,ax
+    ;call beep
+    call tune
 
 ; ensure UART has interrupts disabled
     xor al,al
@@ -165,7 +171,7 @@ int_dummy:
 %include "messages.inc"
 %include "rom.inc"
 %include "stdio.inc"
-%include "beep.inc"
+%include "sound.inc"
 
 
 ;======================================================================

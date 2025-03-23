@@ -18,7 +18,7 @@ PIT_COUNTER_1   equ 02h
 PIT_ENABLE_1    equ 03h
 PIT_COUNTER_2   equ 04h
 PIT_ENABLE_2    equ 05h
-PIT_CNTR        equ 06h
+PIT_CTRL        equ 06h
 PIT_LATCH       equ 07h
 
 RTC_ADDR        equ 0Ch
