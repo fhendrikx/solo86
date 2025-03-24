@@ -2,38 +2,38 @@
 ; interrupt vectors
 ;----------------------------------------------------------------------
 
-    dw int_dummy,0          ; 00 - divide by zero
-    dw int_dummy,0          ; 01 - single step
-    dw int_dummy,0          ; 02 - NMI
-    dw int_dummy,0          ; 03 - breakpoint
-    dw int_dummy,0          ; 04 - INTO overflow
-    dw int_dummy,0          ; 05 - BOUND range
-    dw int_dummy,0          ; 06 - invalid opcode
-    dw int_dummy,0          ; 07 - extension not available
-    dw int_dummy,0          ; 08 - interrupt table too small
-    dw int_dummy,0          ; 09 - segment overrun
-    dw int_dummy,0          ; 0A - reserved
-    dw int_dummy,0          ; 0B - reserved
-    dw int_dummy,0          ; 0C - reserved
-    dw int_dummy,0          ; 0D - reserved
-    dw int_dummy,0          ; 0E - reserved
-    dw int_dummy,0          ; 0F - reserved
-    dw int_dummy,0          ; 10 - extension error
-    dw int_dummy,0          ; 11 - reserved
-    dw int_dummy,0          ; 12 - reserved
-    dw int_dummy,0          ; 13 - reserved
-    dw int_dummy,0          ; 14 - reserved
-    dw int_dummy,0          ; 15 - reserved
-    dw int_dummy,0          ; 16 - reserved
-    dw int_dummy,0          ; 17 - reserved
-    dw int_dummy,0          ; 18 - reserved
-    dw int_dummy,0          ; 19 - reserved
-    dw int_dummy,0          ; 1A - reserved
-    dw int_dummy,0          ; 1B - reserved
-    dw int_dummy,0          ; 1C - reserved
-    dw int_dummy,0          ; 1D - reserved
-    dw int_dummy,0          ; 1E - reserved
-    dw int_dummy,0          ; 1F - reserved
+    dw int_hwexc,0          ; 00 - divide by zero
+    dw int_hwexc,0          ; 01 - single step
+    dw int_hwexc,0          ; 02 - NMI
+    dw int_hwexc,0          ; 03 - breakpoint
+    dw int_hwexc,0          ; 04 - INTO overflow
+    dw int_hwexc,0          ; 05 - BOUND range
+    dw int_hwexc,0          ; 06 - invalid opcode
+    dw int_hwexc,0          ; 07 - extension not available
+    dw int_hwexc,0          ; 08 - interrupt table too small
+    dw int_hwexc,0          ; 09 - segment overrun
+    dw int_hwexc,0          ; 0A - reserved
+    dw int_hwexc,0          ; 0B - reserved
+    dw int_hwexc,0          ; 0C - reserved
+    dw int_hwexc,0          ; 0D - reserved
+    dw int_hwexc,0          ; 0E - reserved
+    dw int_hwexc,0          ; 0F - reserved
+    dw int_hwexc,0          ; 10 - extension error
+    dw int_hwexc,0          ; 11 - reserved
+    dw int_hwexc,0          ; 12 - reserved
+    dw int_hwexc,0          ; 13 - reserved
+    dw int_hwexc,0          ; 14 - reserved
+    dw int_hwexc,0          ; 15 - reserved
+    dw int_hwexc,0          ; 16 - reserved
+    dw int_hwexc,0          ; 17 - reserved
+    dw int_hwexc,0          ; 18 - reserved
+    dw int_hwexc,0          ; 19 - reserved
+    dw int_hwexc,0          ; 1A - reserved
+    dw int_hwexc,0          ; 1B - reserved
+    dw int_hwexc,0          ; 1C - reserved
+    dw int_hwexc,0          ; 1D - reserved
+    dw int_hwexc,0          ; 1E - reserved
+    dw int_hwexc,0          ; 1F - reserved
     dw int_dummy,0          ; 20 - unused
     dw int_dummy,0          ; 21 - unused
     dw int_dummy,0          ; 22 - unused

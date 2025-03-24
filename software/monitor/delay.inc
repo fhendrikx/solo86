@@ -17,16 +17,23 @@
 ; going with bx = 1538
 ;======================================================================
 
+;=========================================================================
+; delay_ms
+; Input:
+;   AX - ms delay time
+; Output:
+;   None
+;-------------------------------------------------------------------------
 delay_ms:
     push bx         ; CLK = 3
-delay_ms1:
+.ms1:
     mov bx,1538     ; CLK = 2
-delay_ms2:
+.ms2:
     nop             ; CLK = 3
     dec bx          ; CLK = 2
-    jnz delay_ms2   ; CLK = 7 + 1 OR 3
+    jnz .ms2        ; CLK = 7 + 1 OR 3
     dec ax          ; CLK = 2
-    jnz delay_ms1   ; CLK = 7 + 1 OR 3
+    jnz .ms1        ; CLK = 7 + 1 OR 3
     pop bx          ; CLK = 5
     ret             ; CLK = 11 + m
 

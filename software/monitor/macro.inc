@@ -15,8 +15,10 @@
 ;=========================================================================
 
 %imacro leds 1
+    push ax
     mov al,%1
-    out LEDS_DATA,al
+    out PANL_CMD,al
+    pop ax
 %endm
 
 

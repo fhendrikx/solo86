@@ -1,9 +1,13 @@
 
-;======================================================================
-; memory read; read memory content at DS:SI for CX bytes
-; returns offset in BX
-;======================================================================
-
+;=========================================================================
+; mem_read
+; Input:
+;   DS - segment
+;   SI - offset
+;   CX - count
+; Notes:
+;   Prints memory content
+;-------------------------------------------------------------------------
 mem_read:
     push ax
     push cx
@@ -11,8 +15,7 @@ mem_read:
     push si
 
 .loop1:
-
-; print seg:offset
+    ; print seg:offset
     mov ax,ds
     call print_word         ; seg
 
@@ -79,10 +82,16 @@ mem_read:
     ret
 
 
-;----------------------------------------------------------------------
-; memory fill; fill memory content at ES:DI for CX bytes with AL
-;----------------------------------------------------------------------
-
+;=========================================================================
+; mem_fill
+; Input:
+;   ES - segment
+;   DI - offset
+;   CX - count
+;   AL - byte
+; Notes:
+;   Fill memory at ES:DI with AL for CX bytes
+;-------------------------------------------------------------------------
 mem_fill:
     push ax
     push bx
@@ -90,10 +99,10 @@ mem_fill:
     push di
     push es
 
-; fill data to ES:DI, keep going until CL is zero
 .loop:
+    ; fill data to ES:DI, keep going until CX is zero
     stosb
-    dec cl
+    dec cx
     jnz .loop
 
 .exit:

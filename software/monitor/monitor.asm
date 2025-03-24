@@ -38,7 +38,8 @@ init:
     mov ax,cs
     mov ds,ax
     mov ss,ax
-    ;call beep
+
+    ;call beep_now
     call tune
 
 ; ensure UART has interrupts disabled
@@ -152,17 +153,10 @@ relocate:
 
 
 ;======================================================================
-; intr_dummy
-;======================================================================
-
-int_dummy:
-    iret
-
-
-;======================================================================
 ; code
 ;======================================================================
 
+%include "beep.inc"
 %include "debug.inc"
 %include "delay.inc"
 %include "ihf.inc"
@@ -170,8 +164,52 @@ int_dummy:
 %include "mem_dasm.inc"
 %include "messages.inc"
 %include "rom.inc"
-%include "stdio.inc"
+%include "rtc.inc"
 %include "sound.inc"
+%include "stdio.inc"
+
+
+;======================================================================
+; interrupts
+;======================================================================
+
+int_hwexc:
+    iret
+
+int_irq0:
+    push ax
+    mov ax,[ cs:irq0_cnt ]
+    inc ax
+    mov [ cs:irq0_cnt ],ax
+    pop ax
+    iret
+
+int_irq1:
+    push ax
+    mov ax,[ cs:irq1_cnt ]
+    inc ax
+    mov [ cs:irq1_cnt ],ax
+    pop ax
+    iret
+
+int_irq2:
+    push ax
+    mov ax,[ cs:irq2_cnt ]
+    inc ax
+    mov [ cs:irq2_cnt ],ax
+    pop ax
+    iret
+
+int_irq3:
+    push ax
+    mov ax,[ cs:irq3_cnt ]
+    inc ax
+    mov [ cs:irq3_cnt ],ax
+    pop ax
+    iret
+
+int_dummy:
+    iret
 
 
 ;======================================================================

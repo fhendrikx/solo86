@@ -21,48 +21,48 @@ notes   dw NOTE_D5, 500
 beep:
     ; set counter 2 mode 3
     mov al,0B6h
-    out PIT_CTRL, al
+    out PIT_CMD, al
 
     ; set 1000Hz frequency
     mov ax,PIT_FREQ/1000
-    out PIT_COUNTER_2,al
+    out PIT_CNTR2,al
     mov al,ah
-    out PIT_COUNTER_2,al
+    out PIT_CNTR2,al
 
     ; enable counter 2 output
     mov al,01h
-    out PIT_ENABLE_2,al
+    out PIT_CNTR2_EN,al
 
     ; delay 100ms
     mov ax,100
     call delay_ms
-    
+
     ; disable counter 2 output
     xor al,al
-    out PIT_ENABLE_2,al
+    out PIT_CNTR2_EN,al
 
     ret
 
 tune:
     cld
-    mov	si,notes
+    mov si,notes
 
     ; set counter 2 mode 3
-    mov	al,0B6h
-    out	PIT_CTRL,al
+    mov al,0B6h
+    out PIT_CMD,al
 
 .loop:
     lodsw               ; load next note into AX
-    cmp	ax,0
-    jz	.done
+    cmp ax,0
+    jz .done
 
-    out PIT_COUNTER_2,al
+    out PIT_CNTR2,al
     mov al,ah
-    out PIT_COUNTER_2,al
+    out PIT_CNTR2,al
 
     ; enable counter 2 output
     mov al,01h
-    out PIT_ENABLE_2,al
+    out PIT_CNTR2_EN,al
 
     lodsw               ; load note length into AX
     call delay_ms
@@ -70,7 +70,7 @@ tune:
     ; a brief pause between notes
     ; disable counter 2 output
     xor al,al
-    out PIT_ENABLE_2,al
+    out PIT_CNTR2_EN,al
 
     mov ax,50
     call delay_ms
@@ -81,7 +81,7 @@ tune:
 
     ; disable counter 2 output
     xor al,al
-    out PIT_ENABLE_2,al
+    out PIT_CNTR2_EN,al
 
     ret
 

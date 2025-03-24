@@ -122,11 +122,17 @@
 ; 11111111, 11 010 010
 ;       SW  11 DX  DX
 
-;======================================================================
-; memory dasm; disassemble memory content at DS:SI for CX instructions
-; returns offset in BX
-;======================================================================
-
+;=========================================================================
+; mem_dasm
+; Input:
+;   DS - segment
+;   SI - offset
+;   CX - intructions
+; Output:
+;   BX - offset
+; Notes:
+;   Prints disassembly of memory at DS:SI
+;-------------------------------------------------------------------------
 mem_dasm:
     push ax
     push cx
@@ -874,13 +880,17 @@ print_rb:
 ;
 print_p_reg:
     cmp byte [cs:dasm_style],0
-    je .end
+    je .intel
 
     ; AT&T style
     mov al,'%'
     call print_chr
+    jmp .end
 
+    ; Intel style
+.intel:
     ; no prefix for Intel style
+
 .end:
     ret
 
@@ -889,13 +899,17 @@ print_p_reg:
 ;
 print_p_imm:
     cmp byte [cs:dasm_style],0
-    je .end
+    je .intel
 
     ; AT&T style
     mov al,'$'
     call print_chr
+    jmp .end
 
+    ; Intel style
+.intel:
     ; no prefix for Intel style
+
 .end:
     ret
 
@@ -942,7 +956,7 @@ clear:
 
 ; instructions
 
-ins ins_unknown,        'unknown'
+ins ins_unknown,        '???'
 ins ins_aaa,            'aaa'
 ins ins_aad,            'aad'
 ins ins_aam,            'aam'

@@ -3,6 +3,12 @@
 ; data
 ;======================================================================
 
+; IRQ counters
+irq0_cnt:                   dw 00h
+irq1_cnt:                   dw 00h
+irq2_cnt:                   dw 00h
+irq3_cnt:                   dw 00h
+
 ; ROM address
 rom_ofs:                    dw 00h
 rom_seg:                    dw 00h
@@ -12,7 +18,7 @@ rom_cnt:                    db 00h
 
 ; ROM found data (8 entries)
 rom_table:
-%rep ROM_MAX
+%rep ROM_CNT
                             dw 00h  ; src segment
                             dw 00h  ; src offset
                             dw 00h  ; size
@@ -22,7 +28,7 @@ rom_table:
 
 
 ; debug command line buffer
-buffer      TIMES 40        db 00h
+buffer      TIMES 64        db 00h
 
 ; debug last command
 dbg_last                    db 00h

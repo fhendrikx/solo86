@@ -35,6 +35,9 @@ debug_menu:
 
     ; which command?
 
+    cmp al,'A'
+    je  cmd_sys_info
+
     cmp al,'D'
     je  cmd_mem_dasm
     cmp al,'S'
@@ -50,6 +53,10 @@ debug_menu:
     je  cmd_out
     cmp al,'J'
     je  cmd_jmp
+    cmp al,'T'
+    je  cmd_timer
+    cmp al,'X'
+    je  cmd_halt
 
     cmp al,'L'
     je  cmd_ihf_load
@@ -58,10 +65,6 @@ debug_menu:
 
     cmp al,'H'
     je  cmd_help
-
-    cmp al,'X'
-    je  cmd_halt
-
     cmp al,'Q'
     je .exit
 
@@ -70,6 +73,16 @@ debug_menu:
 .exit:
     ret
 
+
+syntax:
+    ; syntax error
+    print dbg_syntax
+    jmp debug_menu.loop
+
+
+;======================================================================
+; debug menu commands
+;======================================================================
 
 cmd_last:
     mov al,byte [cs:dbg_last]
@@ -126,14 +139,18 @@ cmd_last:
     jmp debug_menu.loop
 
 
-cmd_help:
-    print dbg_cmd_help
+cmd_sys_info:
+    print dbg_cmd_info
+
+    call info_exp
+    call info_irq
+    call info_rom
+
     jmp debug_menu.loop
 
 
 cmd_mem_dasm:
     call spaces
-
     call inp_word           ; seg
     mov bx,ax
 
@@ -166,19 +183,18 @@ cmd_mem_dasm_style:
     mov byte [cs:dasm_style],al
 
     cmp al,0
-    jne .attstyle
+    je  .intel
 
-    print dbg_cmd_dasm_intel
+    print dbg_cmd_dasm_att
     jmp debug_menu.loop
 
-.attstyle:
-    print dbg_cmd_dasm_att
+.intel:
+    print dbg_cmd_dasm_intel
     jmp debug_menu.loop
 
 
 cmd_mem_fill:
     call spaces
-
     call inp_word           ; seg
     mov bx,ax
 
@@ -190,13 +206,11 @@ cmd_mem_fill:
     mov di,ax
 
     call spaces
-
     call inp_hex            ; count
     xor cx,cx
     mov cl,al
 
     call spaces
-
     call inp_hex            ; byte
 
     print dbg_cmd_fill
@@ -211,7 +225,6 @@ cmd_mem_fill:
 
 cmd_mem_read:
     call spaces
-
     call inp_word           ; seg
     mov bx,ax
 
@@ -242,7 +255,6 @@ cmd_mem_read:
 
 cmd_inp:
     call spaces
-
     call inp_hex            ; port
     xor dx,dx
     mov dl,al
@@ -257,12 +269,10 @@ cmd_inp:
 
 cmd_out:
     call spaces
-
     call inp_hex            ; port
     mov dl,al
 
     call spaces
-
     call inp_hex            ; byte
 
     print dbg_cmd_out
@@ -274,7 +284,6 @@ cmd_out:
 
 cmd_jmp:
     call spaces
-
     call inp_word           ; seg
     mov [cs:jmp_seg],ax
 
@@ -289,6 +298,53 @@ cmd_jmp:
 
     ; indirect far jump to CS:IP
     jmp far [cs:jmp_ofs]
+
+
+cmd_timer:
+    call spaces
+    call inp_word           ; frequency
+
+    cmp ax,0
+    je .disable
+
+    print dbg_cmd_timer
+
+    push ax
+
+    xor ax,ax               ; reset counter
+    mov [ cs:irq0_cnt ],ax
+
+    mov al,034h             ; timer 0, lsb/msb, mode 2, binary counter
+    out PIT_CMD,al
+
+    pop ax
+
+    out PIT_CNTR0,al        ; lsb
+    xchg al,ah
+    out PIT_CNTR0,al        ; msb
+
+    mov al,01h              ; enable
+    out PIT_CNTR0_EN,al
+
+    jmp debug_menu.loop
+
+.disable:
+    print dbg_cmd_timer_off
+
+    xor ax,ax               ; disable
+    out PIT_CNTR0_EN,al
+
+    jmp debug_menu.loop
+
+
+cmd_halt:
+    call spaces
+
+    print dbg_cmd_halt
+
+    hlt
+
+    jmp debug_menu.loop
 
 
 cmd_ihf_load:
@@ -341,18 +397,123 @@ cmd_ihf_exec:
     print dbg_cmd_exec_err
     jmp debug_menu.loop
 
-cmd_halt:
-    call spaces
 
-    print dbg_cmd_halt
-
-    hlt
-
+cmd_help:
+    print dbg_cmd_help
     jmp debug_menu.loop
 
-syntax:
-    print dbg_syntax
-    jmp debug_menu.loop
+
+;======================================================================
+; debug information
+;======================================================================
+
+info_exp:
+    print dbg_cmd_info_exp
+
+    print dbg_cmd_info_exp_epoch
+    mov dx,PIT_SIG
+    in al,dx
+    call print_hex
+
+    print dbg_cmd_info_exp_uart
+    mov dx,UART_SIG
+    in al,dx
+    call print_hex
+
+    print dbg_cmd_info_exp_panel
+    mov dx,PANL_SIG
+    in al,dx
+    call print_hex
+
+    ret
+
+
+info_irq:
+    print dbg_cmd_info_irq
+
+    print dbg_cmd_info_irq_0
+    mov ax,[ cs:irq0_cnt ]
+    call print_word
+
+    print dbg_cmd_info_irq_1
+    mov ax,[ cs:irq1_cnt ]
+    call print_word
+
+    print dbg_cmd_info_irq_2
+    mov ax,[ cs:irq2_cnt ]
+    call print_word
+
+    print dbg_cmd_info_irq_3
+    mov ax,[ cs:irq3_cnt ]
+    call print_word
+
+    ret
+
+
+info_rom:
+    print dbg_cmd_info_rom
+
+    push cs
+    pop ds                  ; DS:SI
+    mov si,rom_table
+
+.next:
+    ; segment
+
+    lodsw
+    cmp ax,0                ; are we done?
+    je debug_menu.loop
+
+    call print_word         ; seg
+
+    mov al,':'
+    call print_chr
+
+    ; offset
+
+    lodsw
+    call print_word         ; offset
+
+    mov al,' '
+    call print_chr
+    mov al,'['
+    call print_chr
+
+    ; size
+
+    lodsw
+    call print_word         ; size
+
+    mov al,']'
+    call print_chr
+    mov al,' '
+    call print_chr
+    mov al,'>'
+    call print_chr
+    mov al,' '
+    call print_chr
+
+    ; seg dest
+
+    lodsw
+    call print_word         ; seg dest
+
+    mov al,':'
+    call print_chr
+    mov al,' '
+    call print_chr
+
+    ; name
+
+    call print_str
+
+    mov al,0Ah
+    call print_chr
+
+    add si,24               ; print char pops DS:SI
+    jmp .next
+
+    ret
 
 
 ;======================================================================
