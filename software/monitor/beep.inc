@@ -8,7 +8,7 @@
 beep_now:
     ; set counter 2 mode 3
     mov al,0B6h
-    out PIT_CMD,al
+    out PIT_CTRL,al
 
     ; set 1000Hz frequency
     mov ax,PIT_FREQ/1000

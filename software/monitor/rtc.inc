@@ -82,7 +82,7 @@ rtc_init:
 ;-------------------------------------------------------------------------
 rtc_read:
     cli
-    out RTC_CMD,al
+    out RTC_CTRL,al
     jmp $+2
     jmp $+2
     jmp $+2
@@ -101,7 +101,7 @@ rtc_read:
 ;-------------------------------------------------------------------------
 rtc_write:
     cli
-    out RTC_CMD,al
+    out RTC_CTRL,al
     jmp $+2
     jmp $+2
     jmp $+2

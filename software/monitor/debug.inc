@@ -302,23 +302,20 @@ cmd_jmp:
 
 cmd_timer:
     call spaces
-    call inp_word           ; frequency
+    call inp_hex            ; enable/disable
 
-    cmp ax,0
+    cmp al,0
     je .disable
 
     print dbg_cmd_timer
-
-    push ax
 
     xor ax,ax               ; reset counter
     mov [ cs:irq0_cnt ],ax
 
     mov al,034h             ; timer 0, lsb/msb, mode 2, binary counter
-    out PIT_CMD,al
+    out PIT_CTRL,al
 
-    pop ax
-
+    mov ax,PIT_TICK
     out PIT_CNTR0,al        ; lsb
     xchg al,ah
     out PIT_CNTR0,al        ; msb
@@ -412,19 +409,45 @@ info_exp:
 
     print dbg_cmd_info_exp_epoch
     mov dx,PIT_SIG
-    in al,dx
-    call print_hex
+    call info_exp_single
 
     print dbg_cmd_info_exp_uart
     mov dx,UART_SIG
-    in al,dx
-    call print_hex
+    call info_exp_single
 
     print dbg_cmd_info_exp_panel
     mov dx,PANL_SIG
-    in al,dx
-    call print_hex
+    call info_exp_single
 
+    ret
+
+
+info_exp_single:
+    push ax
+    push dx
+
+    in al,dx
+    cmp al,0AAh             ; look for 0xAA
+    je .sig
+    shr al,1
+    shr al,1
+    shr al,1
+    shr al,1
+    cmp al,0Ah              ; try 0x0A (for epoch card)
+    je .sig
+
+    mov al,'N'
+    call print_chr
+    jmp .end
+
+.sig:
+    mov al,'Y'
+    call print_chr
+    jmp .end
+
+.end:
+    pop dx
+    pop ax
     ret
 
 
@@ -464,6 +487,7 @@ info_rom:
     cmp ax,0                ; are we done?
     je debug_menu.loop
 
+    print dbg_cmd_info_rom_found
     call print_word         ; seg
 
     mov al,':'
@@ -506,9 +530,6 @@ info_rom:
     ; name
 
     call print_str
-
-    mov al,0Ah
-    call print_chr
 
     add si,24               ; print char pops DS:SI
     jmp .next

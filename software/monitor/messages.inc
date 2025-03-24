@@ -37,7 +37,7 @@ dbg_cmd_help            db 0Ah, '[ MON Help ]', 0Ah
                         db 'I PP                - INP port PP', 0Ah
                         db 'O PP XX             - OUT port PP byte XX', 0Ah
                         db 'J SSSS:OOOO         - JMP addr SSSS:OOOO', 0Ah
-                        db 'T FF                - TMR freq FF Hz (use 00 to disable)', 0Ah
+                        db 'T SS                - TMR stat', 0Ah
                         db 'X                   - CPU HALT', 0Ah
 
                         db 'L                   - IHF LOAD', 0Ah
@@ -68,16 +68,17 @@ dbg_cmd_exec            db 0Ah, '[ IHF EXEC ]', 0Ah, 00h
 dbg_cmd_exec_err        db 0Ah, '[ IHF EXEC ERR ]', 0Ah, 00h
 
 dbg_cmd_info            db 0Ah, '[ SYS INFO ]', 0Ah, 00h
-dbg_cmd_info_exp        db 0Ah, 'Expansion', 0Ah, 00h
+dbg_cmd_info_exp        db 0Ah, 'Expansion', 00h
 dbg_cmd_info_exp_epoch  db 0Ah, '    EPOCH: ', 00h
 dbg_cmd_info_exp_uart   db 0Ah, '     UART: ', 00h
 dbg_cmd_info_exp_panel  db 0Ah, '    PANEL: ', 00h
-dbg_cmd_info_irq        db 0Ah, 'IRQ', 0Ah, 00h
+dbg_cmd_info_irq        db 0Ah, 'IRQ', 00h
 dbg_cmd_info_irq_0      db 0Ah, '    IRQ 0: ', 00h
 dbg_cmd_info_irq_1      db 0Ah, '    IRQ 1: ', 00h
 dbg_cmd_info_irq_2      db 0Ah, '    IRQ 2: ', 00h
 dbg_cmd_info_irq_3      db 0Ah, '    IRQ 3: ', 00h
-dbg_cmd_info_rom        db 0Ah, 'ROM', 0Ah, 00h
+dbg_cmd_info_rom        db 0Ah, 'ROM', 00h
+dbg_cmd_info_rom_found  db 0Ah, '    Found: ', 00h
 
 dbg_cmd_halt            db 0Ah, '[ CPU HALT ]', 0Ah, 00h
 

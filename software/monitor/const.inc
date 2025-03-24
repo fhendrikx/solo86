@@ -20,18 +20,19 @@ ROM_CNT         equ 8       ; ROM count (max)
 ; PIT I/O
 PIT_CNTR0       equ 00h
 PIT_CNTR0_EN    equ 01h
+PIT_SIG         equ 01h
 PIT_CNTR1       equ 02h
 PIT_CNTR1_EN    equ 03h
 PIT_CNTR2       equ 04h
 PIT_CNTR2_EN    equ 05h
-PIT_CMD         equ 06h     ; was PIT_CTRL
+PIT_CTRL        equ 06h
 PIT_LATCH       equ 07h
-PIT_SIG         equ 01h
 
 PIT_FREQ        equ 1000000 ; 1 MHz clock
+PIT_TICK        equ PIT_FREQ / 100
 
 ; RTC I/O
-RTC_CMD         equ 0Ch     ; was RTC_ADDR
+RTC_CTRL        equ 0Ch     ; was RTC_ADDR
 RTC_DATA        equ 0Eh
 
 ; BANK I/O
@@ -46,12 +47,12 @@ BANK_ROW_6      equ 1Ch
 BANK_ROW_7      equ 1Eh
 
 ; UART I/O
-UART_CMD        equ 20h
-UART_DATA       equ 22h
+UART_CTRL       equ 20h
 UART_SIG        equ 21h
+UART_DATA       equ 22h
 
 ; PANL I/O
-PANL_CMD        equ 30h
+PANL_CTRL       equ 30h
 PANL_DATA       equ 30h
 PANL_SIG        equ 31h
 

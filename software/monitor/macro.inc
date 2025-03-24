@@ -17,7 +17,7 @@
 %imacro leds 1
     push ax
     mov al,%1
-    out PANL_CMD,al
+    out PANL_CTRL,al
     pop ax
 %endm
 

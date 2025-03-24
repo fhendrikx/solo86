@@ -21,7 +21,7 @@ notes   dw NOTE_D5, 500
 beep:
     ; set counter 2 mode 3
     mov al,0B6h
-    out PIT_CMD, al
+    out PIT_CTRL, al
 
     ; set 1000Hz frequency
     mov ax,PIT_FREQ/1000
@@ -49,7 +49,7 @@ tune:
 
     ; set counter 2 mode 3
     mov al,0B6h
-    out PIT_CMD,al
+    out PIT_CTRL,al
 
 .loop:
     lodsw               ; load next note into AX

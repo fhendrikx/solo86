@@ -40,11 +40,11 @@ init:
     mov ss,ax
 
     ;call beep_now
-    call tune
+    ;call tune
 
 ; ensure UART has interrupts disabled
     xor al,al
-    out UART_CMD,al
+    out UART_CTRL,al
 
     leds 011b
 
@@ -74,7 +74,6 @@ init:
 ;======================================================================
 
 relocate:
-
     leds 01111b
 
 ; initialise DS

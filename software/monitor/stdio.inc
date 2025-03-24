@@ -112,7 +112,7 @@ print_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 raw_ready:
-    in al,UART_CMD          ; any bytes?
+    in al,UART_CTRL         ; any bytes?
     ret
 
 
@@ -126,7 +126,7 @@ raw_ready:
 ;   Blocking read of 1 character
 ;-------------------------------------------------------------------------
 raw_chr:
-    in al,UART_CMD          ; any characters?
+    in al,UART_CTRL         ; any characters?
     cmp al,0
     jz raw_chr
     in al,UART_DATA         ; read character
@@ -155,7 +155,7 @@ raw_hex:
     ret
 
 .nibble:
-    in al,UART_CMD          ; any characters?
+    in al,UART_CTRL         ; any characters?
     cmp al,0
     jz .nibble
 
@@ -185,7 +185,7 @@ raw_str:
     cld
 
 .loop:
-    in al,UART_CMD          ; any characters?
+    in al,UART_CTRL         ; any characters?
     cmp al,0
     jz .loop
 
@@ -218,7 +218,7 @@ raw_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 read_ready:
-    in al,UART_CMD         ; any bytes?
+    in al,UART_CTRL         ; any bytes?
     ret
 
 
@@ -267,7 +267,7 @@ read_str:
     cld
 
 .loop:
-    in al,UART_CMD          ; any characters?
+    in al,UART_CTRL         ; any characters?
     cmp al,0
     jz .loop
 
