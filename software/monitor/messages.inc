@@ -54,8 +54,8 @@ dbg_cmd_dasm_att        db 0Ah, '[ MEM DASM ]: Style: AT&T/GNU', 0Ah, 00h
 dbg_cmd_fill            db 0Ah, '[ MEM FILL ]', 0Ah, 00h
 dbg_cmd_read            db 0Ah, '[ MEM READ ]', 0Ah, 00h
 
-dbg_cmd_inp             db 0Ah, '[ INP ]', 0Ah, 00h
-dbg_cmd_out             db 0Ah, '[ OUT ]', 0Ah, 00h
+dbg_cmd_inp             db '[ INP ]: ', 00h
+dbg_cmd_out             db '[ OUT ]: ', 00h
 dbg_cmd_jump            db 0Ah, '[ JMP ]', 0Ah, 00h
 
 dbg_cmd_timer           db 0Ah, '[ TMR ]: On', 0Ah, 00h

@@ -65,6 +65,8 @@ debug_menu:
 
     cmp al,'H'
     je  cmd_help
+    cmp al,'?'
+    je  cmd_help
     cmp al,'Q'
     je .exit
 
@@ -256,10 +258,15 @@ cmd_mem_read:
 cmd_inp:
     call spaces
     call inp_hex            ; port
+
     xor dx,dx
     mov dl,al
 
     print dbg_cmd_inp
+    call print_hex
+
+    mov al,'='
+    call print_chr
 
     in al,dx                ; INP
     call print_hex
@@ -270,12 +277,20 @@ cmd_inp:
 cmd_out:
     call spaces
     call inp_hex            ; port
+
+    xor dx,dx
     mov dl,al
+
+    print dbg_cmd_out
+    call print_hex
+
+    mov al,'='
+    call print_chr
 
     call spaces
     call inp_hex            ; byte
 
-    print dbg_cmd_out
+    call print_hex
 
     out dx,al               ; OUT
 

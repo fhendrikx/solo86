@@ -1,36 +1,36 @@
 
 ; RTC addresses
-cmos_secs       equ 00h ; seconds location in RTC
-cmos_secs_alarm equ 01h ; alarm seconds location in RTC
-cmos_mins       equ 02h ; minutes location in RTC
-cmos_mins_alarm equ 03h ; alarm minutes location in RTC
-cmos_hour       equ 04h ; hours locaiton in RTC
-cmos_hour_alarm equ 05h ; alarm hours location in RTC
-cmos_day        equ 06h ; day location in RTC
-cmos_date       equ 07h ; date location in RTC
-cmos_month      equ 08h ; month location in RTC
-cmos_year       equ 09h ; year location in RTC
+cmos_secs       equ 00h ; seconds
+cmos_secs_alarm equ 01h ; alarm seconds
+cmos_mins       equ 02h ; minutes
+cmos_mins_alarm equ 03h ; alarm minutes
+cmos_hour       equ 04h ; hours
+cmos_hour_alarm equ 05h ; alarm hours
+cmos_day        equ 06h ; day
+cmos_date       equ 07h ; date
+cmos_month      equ 08h ; month
+cmos_year       equ 09h ; year
 
-cmos_ctrl_a     equ 0Ah ; RTC control A register
-cmos_uip        equ 80h ; RTC update in progress bit
+cmos_ctrl_a     equ 0Ah ; control A register
+cmos_uip        equ 80h ; update in progress bit
 
-cmos_ctrl_b     equ 0Bh ; RTC control B register
-cmos_dse        equ 01h ; RTC daylight savings enable bit
-cmos_24hours    equ 02h ; RTC 24 hours format (1 = 24 hours, 0 = 12)
-cmos_uie        equ 10h ; RTC update ended interrupt enable bit
-cmos_aie        equ 20h ; RTC alarm interrupt enable bit
-cmos_pie        equ 40h ; RTC periodic interrupt enable bit
-cmos_set        equ 80h ; RTC set bit (0 = normal operation, 1 = set)
+cmos_ctrl_b     equ 0Bh ; control B register
+cmos_dse        equ 01h ; daylight savings enable bit
+cmos_24hours    equ 02h ; 24 hours format (1 = 24 hours, 0 = 12)
+cmos_uie        equ 10h ; update ended interrupt enable bit
+cmos_aie        equ 20h ; alarm interrupt enable bit
+cmos_pie        equ 40h ; periodic interrupt enable bit
+cmos_set        equ 80h ; set bit (0 = normal operation, 1 = set)
 
-cmos_ctrl_c     equ 0Ch ; RTC control C register
-cmos_uf         equ 20h ; RTC update ended interrupt flag
-cmos_af         equ 40h ; RTC alarm interrupt flag
-cmos_pf         equ 80h ; RTC periodic interrupt flag
+cmos_ctrl_c     equ 0Ch ; control C register
+cmos_uf         equ 20h ; update ended interrupt flag
+cmos_af         equ 40h ; alarm interrupt flag
+cmos_pf         equ 80h ; periodic interrupt flag
 
-cmos_ctrl_d     equ 0Dh ; RTC control D register
-cmos_vrt        equ 80h ; RTC vrt bit (1 = battery is OK)
+cmos_ctrl_d     equ 0Dh ; control D register
+cmos_vrt        equ 80h ; vrt bit (1 = battery is OK)
 
-cmos_century    equ 32h ; century location in RTC
+cmos_century    equ 32h ; century
 
 
 ;=========================================================================
@@ -45,22 +45,66 @@ rtc_init:
     mov ah,26h          ; Oscillator to 1024KHz
     call rtc_write
 
+    ; sanity check
+    mov al,cmos_ctrl_a
+    call rtc_read
+    call print_hex
+    cmp al,26h
+    jne .exit
+
     ; ctrl b
     mov al,cmos_ctrl_b
     call rtc_read
+    call print_hex
     xchg al,ah
     and ah,cmos_dse     ; clear everything but DSE
     or ah,cmos_24hours  ; set 24 hours
     mov al,cmos_ctrl_b
     call rtc_write
 
-    ; ctrl d
-    mov al,cmos_ctrl_d
+    ; sanity check
+    mov al,cmos_secs
     call rtc_read
-    test al,cmos_vrt
-    jnz .exit
+    call print_hex
+    cmp al,59
+    ja .defaults
+
+    mov al,cmos_mins
+    call rtc_read
+    call print_hex
+    cmp al,59
+    ja .defaults
+
+    mov al,cmos_hour
+    call rtc_read
+    call print_hex
+    cmp al,23
+    ja .defaults
+
+    mov al,cmos_date
+    call rtc_read
+    call print_hex
+    cmp al,31
+    ja .defaults
+
+    mov al,cmos_month
+    call rtc_read
+    call print_hex
+    cmp al,12
+    ja .defaults
+
+    mov al,cmos_year
+    call rtc_read
+    call print_hex
+    cmp al,99
+    ja .defaults
+
+    jmp .exit
 
 .defaults:
+    mov al,'X'
+    call print_chr
+
     ; set default time and date
     xor cx,cx
     xor dx,dx
@@ -83,10 +127,10 @@ rtc_init:
 rtc_read:
     cli
     out RTC_CTRL,al
-    jmp $+2
-    jmp $+2
-    jmp $+2
-    jmp $+2
+    push ax
+    mov ax,10
+    call delay_ms
+    pop ax
     in  al,RTC_DATA
     sti
     ret
@@ -102,13 +146,12 @@ rtc_read:
 rtc_write:
     cli
     out RTC_CTRL,al
-    jmp $+2
-    jmp $+2
-    jmp $+2
-    jmp $+2
-    xchg ah,al
+    push ax
+    mov ax,10
+    call delay_ms
+    pop ax
+    xchg al,ah
     out RTC_DATA,al
-    xchg ah,al
     sti
     ret
 

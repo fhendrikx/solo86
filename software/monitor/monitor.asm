@@ -121,6 +121,9 @@ relocate:
 
     leds 0111111b
 
+; initialise RTC
+    call rtc_init
+
 ; enable interrupts
     sti
 
