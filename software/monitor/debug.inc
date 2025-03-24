@@ -429,11 +429,8 @@ info_exp_single:
     in al,dx
     cmp al,0AAh             ; look for 0xAA
     je .sig
-    shr al,1
-    shr al,1
-    shr al,1
-    shr al,1
-    cmp al,0Ah              ; try 0x0A (for epoch card)
+    and al,0F0h
+    cmp al,0A0h             ; try 0xA0 (for epoch card)
     je .sig
 
     mov al,'N'
