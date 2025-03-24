@@ -34,10 +34,10 @@
     dw int_hwexc,0          ; 1D - reserved
     dw int_hwexc,0          ; 1E - reserved
     dw int_hwexc,0          ; 1F - reserved
-    dw int_dummy,0          ; 20 - unused
-    dw int_dummy,0          ; 21 - unused
-    dw int_dummy,0          ; 22 - unused
-    dw int_dummy,0          ; 23 - unused
+    dw int_irq0,0           ; 20 - irq0
+    dw int_irq1,0           ; 21 - irq1
+    dw int_irq2,0           ; 22 - irq2
+    dw int_irq3,0           ; 23 - irq3
     dw int_dummy,0          ; 24 - unused
     dw int_dummy,0          ; 25 - unused
     dw int_dummy,0          ; 26 - unused
