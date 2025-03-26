@@ -4,5 +4,6 @@
 *.map
 hex/*
 !hex/Makefile
+!hex/up
 rom/*
 !rom/Makefile
