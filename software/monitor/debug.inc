@@ -53,8 +53,12 @@ debug_menu:
     je  cmd_out
     cmp al,'J'
     je  cmd_jmp
-    cmp al,'T'
+    cmp al,'Y'
     je  cmd_timer
+    cmp al,'T'
+    je  cmd_clock_time
+    cmp al,'C'
+    je  cmd_clock_date
     cmp al,'X'
     je  cmd_halt
 
@@ -146,6 +150,7 @@ cmd_sys_info:
 
     call info_exp
     call info_irq
+    call info_rtc
     call info_rom
 
     jmp debug_menu.loop
@@ -167,6 +172,7 @@ cmd_mem_dasm:
     mov ds,bx
     mov cx,16
 
+    print dbg_cmd_dasm
     call mem_dasm
 
     ; store last address
@@ -349,6 +355,67 @@ cmd_timer:
     jmp debug_menu.loop
 
 
+cmd_clock_time:
+    call spaces
+    call inp_hex            ; hour
+    mov ch,al
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_hex            ; mins
+    mov cl,al
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_hex            ; secs
+    mov dh,al
+
+    call rtc_time_set
+
+    jmp debug_menu.loop
+
+
+cmd_clock_date:
+    call spaces
+    call inp_hex            ; century
+    call print_chr
+    mov ch,al
+
+    call inp_hex            ; year
+    call print_chr
+    mov cl,al
+
+    mov al,'1'
+    call print_chr
+
+    mov al,'-'
+    call expect
+    jne syntax
+
+    call inp_hex            ; month
+    call print_chr
+    mov dh,al
+
+    mov al,'2'
+    call print_chr
+
+    mov al,'-'
+    call expect
+    jne syntax
+
+    call inp_hex            ; date
+    call print_chr
+    mov dl,al
+
+    call rtc_date_set
+
+    jmp debug_menu.loop
+
+
 cmd_halt:
     call spaces
 
@@ -458,6 +525,8 @@ info_exp_single:
     jmp .end
 
 .end:
+    mov al,0Ah
+    call print_chr
     pop dx
     pop ax
     ret
@@ -468,20 +537,81 @@ info_irq:
 
     print dbg_cmd_info_irq_0
     mov ax,[ cs:irq0_cnt ]
-    call print_word
+    call info_irq_single
 
     print dbg_cmd_info_irq_1
     mov ax,[ cs:irq1_cnt ]
-    call print_word
 
     print dbg_cmd_info_irq_2
     mov ax,[ cs:irq2_cnt ]
-    call print_word
+    call info_irq_single
 
     print dbg_cmd_info_irq_3
     mov ax,[ cs:irq3_cnt ]
+    call info_irq_single
+
+    ret
+
+
+info_irq_single:
     call print_word
 
+    mov al,0Ah
+    call print_chr
+    ret
+
+
+info_rtc:
+    print dbg_cmd_info_rtc
+
+    ; date
+    print dbg_cmd_info_rtc_date
+    call rtc_date_get
+
+    mov al,ch
+    call print_hex
+    mov al,cl
+    call print_hex
+
+    mov al,'-'
+    call print_chr
+
+    mov al,dh
+    call print_hex
+
+    mov al,'-'
+    call print_chr
+
+    mov al,dl
+    call print_hex
+
+    mov al,' '
+    call print_chr
+
+    mov al,0Ah
+    call print_chr
+
+    ; time
+    print dbg_cmd_info_rtc_time
+    call rtc_time_get
+
+    mov al,ch
+    call print_hex
+
+    mov al,':'
+    call print_chr
+
+    mov al,cl
+    call print_hex
+
+    mov al,':'
+    call print_chr
+
+    mov al,dh
+    call print_hex
+
+    mov al,0Ah
+    call print_chr
     ret
 
 
@@ -497,7 +627,7 @@ info_rom:
 
     lodsw
     cmp ax,0                ; are we done?
-    je debug_menu.loop
+    je .exit
 
     print dbg_cmd_info_rom_found
     call print_word         ; seg
@@ -543,9 +673,13 @@ info_rom:
 
     call print_str
 
+    mov al,0Ah
+    call print_chr
+
     add si,24               ; print char pops DS:SI
     jmp .next
 
+.exit:
     ret
 
 

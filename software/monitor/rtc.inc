@@ -108,11 +108,11 @@ rtc_init:
     ; set default time and date
     xor cx,cx
     xor dx,dx
-    call rtc_settime
+    call rtc_time_set
 
     mov cx,2020h
     mov dx,0101h
-    call rtc_setdate
+    call rtc_date_set
 
 .exit:
     ret
@@ -156,7 +156,36 @@ rtc_write:
     ret
 
 ;=========================================================================
-; rtc_setdate
+; rtc_date_get
+; Input:
+;   None
+; Output:
+;   CH - BCD century
+;   CL - BCD year
+;   DH - BCD month
+;   DL - BCD date
+;-------------------------------------------------------------------------
+rtc_date_get:
+    push ax
+
+    mov al,cmos_date
+    call rtc_read
+    mov dl,al
+    mov al,cmos_month
+    call rtc_read
+    mov dh,al
+    mov al,cmos_year
+    call rtc_read
+    mov cl,al
+    mov al,cmos_century
+    call rtc_read
+    mov ch,al
+
+    pop ax
+    ret
+
+;=========================================================================
+; rtc_date_set
 ; Input:
 ;   CH - BCD century
 ;   CL - BCD year
@@ -165,7 +194,7 @@ rtc_write:
 ; Output:
 ;   None
 ;-------------------------------------------------------------------------
-rtc_setdate:
+rtc_date_set:
     push ax
 
     ; tell RTC we're setting the date
@@ -208,7 +237,40 @@ rtc_setdate:
     ret
 
 ;=========================================================================
-; rtc_settime
+; rtc_time_get
+; Input:
+;   None
+; Output:
+;   CH - BCD hours
+;   CL - BCD minutes
+;   DH - BCD seconds
+;   DL - daylight savings flag
+;-------------------------------------------------------------------------
+rtc_time_get:
+    push ax
+
+    mov al,cmos_ctrl_b
+    call rtc_read
+    and al,cmos_dse
+    mov dl,al
+
+    mov al,cmos_secs
+    call rtc_read
+    mov dh,al
+
+    mov al,cmos_mins
+    call rtc_read
+    mov cl,al
+
+    mov al,cmos_hour
+    call rtc_read
+    mov ch,al
+
+    pop ax
+    ret
+
+;=========================================================================
+; rtc_time_set
 ; Input:
 ;   CH - BCD hours
 ;   CL - BCD minutes
@@ -216,7 +278,7 @@ rtc_setdate:
 ; Output:
 ;   None
 ;-------------------------------------------------------------------------
-rtc_settime:
+rtc_time_set:
     push ax
 
     ; tell RTC we're setting the time

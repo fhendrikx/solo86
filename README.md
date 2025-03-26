@@ -41,5 +41,8 @@ Then build the system:
 
     make
 
-The final binaries will be in rom/ along with Intel Hex Files in ihf/
+The ROM binaries will be written to the rom/ directory.
+
+Uploadable Intel Hex Files will be written to the ihf/ directory. These can be
+uploaded directly to a running instance of the monitor using IHF Load command.
 
