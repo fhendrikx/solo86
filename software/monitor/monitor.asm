@@ -115,7 +115,7 @@ relocate:
 
     ; check if switch 0 is on
     in al,PANL_DATA
-    and al,00000001b
+    test al,00000001b
     jz .no_sound
 
     call beep_now
