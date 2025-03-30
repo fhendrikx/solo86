@@ -28,25 +28,15 @@ org 0
 ;======================================================================
 
 init:
+; after power up this code is executing from ROM
+; after loading from an intel hex file this code is executing from RAM
+; be aware that segments and stack pointers are not initialised
+
 ; clear interrupts
     cli
     cld
 
-    leds 01b
-
-    ; set DS and SS
-    mov ax,cs
-    mov ds,ax
-    mov ss,ax
-
-    ;call beep_now
-    ;call tune
-
-; ensure UART has interrupts disabled
-    xor al,al
-    out UART_CTRL,al
-
-    leds 011b
+    leds 00000001b  ; 1 LED
 
 ; copy ROM to RAM
 ; don't use the stack yet as the ROM copy will overwrite any stored data
@@ -64,7 +54,7 @@ init:
     movsw
     loop .copy
 
-    leds 0111b
+    leds 00000011b  ; 2 LEDs
 
     jmp CSEG:relocate       ; here we go!
 
@@ -74,7 +64,7 @@ init:
 ;======================================================================
 
 relocate:
-    leds 01111b
+    leds 00000111b  ; 3 LEDs
 
 ; initialise DS
     mov ax,DSEG
@@ -85,21 +75,9 @@ relocate:
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
-    leds 011111b
+    leds 00001111b  ; 4 LEDs
 
 ; setup memory banking table
-; map RAM into the top half of memory
-    ; mov al,011000b
-    ; mov dx,BANK_TABLE
-    ; mov cx,8
-
-; .bank_init:
-    ; out dx,al
-    ; inc al
-    ; inc dx
-    ; inc dx
-    ; loop .bank_init
-
 ; map ROM into the top half of memory, skip monitor
     mov al,1
     out BANK_ROW_0,al
@@ -119,15 +97,43 @@ relocate:
     mov al,01Fh
     out BANK_ROW_7,al
 
-    leds 0111111b
+    leds 00011111b  ; 5 LEDs
 
 ; initialise RTC
     call rtc_init
 
+; ensure UART has interrupts disabled
+    xor al,al
+    out UART_CTRL,al
+
+; startup sound
+
+    ; check if the panel is installed
+    in al,PANL_SIG
+    cmp al,0AAh
+    jne .no_sound
+
+    ; check if switch 0 is on
+    in al,PANL_DATA
+    and al,00000001b
+    jz .no_sound
+
+    call beep_now
+
+    ; ; setup tune pointer
+    ; mov ax,cs
+    ; mov ds,ax
+    ; mov si,imperial
+    ; call tune
+
+.no_sound:
+
+    leds 00111111b  ; 6 LEDs
+
 ; enable interrupts
     sti
 
-    leds 01111111b
+    leds 01111111b  ; 7 LEDs
 
 ;======================================================================
 ; welcome
@@ -136,7 +142,7 @@ relocate:
 ; welcome
     print mon_welcome
 
-    leds 011111111b
+    leds 11111111b  ; 8 LEDs
 
 ; scan for ROMs
 .scan:

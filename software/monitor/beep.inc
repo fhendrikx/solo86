@@ -6,6 +6,15 @@
 ;   Beep the speaker
 ;-------------------------------------------------------------------------
 beep_now:
+    ; save state
+    push ax
+
+    ; check if the Epoch module is installed
+    in al,PIT_SIG
+    and al,11111000b
+    cmp al,10101000b
+    jne .done
+
     ; set counter 2 mode 3
     mov al,0B6h
     out PIT_CTRL,al
@@ -27,5 +36,10 @@ beep_now:
     ; disable counter 2 output
     xor al,al
     out PIT_CNTR2_EN,al
+
+.done:
+
+    ; restore state
+    pop ax
 
     ret
