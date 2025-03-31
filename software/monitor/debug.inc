@@ -511,8 +511,8 @@ info_exp_single:
     in al,dx
     cmp al,0AAh             ; look for 0xAA
     je .sig
-    and al,0F0h
-    cmp al,0A0h             ; try 0xA0 (for epoch card)
+    and al,0F8h
+    cmp al,0A8h             ; try 0xA8 (for epoch card)
     je .sig
 
     mov al,'N'
