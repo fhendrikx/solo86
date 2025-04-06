@@ -2,9 +2,9 @@ include $(TOPDIR)/Makefile.conf
 
 NAME = monitor.bin
 CODE = monitor.asm
-DEPS = beep.inc const.inc data.inc debug.inc delay.inc ihf.inc macro.inc \
-	   mem_dasm.inc mem.inc messages.inc rom.inc rtc.inc sound.inc \
-	   stdio.inc test.inc vectors.inc
+DEPS = beep.inc const.inc dasm.inc data.inc debug.inc delay.inc ihf.inc \
+	   macro.inc mem.inc messages.inc rom.inc rtc.inc sound.inc \
+	   stdio.inc system.inc test.inc vectors.inc
 
 all: $(NAME)
 
