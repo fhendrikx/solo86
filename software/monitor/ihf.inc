@@ -63,22 +63,11 @@ ihf_load:
     ; record type 0x00 - Data
     ; read data to ES:DI, keep going until CL is zero
 .rec_data:
-    xor ax,ax               ; clear AX
-    xor bx,bx               ; clear BX; use for checksum
-.rec_loop:
     call raw_hex            ; get data (1 byte)
     stosb
     dec cl
-    add bx,ax
-    jnz .rec_loop           ; are we done yet?
-    neg bl                  ; invert bits
-    inc bl                  ; add 1 (to give 2's complement)
-    mov al,bl
-    call print_hex
-    mov al,'='
-    call print_hex
+    jnz .rec_data           ; are we done yet?
     call raw_hex            ; get checksum (1 byte)
-    call print_hex
     jmp .find_record
 
     ; record type 0x01 - EOF
