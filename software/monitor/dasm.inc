@@ -123,7 +123,7 @@
 ;       SW  11 DX  DX
 
 ;=========================================================================
-; mem_dasm
+; dasm
 ; Input:
 ;   DS - segment
 ;   SI - offset
@@ -133,7 +133,7 @@
 ; Notes:
 ;   Prints disassembly of memory at DS:SI
 ;-------------------------------------------------------------------------
-mem_dasm:
+dasm:
     push ax
     push cx
     push ds
