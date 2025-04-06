@@ -48,63 +48,60 @@ rtc_init:
     ; sanity check
     mov al,cmos_ctrl_a
     call rtc_read
-    call print_hex
     cmp al,26h
     jne .exit
 
     ; ctrl b
     mov al,cmos_ctrl_b
     call rtc_read
-    call print_hex
     xchg al,ah
     and ah,cmos_dse     ; clear everything but DSE
     or ah,cmos_24hours  ; set 24 hours
     mov al,cmos_ctrl_b
     call rtc_write
 
+    ; ctrl c
+    mov al,cmos_ctrl_c
+    call rtc_read
+
+    ; ctrl d
+    mov al,cmos_ctrl_d
+    call rtc_read
+
     ; sanity check
     mov al,cmos_secs
     call rtc_read
-    call print_hex
     cmp al,59
     ja .defaults
 
     mov al,cmos_mins
     call rtc_read
-    call print_hex
     cmp al,59
     ja .defaults
 
     mov al,cmos_hour
     call rtc_read
-    call print_hex
     cmp al,23
     ja .defaults
 
     mov al,cmos_date
     call rtc_read
-    call print_hex
     cmp al,31
     ja .defaults
 
     mov al,cmos_month
     call rtc_read
-    call print_hex
     cmp al,12
     ja .defaults
 
     mov al,cmos_year
     call rtc_read
-    call print_hex
     cmp al,99
     ja .defaults
 
     jmp .exit
 
 .defaults:
-    mov al,'X'
-    call print_chr
-
     ; set default time and date
     xor cx,cx
     xor dx,dx
