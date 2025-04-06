@@ -382,33 +382,23 @@ cmd_clock_time:
 cmd_clock_date:
     call spaces
     call inp_hex            ; century
-    call print_chr
     mov ch,al
 
     call inp_hex            ; year
-    call print_chr
     mov cl,al
-
-    mov al,'1'
-    call print_chr
 
     mov al,'-'
     call expect
     jne syntax
 
     call inp_hex            ; month
-    call print_chr
     mov dh,al
-
-    mov al,'2'
-    call print_chr
 
     mov al,'-'
     call expect
     jne syntax
 
     call inp_hex            ; date
-    call print_chr
     mov dl,al
 
     call rtc_date_set

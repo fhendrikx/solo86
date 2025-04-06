@@ -69,35 +69,35 @@ rtc_init:
     call rtc_read
 
     ; sanity check
-    mov al,cmos_secs
-    call rtc_read
-    cmp al,59
-    ja .defaults
+    ;mov al,cmos_secs
+    ;call rtc_read
+    ;cmp al,59
+    ;ja .defaults
 
-    mov al,cmos_mins
-    call rtc_read
-    cmp al,59
-    ja .defaults
+    ;mov al,cmos_mins
+    ;call rtc_read
+    ;cmp al,59
+    ;ja .defaults
 
-    mov al,cmos_hour
-    call rtc_read
-    cmp al,23
-    ja .defaults
+    ;mov al,cmos_hour
+    ;call rtc_read
+    ;cmp al,23
+    ;ja .defaults
 
-    mov al,cmos_date
-    call rtc_read
-    cmp al,31
-    ja .defaults
+    ;mov al,cmos_date
+    ;call rtc_read
+    ;cmp al,31
+    ;ja .defaults
 
-    mov al,cmos_month
-    call rtc_read
-    cmp al,12
-    ja .defaults
+    ;mov al,cmos_month
+    ;call rtc_read
+    ;cmp al,12
+    ;ja .defaults
 
-    mov al,cmos_year
-    call rtc_read
-    cmp al,99
-    ja .defaults
+    ;mov al,cmos_year
+    ;call rtc_read
+    ;cmp al,99
+    ;ja .defaults
 
     jmp .exit
 
