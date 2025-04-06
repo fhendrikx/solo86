@@ -36,7 +36,7 @@ init:
     cli
     cld
 
-    leds 00000001b  ; 1 LED
+    leds 00000001b          ; 1 LED
 
 ; copy ROM to RAM
 ; don't use the stack yet as the ROM copy will overwrite any stored data
@@ -54,7 +54,7 @@ init:
     movsw
     loop .copy
 
-    leds 00000011b  ; 2 LEDs
+    leds 00000011b          ; 2 LEDs
 
     jmp CSEG:relocate       ; here we go!
 
@@ -64,7 +64,7 @@ init:
 ;======================================================================
 
 relocate:
-    leds 00000111b  ; 3 LEDs
+    leds 00000111b          ; 3 LEDs
 
 ; initialise DS
     mov ax,DSEG
@@ -75,41 +75,21 @@ relocate:
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
-    leds 00001111b  ; 4 LEDs
-
-; setup memory banking table
-; map ROM into the top half of memory, skip monitor
-    mov al,1
-    out BNK_ROW_0,al
-    mov al,2
-    out BNK_ROW_1,al
-    mov al,3
-    out BNK_ROW_2,al
-    mov al,4
-    out BNK_ROW_3,al
-    mov al,5
-    out BNK_ROW_4,al
-    mov al,6
-    out BNK_ROW_5,al
-    mov al,7
-    out BNK_ROW_6,al
-; map RAM into the last segment so that hex loading still works
-    mov al,01Fh
-    out BNK_ROW_7,al
-
-    leds 00011111b  ; 5 LEDs
+    leds 00001111b          ; 4 LEDs
 
 ; initialise
     call sys_init
     call rtc_init
     call stdio_init
 
+    leds 00001111b          ; 5 LEDs
+
 ; startup sound
 
     ; check if the panel is installed
-    in al,PNL_DETECT
-    cmp al,0AAh
-    jne .no_sound
+    mov ax,[ cs:hardware ]
+    test ax,PNL_PRESENT
+    je .no_sound
 
     ; check if switch 0 is on
     in al,PNL_DATA
@@ -125,13 +105,12 @@ relocate:
     ; call tune
 
 .no_sound:
-
-    leds 00111111b  ; 6 LEDs
+    leds 00111111b          ; 6 LEDs
 
 ; enable interrupts
     sti
 
-    leds 01111111b  ; 7 LEDs
+    leds 01111111b          ; 7 LEDs
 
 ;======================================================================
 ; welcome
@@ -140,7 +119,7 @@ relocate:
 ; welcome
     print mon_welcome
 
-    leds 11111111b  ; 8 LEDs
+    leds 11111111b          ; 8 LEDs
 
 ; scan for ROMs
 .scan:

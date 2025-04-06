@@ -4,6 +4,30 @@ sys_init:
     push bx
     push dx
 
+    ; memory banking
+
+    ; map ROM into the top half of memory, skip monitor
+    mov al,1
+    out BNK_ROW_0,al
+    mov al,2
+    out BNK_ROW_1,al
+    mov al,3
+    out BNK_ROW_2,al
+    mov al,4
+    out BNK_ROW_3,al
+    mov al,5
+    out BNK_ROW_4,al
+    mov al,6
+    out BNK_ROW_5,al
+    mov al,7
+    out BNK_ROW_6,al
+
+    ; map RAM into the last segment so that hex loading still works
+    mov al,01Fh
+    out BNK_ROW_7,al
+
+    ; detect hardware
+
     xor ax,ax
     or  ax,BNK_PRESENT
     mov [ cs:hardware ],ax
