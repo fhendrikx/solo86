@@ -10,7 +10,7 @@ beep_now:
     push ax
 
     ; check if the Epoch module is installed
-    in al,PIT_SIG
+    in al,PIT_DETECT
     and al,11111000b
     cmp al,10101000b
     jne .done
@@ -38,7 +38,6 @@ beep_now:
     out PIT_CNTR2_EN,al
 
 .done:
-
     ; restore state
     pop ax
 

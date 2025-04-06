@@ -3,6 +3,9 @@
 ; data
 ;======================================================================
 
+; hardware detected (01=BNK,02=PIT,04=RES,08=RES,RTC=10,COM=20,RES=40,PNL=80)
+hardware:                   dw 00h
+
 ; IRQ counters
 irq0_cnt:                   dw 00h
 irq1_cnt:                   dw 00h
@@ -46,7 +49,10 @@ ihf_loc:                    dw 00h
 ihf_ofs:                    dw 00h
 ihf_seg:                    dw 00h
 
-; dasm style
+; IHF checksum correct?
+ihf_crc:                    db 00h
+
+; dasm style?
 dasm_style                  db 00h
 
 

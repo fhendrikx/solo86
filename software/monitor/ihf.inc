@@ -24,12 +24,12 @@ ihf_load:
     push di
     push es
 
-; defaults
+    ; defaults
     xor ax,ax
     mov [cs:ihf_seg],ax
     mov [cs:ihf_ofs],ax
 
-; defaults for ES:DI (in case there is no 0x02 record present)
+    ; defaults for ES:DI (in case there is no 0x02 record present)
     mov ax,CSEG
     mov [cs:ihf_loc],ax
     mov es,ax
@@ -63,11 +63,22 @@ ihf_load:
     ; record type 0x00 - Data
     ; read data to ES:DI, keep going until CL is zero
 .rec_data:
+    xor ax,ax               ; clear AX
+    xor bx,bx               ; clear BX; use for checksum
+.rec_loop:
     call raw_hex            ; get data (1 byte)
     stosb
     dec cl
-    jnz .rec_data           ; are we done yet?
+    add bx,ax
+    jnz .rec_loop           ; are we done yet?
+    neg bl                  ; invert bits
+    inc bl                  ; add 1 (to give 2's complement)
+    mov al,bl
+    call print_hex
+    mov al,'='
+    call print_hex
     call raw_hex            ; get checksum (1 byte)
+    call print_hex
     jmp .find_record
 
     ; record type 0x01 - EOF
@@ -107,7 +118,7 @@ ihf_load:
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
-; clean up any remaining chars in the UART
+    ; clean up any remaining chars in the COM
 .clean:
     call raw_ready
     jz .exit

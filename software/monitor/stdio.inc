@@ -2,9 +2,21 @@
 ; Ferry Hendrikx, April 2024
 ;======================================================================
 
-;======================================================================
-; print
-;======================================================================
+;=========================================================================
+; stdio_init
+;=========================================================================
+stdio_init:
+    ; initialise COM
+
+    push ax
+
+    xor al,al
+    out COM_CTRL,al
+
+.exit:
+    pop ax
+    ret
+
 
 ;=========================================================================
 ; print_chr
@@ -14,7 +26,7 @@
 ;   Prints character
 ;-------------------------------------------------------------------------
 print_chr:
-    out UART_DATA,al
+    out COM_DATA,al
     ret
 
 
@@ -44,12 +56,12 @@ print_hex:
     cmp al,9
     jg .letter
     add al,30h              ; '0'
-    out UART_DATA,al
+    out COM_DATA,al
     ret
 
 .letter:
     add al,37h              ; 'A' - 10
-    out UART_DATA,al
+    out COM_DATA,al
     ret
 
 
@@ -92,7 +104,7 @@ print_str:
     cmp al,0                ; are we done?
     jz .exit
 
-    out UART_DATA,al
+    out COM_DATA,al
     jmp .loop
 
 .exit:
@@ -112,7 +124,7 @@ print_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 raw_ready:
-    in al,UART_CTRL         ; any bytes?
+    in al,COM_CTRL          ; any bytes?
     ret
 
 
@@ -126,10 +138,10 @@ raw_ready:
 ;   Blocking read of 1 character
 ;-------------------------------------------------------------------------
 raw_chr:
-    in al,UART_CTRL         ; any characters?
+    in al,COM_CTRL          ; any characters?
     cmp al,0
     jz raw_chr
-    in al,UART_DATA         ; read character
+    in al,COM_DATA          ; read character
     ret
 
 
@@ -155,11 +167,11 @@ raw_hex:
     ret
 
 .nibble:
-    in al,UART_CTRL         ; any characters?
+    in al,COM_CTRL          ; any characters?
     cmp al,0
     jz .nibble
 
-    in al,UART_DATA         ; read character
+    in al,COM_DATA          ; read character
     cmp al,41h
     jae .letter
     sub al,30h              ; '0'
@@ -185,11 +197,11 @@ raw_str:
     cld
 
 .loop:
-    in al,UART_CTRL         ; any characters?
+    in al,COM_CTRL          ; any characters?
     cmp al,0
     jz .loop
 
-    in al,UART_DATA         ; read character
+    in al,COM_DATA          ; read character
     stosb
     cmp al,0Ah              ; are we done?
     jne .loop
@@ -218,7 +230,7 @@ raw_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 read_ready:
-    in al,UART_CTRL         ; any bytes?
+    in al,COM_CTRL          ; any bytes?
     ret
 
 
@@ -233,7 +245,7 @@ read_ready:
 ;-------------------------------------------------------------------------
 read_chr:
     call raw_chr
-    out UART_DATA,al
+    out COM_DATA,al
     ret
 
 
@@ -248,7 +260,7 @@ read_chr:
 ;-------------------------------------------------------------------------
 read_hex:
     call raw_hex
-    out UART_DATA,al
+    out COM_DATA,al
     ret
 
 
@@ -267,13 +279,13 @@ read_str:
     cld
 
 .loop:
-    in al,UART_CTRL         ; any characters?
+    in al,COM_CTRL          ; any characters?
     cmp al,0
     jz .loop
 
-    in al,UART_DATA         ; read character
+    in al,COM_DATA          ; read character
     stosb
-    out UART_DATA,al
+    out COM_DATA,al
 
     cmp al,0Ah              ; are we done?
     jne .loop

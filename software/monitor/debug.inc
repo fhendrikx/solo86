@@ -39,9 +39,9 @@ debug_menu:
     je  cmd_sys_info
 
     cmp al,'D'
-    je  cmd_mem_dasm
+    je  cmd_dasm
     cmp al,'S'
-    je  cmd_mem_dasm_style
+    je  cmd_dasm_style
     cmp al,'F'
     je  cmd_mem_fill
     cmp al,'R'
@@ -111,7 +111,7 @@ cmd_last:
 
     mov cx,16
 
-    call mem_dasm
+    call dasm
 
     ; store last address
     mov [cs:dbg_ofs],bx
@@ -146,9 +146,9 @@ cmd_last:
 
 
 cmd_sys_info:
-    print dbg_cmd_info
+    print dbg_info
 
-    call info_exp
+    call info_sys
     call info_irq
     call info_rtc
     call info_rom
@@ -156,7 +156,7 @@ cmd_sys_info:
     jmp debug_menu.loop
 
 
-cmd_mem_dasm:
+cmd_dasm:
     call spaces
     call inp_word           ; seg
     mov bx,ax
@@ -172,8 +172,8 @@ cmd_mem_dasm:
     mov ds,bx
     mov cx,16
 
-    print dbg_cmd_dasm
-    call mem_dasm
+    print dbg_dasm
+    call dasm
 
     ; store last address
     mov [cs:dbg_ofs],bx
@@ -185,7 +185,7 @@ cmd_mem_dasm:
     jmp debug_menu.loop
 
 
-cmd_mem_dasm_style:
+cmd_dasm_style:
     mov al,byte [cs:dasm_style]
     not al
     mov byte [cs:dasm_style],al
@@ -193,11 +193,11 @@ cmd_mem_dasm_style:
     cmp al,0
     je  .intel
 
-    print dbg_cmd_dasm_att
+    print dbg_dasm_att
     jmp debug_menu.loop
 
 .intel:
-    print dbg_cmd_dasm_intel
+    print dbg_dasm_intel
     jmp debug_menu.loop
 
 
@@ -221,7 +221,7 @@ cmd_mem_fill:
     call spaces
     call inp_hex            ; byte
 
-    print dbg_cmd_fill
+    print dbg_fill
 
     push es
     mov es,bx
@@ -243,7 +243,7 @@ cmd_mem_read:
     call inp_word           ; offset
     mov si,ax
 
-    print dbg_cmd_read
+    print dbg_read
 
     push ds
     mov cx,256
@@ -268,7 +268,7 @@ cmd_inp:
     xor dx,dx
     mov dl,al
 
-    print dbg_cmd_inp
+    print dbg_inp
     call print_hex
 
     mov al,'='
@@ -287,7 +287,7 @@ cmd_out:
     xor dx,dx
     mov dl,al
 
-    print dbg_cmd_out
+    print dbg_out
     call print_hex
 
     mov al,'='
@@ -315,7 +315,7 @@ cmd_jmp:
     call inp_word           ; offset
     mov [cs:jmp_ofs],ax
 
-    print dbg_cmd_jump
+    print dbg_jump
 
     ; indirect far jump to CS:IP
     jmp far [cs:jmp_ofs]
@@ -328,7 +328,7 @@ cmd_timer:
     cmp al,0
     je .disable
 
-    print dbg_cmd_timer
+    print dbg_timer
 
     xor ax,ax               ; reset counter
     mov [ cs:irq0_cnt ],ax
@@ -347,7 +347,7 @@ cmd_timer:
     jmp debug_menu.loop
 
 .disable:
-    print dbg_cmd_timer_off
+    print dbg_timer_off
 
     xor ax,ax               ; disable
     out PIT_CNTR0_EN,al
@@ -419,7 +419,7 @@ cmd_clock_date:
 cmd_halt:
     call spaces
 
-    print dbg_cmd_halt
+    print dbg_halt
 
     hlt
 
@@ -427,15 +427,15 @@ cmd_halt:
 
 
 cmd_ihf_load:
-    print dbg_cmd_load
+    print dbg_load
 
     call ihf_load
 
-    print dbg_cmd_load_loc  ; seg
-    mov ax,[cs:ihf_loc]
-    call print_word
+    mov ax,[cs:ihf_crc] ; checksum
+    cmp ax,0
+    je .exit
 
-    print dbg_cmd_load_jmp  ; seg:offset
+    print dbg_load_addr ; okay
     mov ax,[cs:ihf_seg]
     call print_word
 
@@ -450,6 +450,10 @@ cmd_ihf_load:
 
     jmp debug_menu.loop
 
+.exit:
+    print dbg_load_err  ; error
+    jmp debug_menu.loop
+
 
 cmd_ihf_exec:
     ; sanity check
@@ -457,7 +461,7 @@ cmd_ihf_exec:
     cmp ax,0
     je .exit
 
-    print dbg_cmd_exec
+    print dbg_exec      ; okay
 
     ; simulate cold start
     xor ax,ax
@@ -473,12 +477,12 @@ cmd_ihf_exec:
     jmp far [ ihf_ofs ]
 
 .exit:
-    print dbg_cmd_exec_err
+    print dbg_exec_err  ; error
     jmp debug_menu.loop
 
 
 cmd_help:
-    print dbg_cmd_help
+    print dbg_help
     jmp debug_menu.loop
 
 
@@ -486,67 +490,63 @@ cmd_help:
 ; debug information
 ;======================================================================
 
-info_exp:
-    print dbg_cmd_info_exp
+info_sys:
+    print dbg_info_sys
 
-    print dbg_cmd_info_exp_epoch
-    mov dx,PIT_SIG
-    call info_exp_single
+    print dbg_info_sys_bnk
+    mov ax,01
+    call info_sys_single
 
-    print dbg_cmd_info_exp_uart
-    mov dx,UART_SIG
-    call info_exp_single
+    print dbg_info_sys_pit
+    mov ax,02
+    call info_sys_single
 
-    print dbg_cmd_info_exp_panel
-    mov dx,PANL_SIG
-    call info_exp_single
+    print dbg_info_sys_rtc
+    mov ax,10
+    call info_sys_single
+
+    print dbg_info_sys_com
+    mov ax,20
+    call info_sys_single
+
+    print dbg_info_sys_pnl
+    mov ax,80
+    call info_sys_single
 
     ret
 
 
-info_exp_single:
-    push ax
-    push dx
-
-    in al,dx
-    cmp al,0AAh             ; look for 0xAA
-    je .sig
-    and al,0F8h
-    cmp al,0A8h             ; try 0xA8 (for epoch card)
-    je .sig
-
-    mov al,'N'
-    call print_chr
-    jmp .end
-
-.sig:
-    mov al,'Y'
-    call print_chr
-    jmp .end
-
-.end:
+info_sys_single:
+    test ax,[ cs:hardware ]
+    jnz .found
     mov al,0Ah
     call print_chr
-    pop dx
-    pop ax
+    ret
+
+.found:
+    mov al,'Y'
+    call print_chr
+    mov al,0Ah
+    call print_chr
     ret
 
 
 info_irq:
-    print dbg_cmd_info_irq
+    print dbg_info_irq
 
-    print dbg_cmd_info_irq_0
+    print dbg_info_irq_0
     mov ax,[ cs:irq0_cnt ]
     call info_irq_single
 
-    print dbg_cmd_info_irq_1
+    print dbg_info_irq_1
     mov ax,[ cs:irq1_cnt ]
+    call info_irq_single
 
-    print dbg_cmd_info_irq_2
+    print dbg_info_irq_2
     mov ax,[ cs:irq2_cnt ]
     call info_irq_single
 
-    print dbg_cmd_info_irq_3
+    print dbg_info_irq_3
     mov ax,[ cs:irq3_cnt ]
     call info_irq_single
 
@@ -562,10 +562,10 @@ info_irq_single:
 
 
 info_rtc:
-    print dbg_cmd_info_rtc
+    print dbg_info_rtc
 
     ; date
-    print dbg_cmd_info_rtc_date
+    print dbg_info_rtc_date
     call rtc_date_get
 
     mov al,ch
@@ -592,7 +592,7 @@ info_rtc:
     call print_chr
 
     ; time
-    print dbg_cmd_info_rtc_time
+    print dbg_info_rtc_time
     call rtc_time_get
 
     mov al,ch
@@ -616,7 +616,7 @@ info_rtc:
 
 
 info_rom:
-    print dbg_cmd_info_rom
+    print dbg_info_rom
 
     push cs
     pop ds                  ; DS:SI
@@ -629,7 +629,7 @@ info_rom:
     cmp ax,0                ; are we done?
     je .exit
 
-    print dbg_cmd_info_rom_found
+    print dbg_info_rom_found
     call print_word         ; seg
 
     mov al,':'

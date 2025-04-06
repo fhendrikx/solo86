@@ -80,41 +80,39 @@ relocate:
 ; setup memory banking table
 ; map ROM into the top half of memory, skip monitor
     mov al,1
-    out BANK_ROW_0,al
+    out BNK_ROW_0,al
     mov al,2
-    out BANK_ROW_1,al
+    out BNK_ROW_1,al
     mov al,3
-    out BANK_ROW_2,al
+    out BNK_ROW_2,al
     mov al,4
-    out BANK_ROW_3,al
+    out BNK_ROW_3,al
     mov al,5
-    out BANK_ROW_4,al
+    out BNK_ROW_4,al
     mov al,6
-    out BANK_ROW_5,al
+    out BNK_ROW_5,al
     mov al,7
-    out BANK_ROW_6,al
+    out BNK_ROW_6,al
 ; map RAM into the last segment so that hex loading still works
     mov al,01Fh
-    out BANK_ROW_7,al
+    out BNK_ROW_7,al
 
     leds 00011111b  ; 5 LEDs
 
-; initialise RTC
+; initialise
+    call sys_init
     call rtc_init
-
-; ensure UART has interrupts disabled
-    xor al,al
-    out UART_CTRL,al
+    call stdio_init
 
 ; startup sound
 
     ; check if the panel is installed
-    in al,PANL_SIG
+    in al,PNL_DETECT
     cmp al,0AAh
     jne .no_sound
 
     ; check if switch 0 is on
-    in al,PANL_DATA
+    in al,PNL_DATA
     test al,00000001b
     jz .no_sound
 
@@ -165,16 +163,17 @@ relocate:
 ;======================================================================
 
 %include "beep.inc"
+%include "dasm.inc"
 %include "debug.inc"
 %include "delay.inc"
 %include "ihf.inc"
 %include "mem.inc"
-%include "mem_dasm.inc"
 %include "messages.inc"
 %include "rom.inc"
 %include "rtc.inc"
 %include "sound.inc"
 %include "stdio.inc"
+%include "system.inc"
 
 
 ;======================================================================
