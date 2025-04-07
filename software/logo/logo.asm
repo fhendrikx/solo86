@@ -50,8 +50,7 @@ init:
     hlt
 
 
-%include "delay.inc"
+%include "../monitor/delay.inc"
 %include "sound.inc"
-
 %include "xwing.inc"
 
