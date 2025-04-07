@@ -102,15 +102,15 @@
  - 21h UART signature 0xAA (read)
  - 22h UART Data
  - 23h UART signature 0xAA (read) (alias)
- - 24h UART reserved
+ - 24h VC_MODE
  - 25h UART signature 0xAA (read) (alias)
- - 26h UART reserved
+ - 26h VC_FB_SWAP
  - 27h UART signature 0xAA (read) (alias)
- - 28h UART reserved
+ - 28h VC_HIGH_ADDR
  - 29h UART signature 0xAA (read) (alias)
- - 2Ah UART reserved
+ - 2Ah VC_LOW_ADDR
  - 2Bh UART signature 0xAA (read) (alias)
- - 2Ch UART reserved
+ - 2Ch VC_DATA
  - 2Dh UART signature 0xAA (read) (alias)
  - 2Eh UART reserved
  - 2Fh UART signature 0xAA (read) (alias)
