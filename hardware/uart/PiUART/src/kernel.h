@@ -55,15 +55,18 @@
 #define ARM_GPIO_GPFSEL2        (ARM_GPIO_BASE + 0x08)
 
 #define MODE_CON 0
-#define MODE_160x100 1
-#define MODE_160x100_DB 2
+#define MODE_256x192 1
+#define MODE_256x192_DB 2
 
 // UART registers
-#define UART_CONTROL 0
-#define UART_DATA 1
+#define UART_CONTROL 0  // 0x20
+#define UART_DATA 1     // 0x22
 // video control registers
-#define VC_MODE 2
-#define VC_FB_SWAP 3
+#define VC_MODE 2       // 0x24
+#define VC_FB_SWAP 3    // 0x26
+#define VC_HIGH_ADDR 4  // 0x28
+#define VC_LOW_ADDR 5   // 0x2A
+#define VC_DATA 6       // 0x2C
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
@@ -78,7 +81,7 @@
 #define CORE_DISPLAY 1
 #define CORE_GPIO 2
 
-#define RAM_SIZE 16384
+#define RAM_SIZE 49152 // 256 x 192
 
 #define RING_BUF_SIZE 262144
 
@@ -101,7 +104,7 @@ private:
 
     // Helper functions
     bool DeferredInitialize();
-    void UpdateMode160x100(u8 *pRam);
+    void UpdateMode256x192(u8 *pRam);
     bool InitFB(unsigned nWidth, unsigned nHeight);
     bool ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth, unsigned nTargetHeight);
     void UpdateFB();
@@ -193,6 +196,7 @@ private:
     volatile u8 m_nMode;
     u8 m_nPrevMode;
     volatile u8 m_nReadyForSwap;
+    volatile u32 m_nBusRamPtr;
 
     bool m_bUartIntEnable;
     bool m_bUartIntActive;

@@ -45,6 +45,7 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_nMode = MODE_CON;
     m_nPrevMode = MODE_CON;
     m_nReadyForSwap = 1;
+    m_nBusRamPtr = 0;
 
     m_bUartIntEnable = false;
     m_bUartIntActive = false;
@@ -226,10 +227,10 @@ void CKernel::Display() {
 
                 break;
 
-            case MODE_160x100:
-            case MODE_160x100_DB:
+            case MODE_256x192:
+            case MODE_256x192_DB:
 
-                if (ResizeFB(m_nScreenWidth, m_nScreenHeight, 160, 100)) {
+                if (ResizeFB(m_nScreenWidth, m_nScreenHeight, 256, 192)) {
 
                     klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
 
@@ -258,17 +259,17 @@ void CKernel::Display() {
             UpdateFB();
             break;
 
-        case MODE_160x100:
+        case MODE_256x192:
 
-            UpdateMode160x100(m_pBusRam);
+            UpdateMode256x192(m_pBusRam);
             UpdateFB();
             break;
 
-        case MODE_160x100_DB:
+        case MODE_256x192_DB:
 
             if (m_nReadyForSwap == 0) {
 
-                UpdateMode160x100(m_pDisRam);
+                UpdateMode256x192(m_pDisRam);
                 UpdateFB();
 
                 // clear the buffer
@@ -483,12 +484,12 @@ void CKernel::Main() {
 //  Helper functions
 //
 
-void CKernel::UpdateMode160x100(u8 *pRam) {
+void CKernel::UpdateMode256x192(u8 *pRam) {
 
     //unsigned nStartTime = CTimer::GetClockTicks();
 
-    unsigned nModeWidth = 160;
-    unsigned nModeHeight = 100;
+    unsigned nModeWidth = 256;
+    unsigned nModeHeight = 192;
 
     unsigned nFBWidth = m_pFrameBuffer->GetWidth();
     unsigned nFBHeight = m_pFrameBuffer->GetHeight();
@@ -713,10 +714,11 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     case VC_MODE:
         // set video mode
-
-        if (data <= MODE_CON) {
+        if (data <= MODE_256x192_DB) {
             klog(LogNotice, "Setting mode %u", data);
             m_nMode = data;
+            if (data > MODE_CON)
+                m_nBusRamPtr = 0;
         } else {
             klog(LogWarning, "Bad mode %u", data);
         }
@@ -725,17 +727,37 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     case VC_FB_SWAP:
         // double buffer swap
-        if ((m_nMode == MODE_160x100_DB) && m_nReadyForSwap) {
+        if ((m_nMode == MODE_256x192_DB) && m_nReadyForSwap) {
 
             u8 *tmp = m_pBusRam;
             m_pBusRam = m_pDisRam;
             m_pDisRam = tmp;
 
             m_nReadyForSwap = 0;
+            m_nBusRamPtr = 0;
 
         } else {
             klog(LogWarning, "Bad Swap");
         }
+
+        break;
+
+    case VC_HIGH_ADDR:
+        // set high byte of video address
+        m_nBusRamPtr = ((data << 8) + (m_nBusRamPtr & 0xff)) % RAM_SIZE;
+
+        break;
+
+    case VC_LOW_ADDR:
+        // set low byte of video address
+        m_nBusRamPtr = (m_nBusRamPtr & 0xff00) + data;
+
+        break;
+
+    case VC_DATA:
+        // write byte to display ram
+        m_pBusRam[m_nBusRamPtr] = data;
+        m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
 
         break;
 
