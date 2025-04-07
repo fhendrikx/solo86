@@ -1,9 +1,5 @@
-*.bin
-*.hex
-*.img
-*.map
-hex/*
-!hex/Makefile
-!hex/up
+ihf/*
+!ihf/Makefile
+!ihf/up
 rom/*
 !rom/Makefile
