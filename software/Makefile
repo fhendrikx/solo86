@@ -1,3 +1,3 @@
 include $(TOPDIR)/Makefile.rules
 
-SUBDIRS = basic monitor out16 stub
+SUBDIRS = basic monitor out16 stub logo

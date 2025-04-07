@@ -54,6 +54,13 @@ COM_CTRL        equ 20h
 COM_DETECT      equ 21h
 COM_DATA        equ 22h
 
+; Video Control I/O
+VC_MODE         equ 24h
+VC_FB_SWAP      equ 26h
+VC_HIGH_ADDR    equ 28h
+VC_LOW_ADDR     equ 2Ah
+VC_DATA         equ 2Ch
+
 ; PANEL I/O
 PNL_PRESENT     equ 80h
 PNL_CTRL        equ 30h
