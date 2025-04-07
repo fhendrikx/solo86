@@ -676,6 +676,19 @@ u32 CKernel::BusIORead(u32 address) {
         data = m_nReadyForSwap;
         break;
 
+    case VC_HIGH_ADDR:
+        data = m_nBusRamPtr >> 8;
+        break;
+
+    case VC_LOW_ADDR:
+        data = m_nBusRamPtr & 0xff;
+        break;
+
+    case VC_DATA:
+        data = m_pBusRam[m_nBusRamPtr];
+        m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
+        break;
+
     default:
 
         data = m_nTestPort;
