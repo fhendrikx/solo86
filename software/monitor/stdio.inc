@@ -10,8 +10,12 @@ stdio_init:
 
     push ax
 
+    ; disable interrupts
     xor al,al
     out COM_CTRL,al
+
+    ; set console video mode
+    out VC_MODE,al
 
 .exit:
     pop ax
