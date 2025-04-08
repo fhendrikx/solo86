@@ -4,11 +4,11 @@ all: rom
 
 rom:
 	$(PD) > solo.rom
-	$(DD) if=monitor.bin of=solo.rom bs=1k seek=0 conv=sparse,nocreat,notrunc
-	$(DD) if=basic.bin of=solo.rom bs=1k seek=64 conv=sparse,nocreat,notrunc
-	$(DD) if=stub.bin of=solo.rom bs=1k seek=128 conv=sparse,nocreat,notrunc
-	$(DD) if=out16.bin of=solo.rom bs=1k seek=192 conv=sparse,nocreat,notrunc
-	$(DD) if=logo.bin of=solo.rom bs=1k seek=256 conv=sparse,nocreat,notrunc
+	$(DD) if=monitor.bin of=solo.rom bs=1k seek=0 conv=nocreat,notrunc
+	$(DD) if=basic.bin of=solo.rom bs=1k seek=64 conv=nocreat,notrunc
+	$(DD) if=stub.bin of=solo.rom bs=1k seek=128 conv=nocreat,notrunc
+	$(DD) if=out16.bin of=solo.rom bs=1k seek=192 conv=nocreat,notrunc
+	$(DD) if=logo.bin of=solo.rom bs=1k seek=256 conv=nocreat,notrunc
 	$(SP) --file=solo.rom
 
 burn0:
