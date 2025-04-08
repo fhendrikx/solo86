@@ -68,8 +68,7 @@ rtc_init:
     mov al,cmos_ctrl_d
     call rtc_read
     test al,cmos_vrt
-    jz .defaults
-    ret
+    jnz .exit
 
 .defaults:
     ; set default time and date
@@ -80,6 +79,8 @@ rtc_init:
     mov cx,2020h
     mov dx,0101h
     call rtc_date_set
+
+.exit:
     ret
 
 ;=========================================================================
