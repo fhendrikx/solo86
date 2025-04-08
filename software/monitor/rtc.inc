@@ -42,7 +42,7 @@ rtc_init:
 
     ; ctrl a
     mov al,cmos_ctrl_a
-    mov ah,26h          ; Oscillator to 1024KHz
+    mov ah,26h              ; Oscillator to 1024KHz
     call rtc_write
 
     ; sanity check
@@ -55,8 +55,8 @@ rtc_init:
     mov al,cmos_ctrl_b
     call rtc_read
     xchg al,ah
-    and ah,cmos_dse     ; clear everything but DSE
-    or ah,cmos_24hours  ; set 24 hours
+    and ah,cmos_dse         ; clear everything but DSE
+    or ah,cmos_24hours      ; set 24 hours
     mov al,cmos_ctrl_b
     call rtc_write
 
@@ -67,39 +67,9 @@ rtc_init:
     ; ctrl d
     mov al,cmos_ctrl_d
     call rtc_read
-
-    ; sanity check
-    ;mov al,cmos_secs
-    ;call rtc_read
-    ;cmp al,59
-    ;ja .defaults
-
-    ;mov al,cmos_mins
-    ;call rtc_read
-    ;cmp al,59
-    ;ja .defaults
-
-    ;mov al,cmos_hour
-    ;call rtc_read
-    ;cmp al,23
-    ;ja .defaults
-
-    ;mov al,cmos_date
-    ;call rtc_read
-    ;cmp al,31
-    ;ja .defaults
-
-    ;mov al,cmos_month
-    ;call rtc_read
-    ;cmp al,12
-    ;ja .defaults
-
-    ;mov al,cmos_year
-    ;call rtc_read
-    ;cmp al,99
-    ;ja .defaults
-
-    jmp .exit
+    test al,cmos_vrt
+    jz .defaults
+    ret
 
 .defaults:
     ; set default time and date
@@ -110,8 +80,6 @@ rtc_init:
     mov cx,2020h
     mov dx,0101h
     call rtc_date_set
-
-.exit:
     ret
 
 ;=========================================================================
