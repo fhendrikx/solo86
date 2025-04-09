@@ -421,10 +421,6 @@ cmd_ihf_load:
 
     call ihf_load
 
-    mov ax,[cs:ihf_crc] ; checksum
-    cmp ax,0
-    je .exit
-
     print dbg_load_addr ; okay
     mov ax,[cs:ihf_seg]
     call print_word
