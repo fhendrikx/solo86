@@ -695,7 +695,8 @@ u32 CKernel::BusIORead(u32 address) {
 
     case VC_DATA:
         data = m_pBusRam[m_nBusRamPtr];
-        m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
+        if (m_bAutoIncrementRead)
+            m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
         break;
 
     default:
@@ -803,7 +804,8 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
     case VC_DATA:
         // write byte to display ram
         m_pBusRam[m_nBusRamPtr] = data;
-        m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
+        if (m_bAutoIncrementWrite)
+            m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
 
         break;
 
