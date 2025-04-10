@@ -59,17 +59,43 @@
 #define MODE_256x192_DB 2
 
 // UART registers
-#define UART_CONTROL 0  // 0x20
+#define UART_CTRL 0     // 0x20
 #define UART_DATA 1     // 0x22
-// video control registers
-#define VC_MODE 2       // 0x24
-#define VC_FB_SWAP 3    // 0x26
-#define VC_HIGH_ADDR 4  // 0x28
-#define VC_LOW_ADDR 5   // 0x2A
-#define VC_DATA 6       // 0x2C
+// RESERVED 2              0x24
+// RESERVED 3              0x26
+
+// Video Control registers
+#define VC_CTRL 4       // 0x28
+#define VC_HIGH_ADDR 5  // 0x2A
+#define VC_LOW_ADDR 6   // 0x2C
+#define VC_DATA 7       // 0x2E
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
+
+/*
+  VC_CTRL WRITE:
+
+  bit 7
+  bit 6
+  bit 5 : auto increment on read
+  bit 4 : auto increment on write
+  bit 3-0: video mode, console, 256x192, etc
+
+  VC_CTRL READ:
+
+  bit 7 : ready for swap (double buffer)
+  bit 6 :
+  bit 5 : auto increment on read
+  bit 4 : auto increment on write
+  bit 3-0: video mode, console, 256x192, etc
+
+*/
+
+#define VC_CTRL_MODE_MASK 0x0F
+#define VC_CTRL_AUTO_INCREMENT_WRITE 0x10
+#define VC_CTRL_AUTO_INCREMENT_READ 0x20
+#define VC_CTRL_READY_FOR_SWAP 0x80
 
 // OLED I2C display
 #define LCD_HEIGHT 32
@@ -195,8 +221,10 @@ private:
     u8 *m_pDisRam;
     volatile u8 m_nMode;
     u8 m_nPrevMode;
-    volatile u8 m_nReadyForSwap;
     volatile u32 m_nBusRamPtr;
+    volatile bool m_bReadyForSwap;
+    volatile bool m_bAutoIncrementWrite;
+    volatile bool m_bAutoIncrementRead;
 
     bool m_bUartIntEnable;
     bool m_bUartIntActive;

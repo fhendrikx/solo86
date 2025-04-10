@@ -44,8 +44,10 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
 
     m_nMode = MODE_CON;
     m_nPrevMode = MODE_CON;
-    m_nReadyForSwap = 1;
     m_nBusRamPtr = 0;
+    m_bReadyForSwap = true;
+    m_bAutoIncrementWrite = false;
+    m_bAutoIncrementRead = false;
 
     m_bUartIntEnable = false;
     m_bUartIntActive = false;
@@ -267,7 +269,7 @@ void CKernel::Display() {
 
         case MODE_256x192_DB:
 
-            if (m_nReadyForSwap == 0) {
+            if (m_bReadyForSwap == false) {
 
                 UpdateMode256x192(m_pDisRam);
                 UpdateFB();
@@ -276,7 +278,7 @@ void CKernel::Display() {
                 memset(m_pDisRam, 0, RAM_SIZE);
 
                 // signal redraw is done
-                m_nReadyForSwap = 1;
+                m_bReadyForSwap = true;
 
             }
 
@@ -645,7 +647,7 @@ u32 CKernel::BusIORead(u32 address) {
 
     switch(address) {
 
-    case UART_CONTROL:
+    case UART_CTRL:
         // read UART control register
 
         // return 0x1 if there are bytes waiting
@@ -668,12 +670,19 @@ u32 CKernel::BusIORead(u32 address) {
 
         break;
 
-    case VC_MODE:
-        data = m_nMode;
-        break;
+    case VC_CTRL:
 
-    case VC_FB_SWAP:
-        data = m_nReadyForSwap;
+        data = m_nMode;
+
+        if (m_bAutoIncrementWrite)
+            data |= VC_CTRL_AUTO_INCREMENT_WRITE;
+
+        if (m_bAutoIncrementRead)
+            data |= VC_CTRL_AUTO_INCREMENT_READ;
+
+        if (m_bReadyForSwap)
+            data |= VC_CTRL_READY_FOR_SWAP;
+
         break;
 
     case VC_HIGH_ADDR:
@@ -705,7 +714,7 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
-    case UART_CONTROL:
+    case UART_CTRL:
         // write UART control register
 
         klog(LogNotice, "UART control write %u", data);
@@ -725,32 +734,55 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
         break;
 
-    case VC_MODE:
-        // set video mode
-        if (data <= MODE_256x192_DB) {
+    case VC_CTRL:
+
+        u8 mode = data & VC_CTRL_MODE_MASK;
+        m_bAutoIncrementWrite = data & VC_CTRL_AUTO_INCREMENT_WRITE;
+        m_bAutoIncrementRead = data & VC_CTRL_AUTO_INCREMENT_READ;
+
+        switch(mode) {
+
+        case MODE_CON:
             klog(LogNotice, "Setting mode %u", data);
-            m_nMode = data;
-            if (data > MODE_CON)
-                m_nBusRamPtr = 0;
-        } else {
-            klog(LogWarning, "Bad mode %u", data);
-        }
+            m_nMode = mode;
 
-        break;
+            break;
 
-    case VC_FB_SWAP:
-        // double buffer swap
-        if ((m_nMode == MODE_256x192_DB) && m_nReadyForSwap) {
-
-            u8 *tmp = m_pBusRam;
-            m_pBusRam = m_pDisRam;
-            m_pDisRam = tmp;
-
-            m_nReadyForSwap = 0;
+        case MODE_256x192:
+            klog(LogNotice, "Setting mode %u", data);
+            m_nMode = mode;
             m_nBusRamPtr = 0;
 
-        } else {
-            klog(LogWarning, "Bad Swap");
+            break;
+
+        case MODE_256x192_DB:
+
+            if (mode == m_nMode) {
+                // double buffer swap
+                if (m_bReadyForSwap) {
+                    u8 *tmp = m_pBusRam;
+                    m_pBusRam = m_pDisRam;
+                    m_pDisRam = tmp;
+
+                    m_bReadyForSwap = false;
+                    m_nBusRamPtr = 0;
+
+                } else {
+                    klog(LogWarning, "Bad Swap");
+                }
+            } else {
+                // set video mode
+                klog(LogNotice, "Setting mode %u", data);
+                m_nMode = mode;
+                m_nBusRamPtr = 0;
+            }
+
+            break;
+
+        default:
+            klog(LogWarning, "Bad mode %u", data);
+
+            break;
         }
 
         break;
