@@ -735,56 +735,57 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
         break;
 
     case VC_CTRL:
+        // write Video Control register
+        {
+            u8 mode = data & VC_CTRL_MODE_MASK;
+            m_bAutoIncrementWrite = data & VC_CTRL_AUTO_INCREMENT_WRITE;
+            m_bAutoIncrementRead = data & VC_CTRL_AUTO_INCREMENT_READ;
 
-        u8 mode = data & VC_CTRL_MODE_MASK;
-        m_bAutoIncrementWrite = data & VC_CTRL_AUTO_INCREMENT_WRITE;
-        m_bAutoIncrementRead = data & VC_CTRL_AUTO_INCREMENT_READ;
+            switch(mode) {
 
-        switch(mode) {
+            case MODE_CON:
+                klog(LogNotice, "Setting mode %u", mode);
+                m_nMode = mode;
 
-        case MODE_CON:
-            klog(LogNotice, "Setting mode %u", data);
-            m_nMode = mode;
+                break;
 
-            break;
-
-        case MODE_256x192:
-            klog(LogNotice, "Setting mode %u", data);
-            m_nMode = mode;
-            m_nBusRamPtr = 0;
-
-            break;
-
-        case MODE_256x192_DB:
-
-            if (mode == m_nMode) {
-                // double buffer swap
-                if (m_bReadyForSwap) {
-                    u8 *tmp = m_pBusRam;
-                    m_pBusRam = m_pDisRam;
-                    m_pDisRam = tmp;
-
-                    m_bReadyForSwap = false;
-                    m_nBusRamPtr = 0;
-
-                } else {
-                    klog(LogWarning, "Bad Swap");
-                }
-            } else {
-                // set video mode
-                klog(LogNotice, "Setting mode %u", data);
+            case MODE_256x192:
+                klog(LogNotice, "Setting mode %u", mode);
                 m_nMode = mode;
                 m_nBusRamPtr = 0;
+
+                break;
+
+            case MODE_256x192_DB:
+
+                if (mode == m_nMode) {
+                    // double buffer swap
+                    if (m_bReadyForSwap) {
+                        u8 *tmp = m_pBusRam;
+                        m_pBusRam = m_pDisRam;
+                        m_pDisRam = tmp;
+
+                        m_bReadyForSwap = false;
+                        m_nBusRamPtr = 0;
+
+                    } else {
+                        klog(LogWarning, "Bad Swap");
+                    }
+                } else {
+                    // set video mode
+                    klog(LogNotice, "Setting mode %u", mode);
+                    m_nMode = mode;
+                    m_nBusRamPtr = 0;
+                }
+
+                break;
+
+            default:
+                klog(LogWarning, "Bad mode %u", mode);
+
+                break;
             }
-
-            break;
-
-        default:
-            klog(LogWarning, "Bad mode %u", data);
-
-            break;
         }
-
         break;
 
     case VC_HIGH_ADDR:
