@@ -102,17 +102,17 @@
  - 21h UART signature 0xAA (read)
  - 22h UART Data
  - 23h UART signature 0xAA (read) (alias)
- - 24h VC_MODE
+ - 24h UART reserved
  - 25h UART signature 0xAA (read) (alias)
- - 26h VC_FB_SWAP
+ - 26h UART reserved
  - 27h UART signature 0xAA (read) (alias)
- - 28h VC_HIGH_ADDR
+ - 28h VC_CTRL
  - 29h UART signature 0xAA (read) (alias)
- - 2Ah VC_LOW_ADDR
+ - 2Ah VC_HIGH_ADDR
  - 2Bh UART signature 0xAA (read) (alias)
- - 2Ch VC_DATA
+ - 2Ch VC_LOW_ADDR
  - 2Dh UART signature 0xAA (read) (alias)
- - 2Eh UART reserved
+ - 2Eh VC_DATA
  - 2Fh UART signature 0xAA (read) (alias)
 
 #### Panel module
