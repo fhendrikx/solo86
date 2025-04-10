@@ -15,7 +15,7 @@ stdio_init:
     out COM_CTRL,al
 
     ; set console video mode
-    out VC_MODE,al
+    out VC_CTRL,al
 
 .exit:
     pop ax
