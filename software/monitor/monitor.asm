@@ -145,7 +145,7 @@ relocate:
 %include "dasm.inc"
 %include "debug.inc"
 %include "delay.inc"
-%include "ihf.inc"
+%include "ihx.inc"
 %include "mem.inc"
 %include "messages.inc"
 %include "rom.inc"

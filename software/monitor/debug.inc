@@ -63,9 +63,9 @@ debug_menu:
     je  cmd_halt
 
     cmp al,'L'
-    je  cmd_ihf_load
+    je  cmd_ihx_load
     cmp al,'E'
-    je  cmd_ihf_exec
+    je  cmd_ihx_exec
 
     cmp al,'H'
     je  cmd_help
@@ -416,19 +416,19 @@ cmd_halt:
     jmp debug_menu.loop
 
 
-cmd_ihf_load:
+cmd_ihx_load:
     print dbg_load
 
-    call ihf_load
+    call ihx_load
 
-    print dbg_load_addr ; okay
-    mov ax,[cs:ihf_seg]
+    print dbg_load_addr     ; okay
+    mov ax,[cs:ihx_seg]
     call print_word
 
     mov al,':'
     call print_chr
 
-    mov ax,[cs:ihf_ofs]
+    mov ax,[cs:ihx_ofs]
     call print_word
 
     mov al,0Ah
@@ -437,13 +437,13 @@ cmd_ihf_load:
     jmp debug_menu.loop
 
 .exit:
-    print dbg_load_err  ; error
+    print dbg_load_err      ; error
     jmp debug_menu.loop
 
 
-cmd_ihf_exec:
+cmd_ihx_exec:
     ; sanity check
-    mov ax,[cs:ihf_seg]
+    mov ax,[cs:ihx_seg]
     cmp ax,0
     je .exit
 
@@ -460,7 +460,7 @@ cmd_ihf_exec:
     popf
 
     ; indirect far jump to CS:IP
-    jmp far [ ihf_ofs ]
+    jmp far [ ihx_ofs ]
 
 .exit:
     print dbg_exec_err  ; error

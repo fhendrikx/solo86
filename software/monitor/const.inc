@@ -6,6 +6,7 @@
 ; important segments
 CSEG_INIT       equ 0F000h  ; CS
 CSEG            equ 00000h  ; CS after relocation
+LSEG            equ 02000h
 DSEG            equ 01000h
 SSEG            equ 00000h
 

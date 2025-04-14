@@ -42,8 +42,8 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'C YYYY-MM-DD        - CLK date set', 0Ah
                     db 'X                   - CPU HALT', 0Ah
 
-                    db 'L                   - IHF LOAD', 0Ah
-                    db 'E                   - IHF EXEC', 0Ah
+                    db 'L                   - IHX LOAD', 0Ah
+                    db 'E                   - IHX EXEC', 0Ah
 
                     db 'H                   - HELP', 0Ah
                     db 'Q                   - QUIT', 0Ah
@@ -63,11 +63,11 @@ dbg_jump            db '[ JMP ]', 0Ah, 00h
 dbg_timer           db '[ TMR ] State: On', 0Ah, 00h
 dbg_timer_off       db '[ TMR ] State: Off', 0Ah, 00h
 
-dbg_load            db '[ IHF LOAD ]', 0Ah, 00h
-dbg_load_addr       db '[ IHF LOAD ] Address: ', 00h
-dbg_load_err        db '[ IHF LOAD ERR ]', 0Ah, 00h
-dbg_exec            db '[ IHF EXEC ]', 0Ah, 00h
-dbg_exec_err        db '[ IHF EXEC ERR ]', 0Ah, 00h
+dbg_load            db '[ IHX LOAD ]', 0Ah, 00h
+dbg_load_addr       db '[ IHX LOAD ] Address: ', 00h
+dbg_load_err        db '[ IHX LOAD ERR ]', 0Ah, 00h
+dbg_exec            db '[ IHX EXEC ]', 0Ah, 00h
+dbg_exec_err        db '[ IHX EXEC ERR ]', 0Ah, 00h
 
 dbg_info            db '[ SYS INFO ]', 0Ah, 00h
 dbg_info_sys        db 'System', 0Ah, 00h

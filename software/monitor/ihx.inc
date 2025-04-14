@@ -7,16 +7,20 @@
 ;
 ; the decoded file is written to SEGMENT::OFFSET, where the SEGMENT is
 ; derived from record 0x02, and OFFSET is derived from each record 0x01
+;
+; if a second record 0x02 appears in the record stream, then the decoded
+; file will write to that location. This is normally used to ensure that
+; files longer than 0xFFFF bytes can be correctly loaded.
 ;======================================================================
 
 ;=========================================================================
-; ihf_load
+; ihx_load
 ; Input:
 ;   None
 ; Output:
 ;   None
 ;-------------------------------------------------------------------------
-ihf_load:
+ihx_load:
     push ax
     push bx
     push cx
@@ -24,16 +28,13 @@ ihf_load:
     push di
     push es
 
-    ; defaults
-    xor ax,ax
-    mov [cs:ihf_seg],ax
-    mov [cs:ihf_ofs],ax
-
-    ; defaults for ES:DI (in case there is no 0x02 record present)
-    mov ax,CSEG
-    mov [cs:ihf_loc],ax
+    ; defaults for ES:DI (for when there is no 0x02 record present)
+    mov ax,LSEG
     mov es,ax
     xor di,di
+
+    mov [cs:ihx_seg],ax
+    mov [cs:ihx_ofs],di
 
 .find_record:
     call raw_chr
@@ -76,33 +77,41 @@ ihf_load:
     call raw_hex            ; get checksum (1 byte)
     jmp .clean
 
-    ; record type 0x02 - Segment
-    ; read segment into ihf_loc and ES
+    ; record type 0x02 - Segment (may appear more than once if the file is larger than 64KB)
+    ; read segment into ES:DI
 .rec_segment:
     call raw_hex            ; get segment
     mov bh,al
     call raw_hex            ; get segment
     mov bl,al
-    mov [cs:ihf_loc],bx
+
+    ; prevent overwrite of ihx_seg
+    mov ax,[cs:ihx_seg]     ; load ihx_seg
+    cmp ax,LSEG             ; does it look like LSEG?
+    jne .continue
+    mov [cs:ihx_seg],bx     ; yes, overwrite the segment
+
+.continue:
     mov es,bx               ; rec_data uses ES:DI in stosb
+    xor di,di
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
     ; record type 0x03 - CS:IP
-    ; read CS:IP into ihf_seg/ihf_ofs
+    ; read CS:IP into ihx_seg:ihx_ofs
 .rec_start:
     call raw_hex            ; get CS
     mov bh,al
     call raw_hex            ; get CS
     mov bl,al
-    mov [cs:ihf_seg],bx
+    mov [cs:ihx_seg],bx
 
     call raw_hex            ; get IP
     mov bh,al
     call raw_hex            ; get IP
     mov bl,al
-    mov [cs:ihf_ofs],bx
+    mov [cs:ihx_ofs],bx
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
