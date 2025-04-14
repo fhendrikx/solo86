@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 ######################################################################
-# bin2hex - convert binary to Intel Hex File
+# bin2hex - convert binary to IHX files.
+#
+# This utility handles IHX files that are over 64KB. This is done by
+# simply ensuring that any writes over 65536 bytes are wrapped around
+# to 0, while a second segment record is inserted for the new segment.
 #
 # Ferry Hendrikx, May 2024
 ######################################################################
@@ -36,6 +40,8 @@ sub print_line
     # :<data><checksum>
 
     printf(":%s%02X\n", $data, checksum($data));
+
+    return (0);
 }
 
 sub print_data
@@ -48,6 +54,8 @@ sub print_data
     # byte count, address, type (00), data
 
     print_line(sprintf("%02X%04X00%s", $len, $offs, uc unpack("H".$len*2, $bin)));
+
+    return (0);
 }
 
 sub print_segment
@@ -56,7 +64,9 @@ sub print_segment
 
     # byte count, address, type (02), segment
 
-    print_line(sprintf("%02X%04X02%s", 2, 0, $seg));
+    print_line(sprintf("%02X%04X02%04X", 2, 0, $seg));
+
+    return (0);
 }
 
 sub print_start
@@ -67,6 +77,8 @@ sub print_start
     # byte count, address, type (03), CS, IP
 
     print_line(sprintf("%02X%04X03%04s%04s", 4, 0, $cs, $ip));
+
+    return (0);
 }
 
 sub print_eof
@@ -74,6 +86,8 @@ sub print_eof
     # byte count, address, type (01)
 
     print_line(sprintf("%02X%04X01", 0, 0));
+
+    return (0);
 }
 
 sub usage
@@ -94,6 +108,7 @@ sub usage
 
 my $file;
 my $seg;
+my $off = 0;
 my $addr;
 
 GetOptions(
@@ -109,6 +124,11 @@ if (! $file)
 {
     usage();
 }
+
+
+# segment is in decimal
+
+$seg    = hex $seg;
 
 
 # print segment
@@ -131,8 +151,6 @@ if ($addr)
 
 # process file
 
-my $offset  = 0;
-
 open (my $fh, "<", "$file") || die "unable to open file";
 binmode($fh);
 while (!eof($fh))
@@ -142,9 +160,23 @@ while (!eof($fh))
 
     if ($ret)
     {
-        print_data($offset, $bin);
+        print_data($off, $bin);
 
-        $offset += 16;
+        $off += 16;
+
+        # are we at a 16bit boundary?
+
+        if ($off >= 65536)
+        {
+            # wrap around to a new segment
+
+            $seg = $seg + 4096;
+            $off = 0;
+
+            # let IHX loader know what we're doing
+
+            print_segment($seg);
+        }
     }
 }
 
