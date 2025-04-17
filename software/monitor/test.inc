@@ -90,6 +90,14 @@ test:
     mov     byte [bx + di + 21h], 78h
     xchg    al, ah
 
+    ; string
+    stosb
+    stosw
+    lodsb
+    lodsw
+    scasb
+    scasw
+
     ; in
     in      al, 0F5h
     in      al, dx
@@ -113,6 +121,7 @@ test:
     popf
 
     ; conditional jump
+    conditional_jmp_label:
     jo      conditional_jmp_label
     jno     conditional_jmp_label
     jb      conditional_jmp_label
@@ -129,7 +138,6 @@ test:
     jge     conditional_jmp_label
     jle     conditional_jmp_label
     jg      conditional_jmp_label
-    conditional_jmp_label:
 
     ; jmp
     jmp_label:
@@ -169,7 +177,7 @@ test:
     xchg    cx, [ds:bp - 54h]
     add     dl, [cs:0E54Fh]
 
-    ; other
+    ; flags
     lahf
     sahf
     clc
@@ -178,14 +186,10 @@ test:
     sti
     cld
     std
+
+    ; other
     xlat
     nop
-    stosb
-    stosw
-    lodsb
-    lodsw
-    scasb
-    scasw
 
     ; Unknown
     DB      69h

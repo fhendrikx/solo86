@@ -46,11 +46,14 @@ jmp_seg:                    dw 00h
 ihx_ofs:                    dw 00h
 ihx_seg:                    dw 00h
 
+; IHX segment location
+ihx_loc:                    dw 00h
+
 ; IHX checksum correct?
 ihx_crc:                    db 00h
 
-; dasm style?
-dasm_style                  db 00h
+; unasm style?
+unasm_style                 db 00h
 
 
 ; current instruction

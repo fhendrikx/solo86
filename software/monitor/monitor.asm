@@ -28,18 +28,18 @@ org 0
 ;======================================================================
 
 init:
-; after power up this code is executing from ROM
-; after loading from an intel hex file this code is executing from RAM
-; be aware that segments and stack pointers are not initialised
+    ; at power up this code is executing from ROM. After loading from an
+    ; IHX file, this code is executing from RAM. Be aware that segments
+    ; and stack pointers are not initialised
 
-; clear interrupts
+    ; clear interrupts
     cli
     cld
 
     leds 00000001b          ; 1 LED
 
-; copy ROM to RAM
-; don't use the stack yet as the ROM copy will overwrite any stored data
+    ; copy ROM to RAM
+    ; don't use the stack yet as the ROM copy will overwrite stored data
     mov ax,CSEG_INIT
     mov ds,ax
     xor si,si
@@ -66,25 +66,24 @@ init:
 relocate:
     leds 00000111b          ; 3 LEDs
 
-; initialise DS
+    ; initialise DS
     mov ax,DSEG
     mov ds,ax
 
-; initialise stack
+    ; initialise stack
     mov ax,SSEG
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
     leds 00001111b          ; 4 LEDs
 
-; initialise
+    ; initialise
     call sys_init
     call rtc_init
-    call stdio_init
 
     leds 00001111b          ; 5 LEDs
 
-; startup sound
+    ; startup sound
 
     ; check if the panel is installed
     mov ax,[ cs:hardware ]
@@ -107,7 +106,7 @@ relocate:
 .no_sound:
     leds 00111111b          ; 6 LEDs
 
-; enable interrupts
+    ; enable interrupts
     sti
 
     leds 01111111b          ; 7 LEDs
@@ -116,12 +115,12 @@ relocate:
 ; welcome
 ;======================================================================
 
-; welcome
+    ; welcome
     print mon_welcome
 
     leds 11111111b          ; 8 LEDs
 
-; scan for ROMs
+    ; scan for ROMs
 .scan:
     call rom_scan
 
@@ -142,7 +141,6 @@ relocate:
 ;======================================================================
 
 %include "beep.inc"
-%include "dasm.inc"
 %include "debug.inc"
 %include "delay.inc"
 %include "ihx.inc"
@@ -153,6 +151,7 @@ relocate:
 %include "sound.inc"
 %include "stdio.inc"
 %include "system.inc"
+%include "unasm.inc"
 
 
 ;======================================================================

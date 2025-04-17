@@ -11,6 +11,10 @@
 ; if a second record 0x02 appears in the record stream, then the decoded
 ; file will write to that location. This is normally used to ensure that
 ; files longer than 0xFFFF bytes can be correctly loaded.
+;
+; please note that ihx_seg:ihx_ofs may be different to ihx_loc. This is
+; often when ihx_seg is a different segment than ihx_loc, for example,
+; when loading a monitor at E000 and starting the code at FFFF:0000.
 ;======================================================================
 
 ;=========================================================================
@@ -28,13 +32,10 @@ ihx_load:
     push di
     push es
 
-    ; defaults for ES:DI (for when there is no 0x02 record present)
-    mov ax,LSEG
-    mov es,ax
-    xor di,di
-
+    ; defaults
+    xor ax,ax
     mov [cs:ihx_seg],ax
-    mov [cs:ihx_ofs],di
+    mov [cs:ihx_ofs],ax
 
 .find_record:
     call raw_chr
@@ -48,7 +49,7 @@ ihx_load:
     mov bh,al
     call raw_hex
     mov bl,al
-    mov di,bx               ; rec_data uses ES:DI in stosb
+    mov di,bx               ; rec_data uses (ES:)DI in stosb
 
     call raw_hex            ; get type
     cmp al,0                ; 0x00 - Data
@@ -77,23 +78,15 @@ ihx_load:
     call raw_hex            ; get checksum (1 byte)
     jmp .clean
 
-    ; record type 0x02 - Segment (may appear more than once if the file is larger than 64KB)
-    ; read segment into ES:DI
+    ; record type 0x02 - Segment (may appear more than once when file > 64KB)
+    ; read segment into ihx_loc and ES(:DI)
 .rec_segment:
     call raw_hex            ; get segment
     mov bh,al
     call raw_hex            ; get segment
     mov bl,al
-
-    ; prevent overwrite of ihx_seg
-    mov ax,[cs:ihx_seg]     ; load ihx_seg
-    cmp ax,LSEG             ; does it look like LSEG?
-    jne .continue
-    mov [cs:ihx_seg],bx     ; yes, overwrite the segment
-
-.continue:
+    mov [cs:ihx_loc],bx
     mov es,bx               ; rec_data uses ES:DI in stosb
-    xor di,di
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record

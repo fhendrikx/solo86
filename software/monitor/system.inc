@@ -1,4 +1,9 @@
 
+;=========================================================================
+; sys_init
+; Input:
+;   None
+;-------------------------------------------------------------------------
 sys_init:
     push ax
     push bx
@@ -6,7 +11,7 @@ sys_init:
 
     ; memory banking
 
-    ; map ROM into the top half of memory, skip monitor
+    ; map ROM into top-half of memory
     mov al,1
     out BNK_ROW_0,al
     mov al,2
@@ -21,12 +26,25 @@ sys_init:
     out BNK_ROW_5,al
     mov al,7
     out BNK_ROW_6,al
-
-    ; map RAM into the last segment so that hex loading still works
-    mov al,01Fh
+    mov al,01Fh             ; map RAM into the last segment so that hex loading still works
     out BNK_ROW_7,al
 
-    ; detect hardware
+
+    ; COM port
+
+    ; disable interrupts
+    xor al,al
+    out COM_CTRL,al
+
+
+    ; VIDEO mode
+
+    ; set console video mode
+    xor al,al
+    out VC_CTRL,al
+
+
+    ; expansion detection
 
     xor ax,ax
     or  ax,BNK_PRESENT
@@ -35,22 +53,22 @@ sys_init:
     mov bx,PIT_PRESENT
     or  bx,RTC_PRESENT
     mov dx,PIT_DETECT
-    call hw_detect
+    call exp_detect
 
     mov bx,COM_PRESENT
     mov dx,COM_DETECT
-    call hw_detect
+    call exp_detect
 
     mov bx,PNL_PRESENT
     mov dx,PNL_DETECT
-    call hw_detect
+    call exp_detect
 
     pop dx
     pop bx
     pop ax
     ret
 
-hw_detect:
+exp_detect:
     push dx
 
     in al,dx
@@ -68,5 +86,38 @@ hw_detect:
 
 .end:
     pop dx
+    ret
+
+
+;=========================================================================
+; sys_remap
+; Input:
+;   AX - segment address
+;-------------------------------------------------------------------------
+sys_remap:
+    push ax
+    push cx
+    push dx
+
+    and ax,0F000h           ; ensure we get segment only
+
+    ; calculate value
+    mov al,ah               ; top byte
+    mov cl,4
+    shr al,cl               ; top nibble
+    mov dl,al
+    add al,10h
+
+    ; calculate port
+    sub dl,08h
+    shl dl,1
+    add dl,10h
+    xor dh,dh
+
+    out dx,al
+
+    pop dx
+    pop cx
+    pop ax
     ret
 

@@ -39,13 +39,15 @@ debug_menu:
     je  cmd_sys_info
 
     cmp al,'D'
-    je  cmd_dasm
-    cmp al,'S'
-    je  cmd_dasm_style
+    je  cmd_mem_dump
     cmp al,'F'
     je  cmd_mem_fill
-    cmp al,'R'
-    je  cmd_mem_read
+    cmp al,'r'
+    je  cmd_mem_remap
+    cmp al,'S'
+    je  cmd_unasm_style
+    cmp al,'U'
+    je  cmd_unasm
 
     cmp al,'I'
     je  cmd_inp
@@ -55,19 +57,20 @@ debug_menu:
     je  cmd_jmp
     cmp al,'Y'
     je  cmd_timer
-    cmp al,'T'
-    je  cmd_clock_time
-    cmp al,'C'
-    je  cmd_clock_date
     cmp al,'X'
     je  cmd_halt
+
+    cmp al,'t'
+    je  cmd_clock_time
+    cmp al,'d'
+    je  cmd_clock_date
 
     cmp al,'L'
     je  cmd_ihx_load
     cmp al,'E'
     je  cmd_ihx_exec
 
-    cmp al,'H'
+    cmp al,'h'
     je  cmd_help
     cmp al,'?'
     je  cmd_help
@@ -94,31 +97,9 @@ cmd_last:
     mov al,byte [cs:dbg_last]
 
     cmp al,'D'
-    je .dasm
-    cmp al,'R'
     je .read
-
-    jmp debug_menu.loop
-
-.dasm:
-    push ds
-
-    ; get last address
-    mov bx,[cs:dbg_ofs]
-    mov si,bx
-    mov bx,[cs:dbg_seg]
-    mov ds,bx
-
-    mov cx,16
-
-    call dasm
-
-    ; store last address
-    mov [cs:dbg_ofs],bx
-    mov bx,ds
-    mov [cs:dbg_seg],bx
-
-    pop ds
+    cmp al,'U'
+    je .unasm
 
     jmp debug_menu.loop
 
@@ -133,7 +114,29 @@ cmd_last:
 
     mov cx,256
 
-    call mem_read
+    call mem_dump
+
+    ; store last address
+    mov [cs:dbg_ofs],bx
+    mov bx,ds
+    mov [cs:dbg_seg],bx
+
+    pop ds
+
+    jmp debug_menu.loop
+
+.unasm:
+    push ds
+
+    ; get last address
+    mov bx,[cs:dbg_ofs]
+    mov si,bx
+    mov bx,[cs:dbg_seg]
+    mov ds,bx
+
+    mov cx,16
+
+    call unasm
 
     ; store last address
     mov [cs:dbg_ofs],bx
@@ -156,7 +159,7 @@ cmd_sys_info:
     jmp debug_menu.loop
 
 
-cmd_dasm:
+cmd_unasm:
     call spaces
     call inp_word           ; seg
     mov bx,ax
@@ -172,8 +175,8 @@ cmd_dasm:
     mov ds,bx
     mov cx,16
 
-    print dbg_dasm
-    call dasm
+    print dbg_unasm
+    call unasm
 
     ; store last address
     mov [cs:dbg_ofs],bx
@@ -185,19 +188,19 @@ cmd_dasm:
     jmp debug_menu.loop
 
 
-cmd_dasm_style:
-    mov al,byte [cs:dasm_style]
+cmd_unasm_style:
+    mov al,byte [cs:unasm_style]
     not al
-    mov byte [cs:dasm_style],al
+    mov byte [cs:unasm_style],al
 
     cmp al,0
     je  .intel
 
-    print dbg_dasm_att
+    print dbg_unasm_att
     jmp debug_menu.loop
 
 .intel:
-    print dbg_dasm_intel
+    print dbg_unasm_intel
     jmp debug_menu.loop
 
 
@@ -231,7 +234,7 @@ cmd_mem_fill:
     jmp debug_menu.loop
 
 
-cmd_mem_read:
+cmd_mem_dump:
     call spaces
     call inp_word           ; seg
     mov bx,ax
@@ -243,13 +246,13 @@ cmd_mem_read:
     call inp_word           ; offset
     mov si,ax
 
-    print dbg_read
+    print dbg_dump
 
     push ds
     mov cx,256
     mov ds,bx
 
-    call mem_read
+    call mem_dump
 
     ; store last address
     mov [cs:dbg_ofs],bx
@@ -257,6 +260,20 @@ cmd_mem_read:
     mov [cs:dbg_seg],bx
 
     pop ds
+
+    jmp debug_menu.loop
+
+
+cmd_mem_remap:
+    call spaces
+    call inp_word           ; seg
+    call sys_remap
+
+    print dbg_remap
+    call print_word
+
+    mov al,0Ah
+    call print_chr
 
     jmp debug_menu.loop
 
@@ -421,7 +438,15 @@ cmd_ihx_load:
 
     call ihx_load
 
-    print dbg_load_addr     ; okay
+    print dbg_load_addr
+    mov ax,[cs:ihx_loc]
+    call print_word
+
+    mov al,' '
+    call print_chr
+    mov al,'['
+    call print_chr
+
     mov ax,[cs:ihx_seg]
     call print_word
 
@@ -431,13 +456,11 @@ cmd_ihx_load:
     mov ax,[cs:ihx_ofs]
     call print_word
 
+    mov al,']'
+    call print_chr
     mov al,0Ah
     call print_chr
 
-    jmp debug_menu.loop
-
-.exit:
-    print dbg_load_err      ; error
     jmp debug_menu.loop
 
 
@@ -445,9 +468,9 @@ cmd_ihx_exec:
     ; sanity check
     mov ax,[cs:ihx_seg]
     cmp ax,0
-    je .exit
+    je .err
 
-    print dbg_exec      ; okay
+    print dbg_exec          ; okay
 
     ; simulate cold start
     xor ax,ax
@@ -462,8 +485,8 @@ cmd_ihx_exec:
     ; indirect far jump to CS:IP
     jmp far [ ihx_ofs ]
 
-.exit:
-    print dbg_exec_err  ; error
+.err:
+    print dbg_exec_err      ; error
     jmp debug_menu.loop
 
 
