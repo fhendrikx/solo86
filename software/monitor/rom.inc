@@ -70,7 +70,16 @@ rom_menu:
 .loop:
     print rom_prompt
 
-    call read_chr
+    push cs
+    pop ax
+    mov ds,ax
+    mov es,ax
+
+    mov di,buffer
+    call read_str
+
+    mov si,buffer
+    lodsb
 
     ; quit to monitor
     cmp al,'Q'
