@@ -251,15 +251,17 @@ read_hex:
 ;=========================================================================
 ; read_str
 ; Input:
-;   ES - segment
-;   DI - offset
+;   ES - buffer segment
+;   DI - buffer offset
 ; Notes:
 ;   Blocking read of ASCIIZ string
 ;-------------------------------------------------------------------------
 read_str:
     push ax
+    push cx
     push di
     push es
+    xor cx,cx
     cld
 
 .loop:
@@ -268,6 +270,25 @@ read_str:
     jz .loop
 
     in al,COM_DATA          ; read character
+    cmp al,08h
+    jne .store
+
+    ; BS handling
+    cmp cl,0                ; any characters to delete?
+    jz .loop
+    dec cl
+    dec di
+
+    out COM_DATA,al         ; print DEL
+    mov al,' '
+    out COM_DATA,al         ; over-write with space
+    mov al,08h
+    out COM_DATA,al         ; print DEL
+
+    jmp .loop
+
+.store:
+    inc cl
     stosb
     out COM_DATA,al
 
@@ -280,6 +301,7 @@ read_str:
     stosb
     pop es
     pop di
+    pop cx
     pop ax
     ret
 
