@@ -1,0 +1,41 @@
+Name     console ;
+PartNo   ATF16V8C ;
+Date     2025-04-18 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly None ;
+Location  ;
+Device   g16v8 ;
+
+PIN 1  = A1;
+PIN 2  = A2;
+PIN 3  = A3;
+PIN 4  = A4;
+PIN 5  = A5;
+PIN 6  = A6;
+PIN 7  = A7;
+PIN 8  = !BHE;
+PIN 9  = A0;
+// PIN 10 = GND;
+PIN 11 = !IORD;
+PIN 12 = !IOWR;
+PIN 13 = !PATTERN_EN;
+// PIN 14 = UNUSED;
+// PIN 15 = UNUSED;
+// PIN 16 = UNUSED;
+// PIN 17 = UNUSED;
+PIN 18 = !SW_EN;
+PIN 19 = LED_LATCH_LOW;
+// PIN 20 = VCC;
+
+/* I/O address */
+FIELD IOADDR = [A7..1];
+
+/* valid I/O address */
+ADDRMATCH = IOADDR:['h'30];
+
+/* output functions */
+LED_LATCH_LOW = ADDRMATCH & IOWR & !A0;
+SW_EN = ADDRMATCH & IORD & !A0;
+PATTERN_EN = ADDRMATCH & IORD & BHE;
