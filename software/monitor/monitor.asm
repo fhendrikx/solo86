@@ -117,6 +117,7 @@ relocate:
 
     ; welcome
     print mon_welcome
+    print mon_version
 
     leds 11111111b          ; 8 LEDs
 
@@ -152,6 +153,7 @@ relocate:
 %include "stdio.inc"
 %include "system.inc"
 %include "unasm.inc"
+%include "version.inc"
 
 
 ;======================================================================

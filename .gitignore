@@ -1,5 +1,6 @@
-ihf/*
-!ihf/Makefile
-!ihf/up
+hex/*
+!hex/Makefile
+!hex/up
 rom/*
 !rom/Makefile
+software/monitor/version.inc

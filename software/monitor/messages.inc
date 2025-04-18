@@ -1,16 +1,14 @@
 
 ; monitor
 
-mon_welcome         db 0Ah, 'Solo/86 Release 1.0.0',0Ah,0Ah
+mon_welcome         db 0Ah
                     db ' _____       _         _____   ____ ',0Ah
                     db '/  ___|     | |       |  _  | / ___|',0Ah
                     db '\ `--.  ___ | | ___    \ V / / /___ ',0Ah
                     db ' `--. \/ _ \| |/ _ \   / _ \ | ___ \',0Ah
                     db '/\__/ / (_) | | (_) | | |_| || \_/ |',0Ah
                     db '\____/ \___/|_|\___/  \_____/\_____/',0Ah
-                    db 0Ah, '(c) 2025 Dylan Hall / Ferry Hendrikx', 0Ah
-                    db 0Ah, 'Build ', __DATE__, 20h, 40h, 20h, __TIME__, 0Ah
-                    db 0Ah, 00h
+                    db 0Ah, '(c) 2025 Dylan Hall / Ferry Hendrikx', 0Ah, 00h
 
 
 ; roms
