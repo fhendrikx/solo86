@@ -42,18 +42,18 @@ dbg_seg:                    dw 00h
 jmp_ofs:                    dw 00h
 jmp_seg:                    dw 00h
 
-; IHF location
-ihf_loc:                    dw 00h
+; IHX address
+ihx_ofs:                    dw 00h
+ihx_seg:                    dw 00h
 
-; IHF address
-ihf_ofs:                    dw 00h
-ihf_seg:                    dw 00h
+; IHX segment location
+ihx_loc:                    dw 00h
 
-; IHF checksum correct?
-ihf_crc:                    db 00h
+; IHX checksum correct?
+ihx_crc:                    db 00h
 
-; dasm style?
-dasm_style                  db 00h
+; unasm style?
+unasm_style                 db 00h
 
 
 ; current instruction

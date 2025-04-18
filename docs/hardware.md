@@ -106,6 +106,7 @@
  - 25h UART signature 0xAA (read) (alias)
  - 26h UART reserved
  - 27h UART signature 0xAA (read) (alias)
+
  - 28h VC_CTRL
  - 29h UART signature 0xAA (read) (alias)
  - 2Ah VC_HIGH_ADDR

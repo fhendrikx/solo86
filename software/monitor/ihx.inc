@@ -7,16 +7,24 @@
 ;
 ; the decoded file is written to SEGMENT::OFFSET, where the SEGMENT is
 ; derived from record 0x02, and OFFSET is derived from each record 0x01
+;
+; if a second record 0x02 appears in the record stream, then the decoded
+; file will write to that location. This is normally used to ensure that
+; files longer than 0xFFFF bytes can be correctly loaded.
+;
+; please note that ihx_seg:ihx_ofs may be different to ihx_loc. This is
+; often when ihx_seg is a different segment than ihx_loc, for example,
+; when loading a monitor at E000 and starting the code at FFFF:0000.
 ;======================================================================
 
 ;=========================================================================
-; ihf_load
+; ihx_load
 ; Input:
 ;   None
 ; Output:
 ;   None
 ;-------------------------------------------------------------------------
-ihf_load:
+ihx_load:
     push ax
     push bx
     push cx
@@ -26,14 +34,8 @@ ihf_load:
 
     ; defaults
     xor ax,ax
-    mov [cs:ihf_seg],ax
-    mov [cs:ihf_ofs],ax
-
-    ; defaults for ES:DI (in case there is no 0x02 record present)
-    mov ax,CSEG
-    mov [cs:ihf_loc],ax
-    mov es,ax
-    xor di,di
+    mov [cs:ihx_seg],ax
+    mov [cs:ihx_ofs],ax
 
 .find_record:
     call raw_chr
@@ -47,7 +49,7 @@ ihf_load:
     mov bh,al
     call raw_hex
     mov bl,al
-    mov di,bx               ; rec_data uses ES:DI in stosb
+    mov di,bx               ; rec_data uses (ES:)DI in stosb
 
     call raw_hex            ; get type
     cmp al,0                ; 0x00 - Data
@@ -76,33 +78,33 @@ ihf_load:
     call raw_hex            ; get checksum (1 byte)
     jmp .clean
 
-    ; record type 0x02 - Segment
-    ; read segment into ihf_loc and ES
+    ; record type 0x02 - Segment (may appear more than once when file > 64KB)
+    ; read segment into ihx_loc and ES(:DI)
 .rec_segment:
     call raw_hex            ; get segment
     mov bh,al
     call raw_hex            ; get segment
     mov bl,al
-    mov [cs:ihf_loc],bx
+    mov [cs:ihx_loc],bx
     mov es,bx               ; rec_data uses ES:DI in stosb
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record
 
     ; record type 0x03 - CS:IP
-    ; read CS:IP into ihf_seg/ihf_ofs
+    ; read CS:IP into ihx_seg:ihx_ofs
 .rec_start:
     call raw_hex            ; get CS
     mov bh,al
     call raw_hex            ; get CS
     mov bl,al
-    mov [cs:ihf_seg],bx
+    mov [cs:ihx_seg],bx
 
     call raw_hex            ; get IP
     mov bh,al
     call raw_hex            ; get IP
     mov bl,al
-    mov [cs:ihf_ofs],bx
+    mov [cs:ihx_ofs],bx
 
     call raw_hex            ; get checksum (1 byte)
     jmp .find_record

@@ -123,7 +123,7 @@
 ;       SW  11 DX  DX
 
 ;=========================================================================
-; dasm
+; unasm
 ; Input:
 ;   DS - segment
 ;   SI - offset
@@ -133,7 +133,7 @@
 ; Notes:
 ;   Prints disassembly of memory at DS:SI
 ;-------------------------------------------------------------------------
-dasm:
+unasm:
     push ax
     push cx
     push ds
@@ -544,7 +544,7 @@ print_inst:
 ; print operands
 ;
 print_operands:
-    cmp byte [cs:dasm_style],0
+    cmp byte [cs:unasm_style],0
     je .intel
 
     ; AT&T style
@@ -839,7 +839,7 @@ print_opr:
 ; print left bracket
 ;
 print_lb:
-    cmp byte [cs:dasm_style],0
+    cmp byte [cs:unasm_style],0
     je .intel
 
     ; AT&T style
@@ -859,7 +859,7 @@ print_lb:
 ; print right bracket
 ;
 print_rb:
-    cmp byte [cs:dasm_style],0
+    cmp byte [cs:unasm_style],0
     je .intel
 
     ; AT&T style
@@ -879,7 +879,7 @@ print_rb:
 ; print prefix for registers
 ;
 print_p_reg:
-    cmp byte [cs:dasm_style],0
+    cmp byte [cs:unasm_style],0
     je .intel
 
     ; AT&T style
@@ -898,7 +898,7 @@ print_p_reg:
 ; print prefix for immediates
 ;
 print_p_imm:
-    cmp byte [cs:dasm_style],0
+    cmp byte [cs:unasm_style],0
     je .intel
 
     ; AT&T style

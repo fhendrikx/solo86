@@ -1,0 +1,3 @@
+#!/bin/bash
+DATA=$1
+nc -N "solo" "24" < "$DATA"

@@ -1,4 +1,4 @@
 include $(TOPDIR)/Makefile.conf
 include $(TOPDIR)/Makefile.rules
 
-SUBDIRS = software rom ihf
+SUBDIRS = software rom hex

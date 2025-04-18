@@ -1,6 +1,6 @@
 
 ;=========================================================================
-; mem_read
+; mem_dump
 ; Input:
 ;   DS - segment
 ;   SI - offset
@@ -8,7 +8,7 @@
 ; Notes:
 ;   Prints memory content
 ;-------------------------------------------------------------------------
-mem_read:
+mem_dump:
     push ax
     push cx
     push ds
