@@ -71,9 +71,9 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
     while (*pString) {
 
         if (*pString >= 0x20 and *pString < 0x7f) {
-            klog(LogNotice, "KeyPress: %02x '%c'", *pString, *pString);
+            klog(LogDebug, "KeyPress: %02x '%c'", *pString, *pString);
         } else {
-            klog(LogNotice, "KeyPress: %02x", *pString);
+            klog(LogDebug, "KeyPress: %02x", *pString);
         }
 
         s_pThis->m_pKeyBuf->AddCharSafe(*pString);
