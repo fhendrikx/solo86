@@ -74,6 +74,8 @@ debug_menu:
     je  cmd_help
     cmp al,'?'
     je  cmd_help
+    cmp al,'v'
+    je  cmd_version
     cmp al,'Q'
     je .exit
 
@@ -267,6 +269,15 @@ cmd_mem_dump:
 cmd_mem_remap:
     call spaces
     call inp_word           ; seg
+    push ax
+
+    call spaces
+
+    call inp_hex            ; count
+    xor cx,cx
+    mov cl,al
+    pop ax
+
     call sys_remap
 
     print dbg_remap
@@ -492,6 +503,11 @@ cmd_ihx_exec:
 
 cmd_help:
     print dbg_help
+    jmp debug_menu.loop
+
+
+cmd_version:
+    print mon_version
     jmp debug_menu.loop
 
 
