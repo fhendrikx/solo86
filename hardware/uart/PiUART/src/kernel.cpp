@@ -508,13 +508,13 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
     nIdxP = nFBWidth * nVertGutter;
 
-    klog(LogDebug, "nFBWidth %u", nFBWidth);
-    klog(LogDebug, "nFBHeight %u", nFBHeight);
-    klog(LogDebug, "nHorizMult %u", nHorizMult);
-    klog(LogDebug, "nHorizGutter %u", nHorizGutter);
-    klog(LogDebug, "nVertMult %u", nVertMult);
-    klog(LogDebug, "nVertGutter %u", nVertGutter);
-    klog(LogDebug, "nMult %u", nMult);
+    // klog(LogDebug, "nFBWidth %u", nFBWidth);
+    // klog(LogDebug, "nFBHeight %u", nFBHeight);
+    // klog(LogDebug, "nHorizMult %u", nHorizMult);
+    // klog(LogDebug, "nHorizGutter %u", nHorizGutter);
+    // klog(LogDebug, "nVertMult %u", nVertMult);
+    // klog(LogDebug, "nVertGutter %u", nVertGutter);
+    // klog(LogDebug, "nMult %u", nMult);
 
     for (unsigned nY = 0; nY < nModeHeight; nY++) {
 
