@@ -7,7 +7,10 @@
 sys_init:
     push ax
     push bx
+    push cx
     push dx
+    push ds
+    push es
 
     ; memory banking
 
@@ -63,7 +66,10 @@ sys_init:
     mov dx,PNL_DETECT
     call exp_detect
 
+    pop es
+    pop ds
     pop dx
+    pop cx
     pop bx
     pop ax
     ret
@@ -93,8 +99,38 @@ exp_detect:
 ; sys_remap
 ; Input:
 ;   AX - segment address
+;   CL - count
 ;-------------------------------------------------------------------------
 sys_remap:
+    push ax
+    push cx
+
+    ; set defaults
+    and ax,0F000h           ; ensure we get segment only
+    cmp cl,0
+    jg .loop
+    mov cl,1                ; ensure count=1 if count=0
+
+.loop:
+    call sys_remap_seg
+
+    add ax,01000h           ; increment segment
+    dec cl
+    cmp cl,0                ; decrement count
+    jg .loop
+
+.exit:
+    pop cx
+    pop ax
+    ret
+
+
+;=========================================================================
+; sys_remap_seg
+; Input:
+;   AX - segment address
+;-------------------------------------------------------------------------
+sys_remap_seg:
     push ax
     push cx
     push dx

@@ -267,6 +267,15 @@ cmd_mem_dump:
 cmd_mem_remap:
     call spaces
     call inp_word           ; seg
+    push ax
+
+    call spaces
+
+    call inp_hex            ; count
+    xor cx,cx
+    mov cl,al
+    pop ax
+
     call sys_remap
 
     print dbg_remap

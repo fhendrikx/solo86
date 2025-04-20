@@ -27,7 +27,7 @@ dbg_syntax          db 0Ah, '[ Syntax Error ]', 0Ah, 00h
 dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'D SSSS:OOOO         - MEM DUMP addr SSSS:OOOO', 0Ah
                     db 'F SSSS:OOOO CC XX   - MEM FILL addr SSSS:OOOO count CC byte XX', 0Ah
-                    db 'r SSSS              - MEM RMAP ROM segment SSSS as RAM', 0Ah
+                    db 'r SSSS CC           - MEM RMAP ROM segment SSSS (+ count CC) as RAM', 0Ah
                     db 'S                   - MEM UASM style', 0Ah
                     db 'U SSSS:OOOO         - MEM UASM addr SSSS:OOOO', 0Ah
 

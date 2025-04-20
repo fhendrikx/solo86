@@ -17,14 +17,14 @@ org 0
 
 
 ;======================================================================
-; interrupt vectors
+; interrupt vectors (first 64 only)
 ;======================================================================
 
 %include "vectors.inc"
 
 
 ;======================================================================
-; 0xf0100 - monitor start
+; 0xf0100 - monitor start (ROM location; don't move this)
 ;======================================================================
 
 init:
@@ -38,8 +38,11 @@ init:
 
     leds 00000001b          ; 1 LED
 
-    ; copy ROM to RAM
+    ; copy ROM to RAM (F000:0000 => 0000:0000)
     ; don't use the stack yet as the ROM copy will overwrite stored data
+    ; this will also copy the first 64 interrupt vectors across; we'll
+    ; need to clean out the rest later.
+
     mov ax,CSEG_INIT
     mov ds,ax
     xor si,si
@@ -60,7 +63,15 @@ init:
 
 
 ;======================================================================
-; 0x00xxx - monitor relocation
+; padding
+;======================================================================
+
+; padding
+TIMES 1024-($-$$)           db 00h
+
+
+;======================================================================
+; 0x00400 - monitor start (relocation point)
 ;======================================================================
 
 relocate:
@@ -168,6 +179,7 @@ int_irq0:
     mov ax,[ cs:irq0_cnt ]
     inc ax
     mov [ cs:irq0_cnt ],ax
+    out 70h, al				; fake EOI
     pop ax
     iret
 
