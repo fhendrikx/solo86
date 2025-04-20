@@ -162,8 +162,6 @@ while (!eof($fh))
     {
         print_data($off, $bin);
 
-        $off += 16;
-
         # are we at a 16bit boundary?
 
         if ($off >= 65536)
@@ -177,6 +175,8 @@ while (!eof($fh))
 
             print_segment($seg);
         }
+
+        $off += 16;
     }
 }
 
