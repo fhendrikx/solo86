@@ -164,7 +164,7 @@ while (!eof($fh))
 
         # are we at a 16bit boundary?
 
-        if ($off >= 65536)
+        if ($off >= 65520)
         {
             # wrap around to a new segment
 
@@ -175,8 +175,12 @@ while (!eof($fh))
 
             print_segment($seg);
         }
+        else
+        {
+            # next 16 bytes
 
-        $off += 16;
+            $off += 16;
+        }
     }
 }
 
