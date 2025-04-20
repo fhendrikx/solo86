@@ -68,33 +68,17 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
 
     assert(s_pThis != NULL);
 
-#ifndef NDEBUG
-    const char *pStringCopy = pString;
+    while (*pString) {
 
-    while (*pStringCopy) {
-
-        if (*pStringCopy >= 0x20 and *pStringCopy < 0x7f) {
-            klog(LogNotice, "KeyPress: %02x '%c'", *pStringCopy, *pStringCopy);
+        if (*pString >= 0x20 and *pString < 0x7f) {
+            klog(LogNotice, "KeyPress: %02x '%c'", *pString, *pString);
         } else {
-            klog(LogNotice, "KeyPress: %02x", *pStringCopy);
+            klog(LogNotice, "KeyPress: %02x", *pString);
         }
 
-        pStringCopy++;
+        s_pThis->m_pKeyBuf->AddCharSafe(*pString);
 
-    }
-#endif
-
-    char c = pString[0];
-
-    // ignore escape encoded keys, we only want 7-bit clean ascii
-    if (c != 0x1b) {
-
-        // fix backspace
-        if (c == 0x7f)
-            c = 0x8; // ascii backspace
-
-        s_pThis->m_pKeyBuf->AddCharSafe(c);
-
+        pString++;
     }
 
 }

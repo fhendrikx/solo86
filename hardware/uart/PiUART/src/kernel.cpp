@@ -706,7 +706,7 @@ u32 CKernel::BusIORead(u32 address) {
 
     }
 
-    klog(LogDebug, "IO_READ Address: 0x%x, Data: 0x%x", address, data);
+    // klog(LogDebug, "IO_READ Address: 0x%x, Data: 0x%x", address, data);
 
     return data;
 }
@@ -818,7 +818,7 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     }
 
-    klog(LogDebug, "IO_WRITE Address: 0x%x Data: 0x%x", address, data);
+    // klog(LogDebug, "IO_WRITE Address: 0x%x Data: 0x%x", address, data);
 
 }
 

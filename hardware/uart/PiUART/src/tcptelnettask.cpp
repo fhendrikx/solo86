@@ -101,7 +101,7 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
             u8 c = ev->data.buffer[i];
 
-            if ((c >= 32) and (c < 127)) {
+            if ((c >= 0x20) and (c < 0x7f)) {
                 klog(LogDebug, "Got byte [%d]: 0x%x [%c]", i, c, c);
             } else {
                 klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
@@ -112,8 +112,8 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
                 c = '\n';
 
             // fix backspace
-            if (c == 0x7f)
-                c = 0x8; // ascii backspace
+            // if (c == 0x7f)
+            //     c = 0x8; // ascii backspace
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
@@ -122,6 +122,7 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
         }
 
         break;
+
     case TELNET_EV_SEND:
 
         klog(LogDebug, "TelnetEventCB TELNET_EV_SEND size = %u", ev->data.size);
