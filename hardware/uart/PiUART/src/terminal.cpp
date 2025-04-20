@@ -1,6 +1,6 @@
 #include "terminal.h"
 
-// there is a typo in the c++ class wrapper and a dependany on strings.h
+// there is a typo in the c++ class wrapper and a dependancy on strings.h
 // which doesn't exist so undef __cplusplus rather than edit ssfn.h
 #undef __cplusplus
 #include "scalable-font2/ssfn.h"
