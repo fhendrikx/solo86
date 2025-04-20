@@ -74,6 +74,8 @@ debug_menu:
     je  cmd_help
     cmp al,'?'
     je  cmd_help
+    cmp al,'v'
+    je  cmd_version
     cmp al,'Q'
     je .exit
 
@@ -501,6 +503,11 @@ cmd_ihx_exec:
 
 cmd_help:
     print dbg_help
+    jmp debug_menu.loop
+
+
+cmd_version:
+    print mon_version
     jmp debug_menu.loop
 
 

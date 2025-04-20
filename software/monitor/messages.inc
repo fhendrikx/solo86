@@ -46,6 +46,7 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'A                   - SYS INFO', 0Ah
 
                     db 'h                   - Help', 0Ah
+                    db 'v                   - Version', 0Ah
                     db 'Q                   - Quit', 0Ah
                     db 0Ah, 'All values are given in HEX', 0Ah
                     db 00h
