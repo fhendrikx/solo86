@@ -270,8 +270,22 @@ read_str:
     jz .loop
 
     in al,COM_DATA          ; read character
+    cmp al,00h
+    je  .loop
+    cmp al,0Dh              ; telnet
+    je  .cr
     cmp al,7fh
-    jne .store
+    je  .bs
+
+.next:
+    inc cl
+    stosb
+    out COM_DATA,al
+
+    cmp al,0Ah              ; are we done?
+    je  .exit
+
+    jmp .loop
 
 .bs:
     cmp cl,0                ; any characters to delete?
@@ -287,18 +301,15 @@ read_str:
     out COM_DATA,al         ; print DEL
     jmp .loop
 
-.store:
-    inc cl
-    stosb
-    out COM_DATA,al
-
-    cmp al,0Ah              ; are we done?
-    jne .loop
+.cr:
+    mov al,0Ah              ; convert CR to LF
+    jmp .next
 
 .exit:
     mov dx,di               ; return length in dx
     mov al,0                ; terminator
     stosb
+
     pop es
     pop di
     pop cx
