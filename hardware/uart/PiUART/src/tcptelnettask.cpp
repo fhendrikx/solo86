@@ -40,7 +40,8 @@ void CTCPTelnetTask::Run() {
     // TELNET_FLAG_NVT_EOL => translate new line sequences
     // \r\0 -> \r
     // \r\n -> \n
-    m_pTelnet = telnet_init(my_telopts, TelnetEventCB, TELNET_FLAG_NVT_EOL, this);
+    //m_pTelnet = telnet_init(my_telopts, TelnetEventCB, TELNET_FLAG_NVT_EOL, this);
+    m_pTelnet = telnet_init(my_telopts, TelnetEventCB, 0, this);
 
     // tell the client not to do local echo, it'll be handled by whatever is out the UART
     telnet_negotiate(m_pTelnet, TELNET_DO, TELNET_TELOPT_ECHO);
@@ -108,8 +109,8 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
             }
 
             // fix carriage return
-            if (c == '\r')
-                c = '\n';
+            //if (c == '\r')
+            //    c = '\n';
 
             // fix backspace
             // if (c == 0x7f)
