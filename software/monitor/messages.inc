@@ -45,6 +45,8 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
 
                     db 'A                   - SYS INFO', 0Ah
 
+                    db 'K                   - ECHO', 0Ah
+
                     db 'h                   - Help', 0Ah
                     db 'v                   - Version', 0Ah
                     db 'Q                   - Quit', 0Ah
@@ -64,6 +66,7 @@ dbg_jump            db '[ CPU JMP ]', 0Ah, 00h
 dbg_timer           db '[ CPU TMR ] State: On', 0Ah, 00h
 dbg_timer_off       db '[ CPU TMR ] State: Off', 0Ah, 00h
 dbg_halt            db '[ CPU HLT ]', 0Ah, 00h
+dbg_echo            db '[ ECHO ]', 0Ah, 00h
 
 dbg_load            db '[ IHX LOAD ]', 0Ah, 00h
 dbg_load_addr       db '[ IHX LOAD ] Segment: ', 00h

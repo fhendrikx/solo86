@@ -70,6 +70,9 @@ debug_menu:
     cmp al,'E'
     je  cmd_ihx_exec
 
+    cmp al,'K'
+    je  cmd_echo
+
     cmp al,'h'
     je  cmd_help
     cmp al,'?'
@@ -498,6 +501,18 @@ cmd_ihx_exec:
 
 .err:
     print dbg_exec_err      ; error
+    jmp debug_menu.loop
+
+cmd_echo:
+    call spaces
+
+    print dbg_echo
+
+.echo_loop:
+    call read_chr
+    cmp al,'Q'
+    jne .echo_loop
+
     jmp debug_menu.loop
 
 
