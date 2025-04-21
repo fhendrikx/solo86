@@ -131,15 +131,7 @@ if (! $file)
 $seg    = hex $seg;
 
 
-# print segment
-
-if ($seg)
-{
-    print_segment($seg);
-}
-
-
-# print address (CS:IP)
+# starting address (CS:IP)
 
 if ($addr)
 {
@@ -160,9 +152,22 @@ while (!eof($fh))
 
     if ($ret)
     {
+        # are we starting a new segment?
+
+        if ($off == 0)
+        {
+            # let IHX loader know what we're doing
+
+            print_segment($seg);
+        }
+
+
+        # print 16 bytes of data
+
         print_data($off, $bin);
 
-        # are we at a 16bit boundary?
+
+        # are we at the end of a segment?
 
         if ($off >= 65520)
         {
@@ -170,10 +175,6 @@ while (!eof($fh))
 
             $seg = $seg + 4096;
             $off = 0;
-
-            # let IHX loader know what we're doing
-
-            print_segment($seg);
         }
         else
         {
