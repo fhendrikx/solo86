@@ -11,12 +11,12 @@ rom:
 	$(DD) if=logo.bin of=solo.rom bs=1k seek=256 conv=nocreat,notrunc
 	$(SP) --file=solo.rom
 
-burn0:
+rom0:
 	@echo "Please put solo.0 (EVEN) into the burner; please ENTER when ready"
 	@read DUMMY
 	minipro -p "SST39SF040" -w solo.0
 
-burn1:
+rom1:
 	@echo "Please put solo.1 (ODD)  into the burner; please ENTER when ready"
 	@read DUMMY
 	minipro -p "SST39SF040" -w solo.1
