@@ -1,3 +1,7 @@
+
+sudo apt install cmake python3 build-essential gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+
+
 # Note: currently using this version of Circle
 $ git log -n 1
 commit c21f2efdad86c1062f255fbf891135a2a356713e (HEAD -> master, tag: Step45.3.1, origin/master, origin/HEAD)
@@ -7,9 +11,10 @@ Date:   Sun Oct 8 11:19:19 2023 +0200
 
     Merge branch 'hotfix-45.3.1'
 
-##
-##
-##
+#
+#
+
+$ cd solo86/hardware/uart/PiUART
 
 # grab Circle from github. We need the git version so the WLAN modules will build
 $ git submodule init
@@ -41,4 +46,5 @@ circle$ git submodule update --init addon/wlan/hostap
 circle$ cd addon/wlan/
 circle/addon/wlan$ ./makeall clean
 circle/addon/wlan$ ./makeall
+
 
