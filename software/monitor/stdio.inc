@@ -270,21 +270,21 @@ read_str:
     jz .loop
 
     in al,COM_DATA          ; read character
-    cmp al,08h
+    cmp al,7fh
     jne .store
 
-    ; BS handling
+.bs:
     cmp cl,0                ; any characters to delete?
     jz .loop
     dec cl
     dec di
 
+    mov al,08h
     out COM_DATA,al         ; print DEL
-    mov al,' '
+    mov al,20h
     out COM_DATA,al         ; over-write with space
     mov al,08h
     out COM_DATA,al         ; print DEL
-
     jmp .loop
 
 .store:
