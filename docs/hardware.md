@@ -4,7 +4,7 @@
 
 ## Interrupts
 
-### 00h - 1Fh reserved; System (hardware/faults)
+### 00h - 1Fh reserved; INTEL (hardware/faults)
 
  - 00h Divide by zero
  - 01h Single step
@@ -39,18 +39,17 @@
  - 1Eh Reserved
  - 1Fh Reserved
 
+### 20h - 2Fh reserved; Solo/86 System
 
-### 20h - 30h reserved; System
-
- - 20h IRQ0 Timer channel 0
+ - 20h IRQ0 Timer
  - 21h IRQ1 Reserved; Expansion board
  - 22h IRQ2 Reserved; Expansion board
- - 23h IRQ3 UART
- - 24h IRQ4 Reserved; Expansion board
- - 25h IRQ5 Reserved; Expansion board
- - 26h Reserved
- - 27h Reserved
- - 28h Reserved
+ - 23h IRQ3 COM0/UART
+ - 24h IRQ4 Reserved
+ - 25h IRQ5 Reserved
+ - 26h IRQ6 Reserved
+ - 27h IRQ7 Reserved
+ - 28h IRQ8 Reserved
  - 29h Reserved
  - 2Ah Reserved
  - 2Bh Reserved
@@ -58,12 +57,13 @@
  - 2Dh Reserved
  - 2Eh Reserved
  - 2Fh Reserved
- - 30h System Call
+
+### 30h - FFh available
 
 
 ## IO Ports
 
-### 00h - 9Fh reserved; System
+### 00h - 7Fh reserved; Solo/86 System
 
 #### Epoch module (PIT)
 
@@ -118,12 +118,17 @@
 
 #### Panel module
 
- - 30h LED red LEDs (write)
- - 30h LED switches (read)
- - 31h LED multi-colour LEDs (write)
+ - 30h LED (write)
+ - 30h LED switch state (read)
  - 31h LED signature 0xAA (read)
 
 
-### A0h - FFh reserved; Expansion boards
+### 80h - AFh reserved; Testing
 
+ - 80h IO Slow Down
+
+ - A0h Dummy EOI
+
+
+### B0h - FFh available; Expansion Boards
 
