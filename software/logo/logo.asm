@@ -10,8 +10,12 @@ org 0
                     db 0AAh
                     dw init
                     dw 01h
+                    dw 0000h
+                    dw 01h
                     dw 00h
-                    db 'Display demo            ', 00h
+                    dw 00h
+                    dw 00h
+                    db 'Display demo', 00h
 
 TIMES 256-($-$$)    db 0FFh
 

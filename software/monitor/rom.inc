@@ -54,8 +54,8 @@ rom_menu:
     mov al,' '
     call print_chr
 
-    ; size/flags
-    add si,4                ; skip size and flag
+    ; size, dst, flags, reserved
+    add si,12               ; skip fields
 
     ; name
     call print_str
@@ -63,7 +63,7 @@ rom_menu:
     mov al,0Ah
     call print_chr
 
-    add si,24               ; print char pops DS:SI
+    add si,16               ; print char pops DS:SI
     jmp .next
 
     ; main loop

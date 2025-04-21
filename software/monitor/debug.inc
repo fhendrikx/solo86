@@ -709,6 +709,8 @@ info_rom:
     mov al,' '
     call print_chr
 
+    add si,8
+
     ; name
 
     call print_str
@@ -716,7 +718,7 @@ info_rom:
     mov al,0Ah
     call print_chr
 
-    add si,24               ; print char pops DS:SI
+    add si,16               ; print char pops DS:SI
     jmp .next
 
 .exit:

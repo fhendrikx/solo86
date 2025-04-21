@@ -26,7 +26,11 @@ rom_table:
                             dw 00h  ; src offset
                             dw 00h  ; size
                             dw 00h  ; dst segment
-            TIMES 24        db 00h  ; name (24 bytes)
+                            dw 00h  ; flags
+                            dw 00h  ; reserved 1
+                            dw 00h  ; reserved 2
+                            dw 00h  ; reserved 3
+            TIMES 16        db 00h  ; name (16 bytes)
 %endrep
 
 
