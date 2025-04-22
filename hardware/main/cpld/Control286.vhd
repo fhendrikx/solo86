@@ -424,7 +424,9 @@ begin
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '0' then
               -- Halt/Shutdown
 
-              o_warning <= '1';
+              if i_addr_low(1) = '0' then
+                  o_warning <= '1';
+              end if;
 
             elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
               -- Mem Read
