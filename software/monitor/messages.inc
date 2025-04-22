@@ -2,13 +2,13 @@
 ; monitor
 
 mon_welcome         db 0Ah
-                    db ' _____       _         _____   ____ ',0Ah
-                    db '/  ___|     | |       |  _  | / ___|',0Ah
-                    db '\ `--.  ___ | | ___    \ V / / /___ ',0Ah
-                    db ' `--. \/ _ \| |/ _ \   / _ \ | ___ \',0Ah
-                    db '/\__/ / (_) | | (_) | | |_| || \_/ |',0Ah
-                    db '\____/ \___/|_|\___/  \_____/\_____/',0Ah
-                    db 0Ah, '(c) 2025 Dylan Hall / Ferry Hendrikx', 0Ah, 00h
+                    db ' _____       _          _______   ____ ',0Ah
+                    db '/  ___|     | |        / /  _  | / ___|',0Ah
+                    db '\ `--.  ___ | | ___   / / \ V / / /___ ',0Ah
+                    db ' `--. \/ _ \| |/ _ \ / /  / _ \ | ___ \',0Ah
+                    db '/\__/ / (_) | | (_) / /  | |_| || \_/ |',0Ah
+                    db '\____/ \___/|_|\___/_/   \_____/\_____/',0Ah,0Ah
+                    db '[ (c) 2025 Dylan Hall / Ferry Hendrikx ]',0Ah,00h
 
 
 ; roms
@@ -16,6 +16,42 @@ mon_welcome         db 0Ah
 rom_welcome         db 0Ah, '[ ROM Selection ]', 0Ah, 00h
 rom_prompt          db 0Ah, 'ROM$ ', 00h
 rom_select          db 0Ah, '[ Select ]', 0Ah, 0Ah, 00h
+
+
+; exceptions
+
+exc_00              db 0Ah, '[ EXCEPTION ] Divide by zero', 0Ah, 00h
+exc_01              db 0Ah, '[ EXCEPTION ] Single step', 0Ah, 00h
+exc_02              db 0Ah, '[ EXCEPTION ] NMI', 0Ah, 00h
+exc_03              db 0Ah, '[ EXCEPTION ] Breakpoint', 0Ah, 00h
+exc_04              db 0Ah, '[ EXCEPTION ] INTO overflow', 0Ah, 00h
+exc_05              db 0Ah, '[ EXCEPTION ] BOUND range', 0Ah, 00h
+exc_06              db 0Ah, '[ EXCEPTION ] Invalid opcode', 0Ah, 00h
+exc_07              db 0Ah, '[ EXCEPTION ] Extension not available', 0Ah, 00h
+exc_08              db 0Ah, '[ EXCEPTION ] Interrupt table too small', 0Ah, 00h
+exc_09              db 0Ah, '[ EXCEPTION ] Segment overrun', 0Ah, 00h
+exc_0A              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_0B              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_0C              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_0D              db 0Ah, '[ EXCEPTION ] Segment overrun', 0Ah, 00h
+exc_0E              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_0F              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_10              db 0Ah, '[ EXCEPTION ] Extension error', 0Ah, 00h
+exc_11              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_12              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_13              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_14              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_15              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_16              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_17              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_18              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_19              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1A              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1B              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1C              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1D              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1E              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_1F              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
 
 
 ; debug
