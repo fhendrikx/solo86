@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 ######################################################################
-# bin2hex - convert binary to IHX files.
+# bin2hex - convert binary to Intel Hex File.
 #
 # This utility handles IHX files that are over 64KB. This is done by
 # simply ensuring that any writes over 65536 bytes are wrapped around
