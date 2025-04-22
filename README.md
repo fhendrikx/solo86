@@ -48,5 +48,5 @@ Then build the system:
 The ROM binaries will be written to the rom/ directory.
 
 Uploadable Intel Hex Files will be written to the hex/ directory. These can be
-uploaded directly to a running instance of the monitor using IHF Load command.
+uploaded directly to a running instance of the monitor using the Load command.
 
