@@ -36,7 +36,7 @@ init:
     cli
     cld
 
-    leds 00000001b          ; 1 LED
+    leds 11111111b          ; 8 LEDs
 
     ; copy ROM to RAM (F000:0000 => 0000:0000)
     ; don't use the stack yet as the ROM copy will overwrite stored data
@@ -57,7 +57,7 @@ init:
     movsw
     loop .copy
 
-    leds 00000011b          ; 2 LEDs
+    leds 01111111b          ; 7 LEDs
 
     jmp CSEG:relocate       ; here we go!
 
@@ -75,7 +75,7 @@ TIMES 1024-($-$$)           db 00h
 ;======================================================================
 
 relocate:
-    leds 00000111b          ; 3 LEDs
+    leds 00111111b          ; 6 LEDs
 
     ; initialise DS
     mov ax,DSEG
@@ -86,13 +86,16 @@ relocate:
     mov ss,ax               ; SS:SP
     mov sp,0FFFFh
 
-    leds 00001111b          ; 4 LEDs
+    leds 00011111b          ; 5 LEDs
 
     ; initialise
     call sys_init
+
+    leds 00001111b          ; 4 LEDs
+
     call rtc_init
 
-    leds 00001111b          ; 5 LEDs
+    leds 00000111b          ; 3 LEDs
 
     ; startup sound
 
@@ -115,12 +118,12 @@ relocate:
     ; call tune
 
 .no_sound:
-    leds 00111111b          ; 6 LEDs
+    leds 00000011b          ; 2 LEDs
 
     ; enable interrupts
     sti
 
-    leds 01111111b          ; 7 LEDs
+    leds 00000001b          ; 1 LEDs
 
 ;======================================================================
 ; welcome
@@ -130,7 +133,7 @@ relocate:
     print mon_welcome
     print mon_version
 
-    leds 11111111b          ; 8 LEDs
+    leds 00000000b          ; 0 LEDs
 
     ; scan for ROMs
 .scan:
