@@ -36,6 +36,7 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'J SSSS:OOOO         - CPU JMP addr SSSS:OOOO', 0Ah
                     db 'Y SS                - CPU TMR state', 0Ah
                     db 'X                   - CPU HLT', 0Ah
+                    db 'Z                   - CPU SHUTDOWN (generate triple fault)', 0Ah
 
                     db 't HH:MM:SS          - CLK time set', 0Ah
                     db 'd YYYY-MM-DD        - CLK date set', 0Ah
@@ -66,6 +67,7 @@ dbg_jump            db '[ CPU JMP ]', 0Ah, 00h
 dbg_timer           db '[ CPU TMR ] State: On', 0Ah, 00h
 dbg_timer_off       db '[ CPU TMR ] State: Off', 0Ah, 00h
 dbg_halt            db '[ CPU HLT ]', 0Ah, 00h
+dbg_shutdown        db '[ CPU SHUTDOWN ]', 0Ah, 00h
 dbg_echo            db '[ ECHO ]', 0Ah, 00h
 
 dbg_load            db '[ IHX LOAD ]', 0Ah, 00h

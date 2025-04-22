@@ -60,6 +60,9 @@ debug_menu:
     cmp al,'X'
     je  cmd_halt
 
+    cmp al,'Z'
+    je  cmd_shutdown
+
     cmp al,'t'
     je  cmd_clock_time
     cmp al,'d'
@@ -445,6 +448,38 @@ cmd_halt:
     hlt
 
     jmp debug_menu.loop
+
+cmd_shutdown:
+    call spaces
+
+    print dbg_shutdown
+
+    ; From the Harris 80C286 datasheet
+    ; Shutdown occurs when a severe error is detected that prevents
+    ; further instruction processing by the CPU. Shutdown and halt are
+    ; externally signalled via a halt bus operation. They can be distin-
+    ; guished by A1 HIGH for halt and A1 LOW for shutdown. In real
+    ; address mode, shutdown can occur under two conditions:
+    ;
+    ; * Exceptions 8 or 13 happen and the IDT limit does not
+    ;   include the interrupt vector.
+    ; * A CALL INT or PUSH instruction attempts to wrap around
+    ;   the stack segment when SP is not even.
+    ;
+    ; An NMI input can bring the CPU out of shutdown if the IDT limit
+    ; is at least 000F(H) and SP is greater than 0005(H), otherwise
+    ; shutdown can only be exited via the RESET input.
+
+    ; Second method above
+    ; set the stack pointer to one so the INT instruction forces a wrap
+    mov ax,1
+    mov sp,ax
+    int 0
+
+    ; we shouldn't get here
+    ; however, if we do, the stack pointer is broken, do nothing
+.loop:
+    jmp cmd_shutdown.loop
 
 
 cmd_ihx_load:
