@@ -1,6 +1,8 @@
 hex/*
 !hex/Makefile
+!hex/README.md
 !hex/up
 rom/*
 !rom/Makefile
+!rom/README.md
 software/monitor/version.inc
