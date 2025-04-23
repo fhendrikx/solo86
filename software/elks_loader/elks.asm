@@ -60,7 +60,7 @@ relocate:
     out BNK_ROW_4,al
 
     ; map RAM into the spare bank 0xD000
-    mov al,1Dh
+    mov al,01Dh
     out BNK_ROW_5,al
 
     ; map the kernel image into 0xE000
