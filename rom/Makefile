@@ -6,9 +6,13 @@ rom:
 	$(PD) > solo.rom
 	$(DD) if=monitor.bin of=solo.rom bs=1k seek=0 conv=nocreat,notrunc
 	$(DD) if=basic.bin of=solo.rom bs=1k seek=64 conv=nocreat,notrunc
-	$(DD) if=stub.bin of=solo.rom bs=1k seek=128 conv=nocreat,notrunc
-	$(DD) if=out16.bin of=solo.rom bs=1k seek=192 conv=nocreat,notrunc
+	$(DD) if=elks.bin of=solo.rom bs=1k seek=128 conv=nocreat,notrunc
+	$(DD) if=out16.bin of=solo.rom bs=1k seek=144 conv=nocreat,notrunc
+	$(DD) if=stub.bin of=solo.rom bs=1k seek=192 conv=nocreat,notrunc
 	$(DD) if=logo.bin of=solo.rom bs=1k seek=256 conv=nocreat,notrunc
+#	put ELKS at the end of the ROM
+	$(DD) if=$(TOPDIR)/elks/romfs.bin of=solo.rom bs=1k seek=640 conv=nocreat,notrunc
+	$(DD) if=$(TOPDIR)/elks/Image.bin of=solo.rom bs=1k seek=960 conv=nocreat,notrunc
 	$(SP) --file=solo.rom
 
 rom0:

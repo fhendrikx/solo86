@@ -9,7 +9,7 @@ org 0
                     db 055h
                     db 0AAh
                     dw init
-                    dw 01h
+                    dw 04h
                     dw 0000h
                     dw 01h
                     dw 00h

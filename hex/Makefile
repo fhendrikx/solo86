@@ -1,6 +1,6 @@
 include $(TOPDIR)/Makefile.conf
 
-all: clean monitor basic stub logo
+all: clean monitor basic stub logo elks_loader
 
 monitor:
 	$(BH) --file=$(TOPDIR)/rom/monitor.bin --seg=F000 --start=F000:FFF0 > monitor.hex
@@ -13,6 +13,9 @@ stub:
 
 logo:
 	$(BH) --file=$(TOPDIR)/rom/logo.bin --seg=F000 --start=F000:0100 > logo.hex
+
+elks_loader:
+	$(BH) --file=$(TOPDIR)/rom/elks.bin --seg=F000 --start=F000:0100 > elks.hex
 
 clean:
 	rm -f *.hex
