@@ -62,7 +62,7 @@ entity Control286 is
 
     );
 
-  constant bank_ctrl_addr   : STD_LOGIC_VECTOR(7 downto 4) := "0001"; -- 0x10-1F
+  constant bank_ctrl_addr   : STD_LOGIC_VECTOR(7 downto 3) := "00010"; -- 0x10-17
 
 end Control286;
 
@@ -141,7 +141,7 @@ architecture rtl of Control286 is
 
   signal wait_states          : INTEGER range 0 to 3;
 
-  type t_bank_table is array (0 to 7) of STD_LOGIC_VECTOR(4 downto 0);
+  type t_bank_table is array (0 to 3) of STD_LOGIC_VECTOR(3 downto 0);
   signal bank_table           : t_bank_table;
   signal bank_write           : STD_LOGIC;
 
@@ -229,7 +229,7 @@ begin
   --
 
   proc_addr_high: process(i_reset_n, o_ale) is
-    variable bank           : STD_LOGIC_VECTOR(4 downto 0);
+    variable bank           : STD_LOGIC_VECTOR(3 downto 0);
     variable bank_index     : INTEGER;
   begin
 
@@ -249,14 +249,19 @@ begin
       if i_addr_high(3) = '1' then
         -- accessing top half of memory, use bank table
 
-        bank_index := to_integer(unsigned(i_addr_high(2 downto 0)));
+        bank_index := to_integer(unsigned(i_addr_high(2 downto 1)));
         bank := bank_table(bank_index);
 
-        o_addr_high <= bank(3 downto 0);
+        -- o_addr_high(3 downto 1) <= bank(2 downto 0);
+        o_addr_high(3) <= bank(2);
+        o_addr_high(2) <= bank(1);
+        o_addr_high(1) <= bank(0);
 
-        if bank(4) = '0' then
+        o_addr_high(0) <= i_addr_high(0);
+
+        if bank(3) = '0' then
           rom_enable <= '1';
-        elsif bank(3) = '1' then
+        elsif bank(2) = '1' then
           ram_enable <= '1';
         end if;
 
@@ -282,14 +287,14 @@ begin
 
     if i_reset_n = '0' then
 
-      for i in 0 to 7 loop
-        bank_table(i) <= "00000";
+      for i in 0 to 3 loop
+        bank_table(i) <= "0000";
       end loop;
 
     elsif rising_edge(bank_write) then
 
-      bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
-      bank_table(bank_index) <= io_data(4 downto 0);
+      bank_index := to_integer(unsigned(i_addr_low(2 downto 1)));
+      bank_table(bank_index) <= io_data(3 downto 0);
 
     end if;
 
@@ -501,22 +506,22 @@ begin
 
               if irq0_latch = '1' then
 
-                io_data <= "00100000";
+                io_data <= "00100000"; -- 0x20
                 irq0_clear <= '1';
 
               elsif irq1_latch = '1' then
 
-                io_data <= "00100001";
+                io_data <= "00100001"; -- 0x21
                 irq1_clear <= '1';
 
               elsif irq2_latch = '1' then
 
-                io_data <= "00100010";
+                io_data <= "00100010"; -- 0x22
                 irq2_clear <= '1';
 
               elsif irq3_latch = '1' then
 
-                io_data <= "00100011";
+                io_data <= "00100011"; -- 0x23
                 irq3_clear <= '1';
 
               end if;
@@ -539,12 +544,12 @@ begin
             -- only signal even numbered I/O requests
 
               -- memory banking control
-              if i_addr_low(7 downto 4) = bank_ctrl_addr then
-                bank_index := to_integer(unsigned(i_addr_low(3 downto 1)));
-                -- don't use "000", adds three more macro cells and results
+              if i_addr_low(7 downto 3) = bank_ctrl_addr then
+                bank_index := to_integer(unsigned(i_addr_low(2 downto 1)));
+                -- don't use "0000", adds three more macro cells and results
                 -- in flaky behaviour elsewhere in the CPLD (fitter bug?)
-                io_data(7 downto 5) <= "111";
-                io_data(4 downto 0) <= bank_table(bank_index);
+                io_data(7 downto 4) <= "1111";
+                io_data(3 downto 0) <= bank_table(bank_index);
               end if;
 
             end if;
@@ -564,7 +569,7 @@ begin
             -- only signal even numbered I/O requests
 
               -- memory banking control
-              if i_addr_low(7 downto 4) = bank_ctrl_addr then
+              if i_addr_low(7 downto 3) = bank_ctrl_addr then
                 bank_write <= '1';
               end if;
 
