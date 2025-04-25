@@ -91,10 +91,6 @@
  - 12h Bank table; row 1
  - 14h Bank table; row 2
  - 16h Bank table; row 3
- - 18h Bank table; row 4
- - 1Ah Bank table; row 5
- - 1Ch Bank table; row 6
- - 1Eh Bank table; row 7
 
 #### PiUART module
 
