@@ -47,29 +47,17 @@ relocate:
 
     ; setup memory banking
 
-    ; map the ROMFS image into 0x8000->0xC000 (5 banks)
-    mov al,0Ah
+    ; map the ROMFS image into 0x8000->0xD000 (3 x 128k banks)
+    mov al,04h
     out BNK_ROW_0,al
-    mov al,0Bh
+    mov al,05h
     out BNK_ROW_1,al
-    mov al,0Ch
+    mov al,06h
     out BNK_ROW_2,al
-    mov al,0Dh
+
+    ; map the kernel image into 0xE000->0xF000
+    mov al,07h
     out BNK_ROW_3,al
-    mov al,0Eh
-    out BNK_ROW_4,al
-
-    ; map RAM into the spare bank 0xD000
-    mov al,01Dh
-    out BNK_ROW_5,al
-
-    ; map the kernel image into 0xE000
-    mov al,0Fh
-    out BNK_ROW_6,al
-
-    ; map RAM into the spare bank 0xF000
-    mov al,01Fh
-    out BNK_ROW_7,al
 
     jmp 0E000h:0014h
 

@@ -21,16 +21,10 @@ sys_init:
     out BNK_ROW_1,al
     mov al,3
     out BNK_ROW_2,al
-    mov al,4
+
+    ; map RAM into the last 128k so that hex loading still works
+    mov al,0Fh
     out BNK_ROW_3,al
-    mov al,5
-    out BNK_ROW_4,al
-    mov al,6
-    out BNK_ROW_5,al
-    mov al,7
-    out BNK_ROW_6,al
-    mov al,01Fh             ; map RAM into the last segment so that hex loading still works
-    out BNK_ROW_7,al
 
 
     ; COM port
@@ -106,7 +100,7 @@ sys_remap:
     push cx
 
     ; set defaults
-    and ax,0F000h           ; ensure we get segment only
+    and ax,0E000h           ; ensure we get segment only
     cmp cl,0
     jg .loop
     mov cl,1                ; ensure count=1 if count=0
@@ -114,7 +108,7 @@ sys_remap:
 .loop:
     call sys_remap_seg
 
-    add ax,01000h           ; increment segment
+    add ax,02000h           ; increment segment
     dec cl
     cmp cl,0                ; decrement count
     jg .loop
@@ -135,20 +129,25 @@ sys_remap_seg:
     push cx
     push dx
 
-    and ax,0F000h           ; ensure we get segment only
+    and ax,0E000h           ; ensure we get segment only
+
+    ; bank row -> I/O port, value
+    ; 8000 -> 10h, 0Ch
+    ; A000 -> 12h, 0Dh
+    ; C000 -> 14h, 0Eh
+    ; E000 -> 16h, 0Fh
+
+    mov cl,12
+    shr ax,cl               ; 8000 -> 0008
+    mov dx,ax
 
     ; calculate value
-    mov al,ah               ; top byte
-    mov cl,4
-    shr al,cl               ; top nibble
-    mov dl,al
-    add al,10h
+    sub al,08h              ; 08, 0A, 0C, 0E -> 00, 02, 04, 06
+    shr al,1                ; div by 2
+    add al,0Ch              ; 00, 01, 02, 03 -> 0C, 0D, 0E, 0F
 
     ; calculate port
-    sub dl,08h
-    shl dl,1
-    add dl,10h
-    xor dh,dh
+    add dx,08h              ; 0008 -> 0010
 
     out dx,al
 
