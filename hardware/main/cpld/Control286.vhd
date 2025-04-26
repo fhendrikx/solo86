@@ -63,6 +63,9 @@ entity Control286 is
     );
 
   constant bank_ctrl_addr   : STD_LOGIC_VECTOR(7 downto 3) := "00010"; -- 0x10-17
+  constant irq_ctrl_addr    : STD_LOGIC_VECTOR(7 downto 1) := "0001100"; -- 0x18-19
+  constant irq_eoi_addr     : STD_LOGIC_VECTOR(7 downto 1) := "0001101"; -- 0x1A-1B
+  constant irq_eoi_addr_alt : STD_LOGIC_VECTOR(7 downto 1) := "1010000"; -- 0xA0-A1
 
 end Control286;
 
@@ -129,15 +132,31 @@ architecture rtl of Control286 is
   -- signals
   signal inta_cycle           : STD_LOGIC;
 
+  -- irq edge triggered latches
   signal irq0_latch           : STD_LOGIC;
   signal irq1_latch           : STD_LOGIC;
   signal irq2_latch           : STD_LOGIC;
   signal irq3_latch           : STD_LOGIC;
 
+  -- signal to clear the irq latch during an interrupt acknowledge cycle
   signal irq0_clear           : STD_LOGIC;
   signal irq1_clear           : STD_LOGIC;
   signal irq2_clear           : STD_LOGIC;
   signal irq3_clear           : STD_LOGIC;
+
+  -- mask input, 0 == input disabled, 1 == enabled
+  signal irq0_mask            : STD_LOGIC;
+  signal irq1_mask            : STD_LOGIC;
+  signal irq2_mask            : STD_LOGIC;
+  signal irq3_mask            : STD_LOGIC;
+
+  -- in service register
+  signal irq0_isr             : STD_LOGIC;
+  signal irq1_isr             : STD_LOGIC;
+  signal irq2_isr             : STD_LOGIC;
+  signal irq3_isr             : STD_LOGIC;
+
+  signal irq_ctrl_write       : STD_LOGIC;
 
   signal wait_states          : INTEGER range 0 to 3;
 
@@ -151,23 +170,29 @@ architecture rtl of Control286 is
   signal ram_enable           : STD_LOGIC;
   signal rom_enable           : STD_LOGIC;
 
+  -- latch all 8 low address bits and the optimiser will remove those
+  -- we don't need
+  signal i_addr_low_latch     : STD_LOGIC_VECTOR(7 downto 0);
+
 begin
 
   -- interrupt outputs
   o_nmi <= '0';
 
-  o_intr <= '1' when irq0_latch = '1' or irq1_latch = '1' or
-            irq2_latch = '1' or irq3_latch = '1'
+  o_intr <= '1' when (irq0_latch = '1' and irq0_isr = '0') or
+                     (irq1_latch = '1' and irq0_isr = '0' and irq1_isr = '0') or
+                     (irq2_latch = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0') or
+                     (irq3_latch = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0' and irq3_isr = '0')
             else '0';
 
   --
   -- edge triggered interrupt latches
   --
 
-  proc_irq0_latch: process(i_irq0, i_reset_n, irq0_clear) is
+  proc_irq0_latch: process(i_irq0, i_reset_n, irq0_clear, irq0_mask) is
   begin
 
-    if i_reset_n = '0' or irq0_clear = '1' then
+    if i_reset_n = '0' or irq0_clear = '1' or irq0_mask = '0' then
 
       irq0_latch <= '0';
 
@@ -179,10 +204,10 @@ begin
 
   end process;
 
-  proc_irq1_latch: process(i_irq1, i_reset_n, irq1_clear) is
+  proc_irq1_latch: process(i_irq1, i_reset_n, irq1_clear, irq1_mask) is
   begin
 
-    if i_reset_n = '0' or irq1_clear = '1' then
+    if i_reset_n = '0' or irq1_clear = '1' or irq1_mask = '0' then
 
       irq1_latch <= '0';
 
@@ -194,10 +219,10 @@ begin
 
   end process;
 
-  proc_irq2_latch: process(i_irq2, i_reset_n, irq2_clear) is
+  proc_irq2_latch: process(i_irq2, i_reset_n, irq2_clear, irq2_mask) is
   begin
 
-    if i_reset_n = '0' or irq2_clear = '1' then
+    if i_reset_n = '0' or irq2_clear = '1' or irq2_mask = '0' then
 
       irq2_latch <= '0';
 
@@ -209,10 +234,10 @@ begin
 
   end process;
 
-  proc_irq3_latch: process(i_irq3, i_reset_n, irq3_clear) is
+  proc_irq3_latch: process(i_irq3, i_reset_n, irq3_clear, irq3_mask) is
   begin
 
-    if i_reset_n = '0' or irq3_clear = '1' then
+    if i_reset_n = '0' or irq3_clear = '1' or irq3_mask = '0' then
 
       irq3_latch <= '0';
 
@@ -225,10 +250,10 @@ begin
   end process;
 
   --
-  -- generate the address high outputs
+  -- address latch enable
   --
 
-  proc_addr_high: process(i_reset_n, o_ale) is
+  proc_ale: process(i_reset_n, o_ale) is
     variable bank           : STD_LOGIC_VECTOR(3 downto 0);
     variable bank_index     : INTEGER;
   begin
@@ -239,12 +264,14 @@ begin
       o_bhe_n <= '1';
       rom_enable <= '0';
       ram_enable <= '0';
+      i_addr_low_latch <= "00000000";
 
     elsif rising_edge(o_ale) then
 
       o_bhe_n <= i_bhe_n;
       rom_enable <= '0';
       ram_enable <= '0';
+      i_addr_low_latch <= i_addr_low;
 
       if i_addr_high(3) = '1' then
         -- accessing top half of memory, use bank table
@@ -291,9 +318,12 @@ begin
         bank_table(i) <= "0000";
       end loop;
 
-    elsif rising_edge(bank_write) then
+    elsif falling_edge(bank_write) then
+      -- update the bank table on the falling edge to ensure io_data is stable
+      -- use the latched version of i_addr_low as its starting to change on
+      -- the falling edge
 
-      bank_index := to_integer(unsigned(i_addr_low(2 downto 1)));
+      bank_index := to_integer(unsigned(i_addr_low_latch(2 downto 1)));
       bank_table(bank_index) <= io_data(3 downto 0);
 
     end if;
@@ -334,12 +364,23 @@ begin
       wait_states <= 0;
 
       bank_write <= '0';
+      irq_ctrl_write <= '0';
       inta_cycle <= '0';
+
+      irq0_mask <= '0';
+      irq1_mask <= '0';
+      irq2_mask <= '0';
+      irq3_mask <= '0';
 
       irq0_clear <= '0';
       irq1_clear <= '0';
       irq2_clear <= '0';
       irq3_clear <= '0';
+
+      irq0_isr <= '0';
+      irq1_isr <= '0';
+      irq2_isr <= '0';
+      irq3_isr <= '0';
 
       -- initial output pin state
       o_warning <= '0';
@@ -371,6 +412,7 @@ begin
           wait_states <= 0;
 
           bank_write <= '0';
+          irq_ctrl_write <= '0';
 
           irq0_clear <= '0';
           irq1_clear <= '0';
@@ -461,6 +503,7 @@ begin
           wait_states <= 0;
 
           bank_write <= '0';
+          irq_ctrl_write <= '0';
 
           irq0_clear <= '0';
           irq1_clear <= '0';
@@ -508,21 +551,25 @@ begin
 
                 io_data <= "00100000"; -- 0x20
                 irq0_clear <= '1';
+                irq0_isr <= '1';
 
               elsif irq1_latch = '1' then
 
                 io_data <= "00100001"; -- 0x21
                 irq1_clear <= '1';
+                irq1_isr <= '1';
 
               elsif irq2_latch = '1' then
 
                 io_data <= "00100010"; -- 0x22
                 irq2_clear <= '1';
+                irq2_isr <= '1';
 
               elsif irq3_latch = '1' then
 
                 io_data <= "00100011"; -- 0x23
                 irq3_clear <= '1';
+                irq3_isr <= '1';
 
               end if;
 
@@ -540,17 +587,50 @@ begin
             -- for example)
             wait_states <= 3;
 
+            -- Internal peripherals
+
             if i_addr_low(0) = '0' then
             -- only signal even numbered I/O requests
 
               -- memory banking control
               if i_addr_low(7 downto 3) = bank_ctrl_addr then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+
+                -- output the bank table row
                 bank_index := to_integer(unsigned(i_addr_low(2 downto 1)));
-                -- don't use "0000", adds three more macro cells and results
-                -- in flaky behaviour elsewhere in the CPLD (fitter bug?)
+                -- don't use "0000", adds more macro cells
                 io_data(7 downto 4) <= "1111";
                 io_data(3 downto 0) <= bank_table(bank_index);
               end if;
+
+              -- irq control
+              if i_addr_low(7 downto 1) = irq_ctrl_addr then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+
+                -- output the irq mask
+                -- don't use "0000", adds more macro cells
+                io_data(7 downto 4) <= "1111";
+                io_data(3) <= irq3_mask;
+                io_data(2) <= irq2_mask;
+                io_data(1) <= irq1_mask;
+                io_data(0) <= irq0_mask;
+              end if;
+
+              -- debugging
+              -- if i_addr_low(7 downto 1) = irq_eoi_addr then
+              --   -- internal peripherals don't need any wait states
+              --   wait_states <= 0;
+              --   io_data(7) <= irq3_latch;
+              --   io_data(6) <= irq2_latch;
+              --   io_data(5) <= irq1_latch;
+              --   io_data(4) <= irq0_latch;
+              --   io_data(3) <= irq3_isr;
+              --   io_data(2) <= irq2_isr;
+              --   io_data(1) <= irq1_isr;
+              --   io_data(0) <= irq0_isr;
+              -- end if;
 
             end if;
 
@@ -565,12 +645,53 @@ begin
             -- for example)
             wait_states <= 3;
 
+            -- Internal peripherals
+
+            -- at this point i_addr_low is valid but io_data seems flaky(*)
+            -- (*) datasheet says 0-27ns to write data @ 20Mhz, CPLD also needs setup time
+            -- which exceeds the 25ns before next cycle starts meaning io_data can't be
+            -- relied on to be correct during TS2 cycle
+            -- we could perform IO write to internal peripherals in the next cycle
+            -- but then i_addr_low may not be valid
+
+            -- solution, check i_addr_low here, then raise a signal to another
+            -- process to read the io_data
+
             if i_addr_low(0) = '0' then
-            -- only signal even numbered I/O requests
+              -- only signal even numbered I/O requests
 
               -- memory banking control
               if i_addr_low(7 downto 3) = bank_ctrl_addr then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+                -- signal the bank write process
                 bank_write <= '1';
+              end if;
+
+              -- irq mask control
+              if i_addr_low(7 downto 1) = irq_ctrl_addr then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+                -- signal irq mask write process
+                irq_ctrl_write <= '1';
+              end if;
+
+              -- irq eoi
+              if i_addr_low(7 downto 1) = irq_eoi_addr or i_addr_low(7 downto 1) = irq_eoi_addr_alt then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+
+                -- clear the highest priority in service interrupt
+                if irq0_isr = '1' then
+                  irq0_isr <= '0';
+                elsif irq1_isr = '1' then
+                  irq1_isr <= '0';
+                elsif irq2_isr = '1' then
+                  irq2_isr <= '0';
+                elsif irq3_isr = '1' then
+                  irq3_isr <= '0';
+                end if;
+
               end if;
 
             end if;
@@ -740,6 +861,34 @@ begin
             o_iowr_n <= '1';
 
             io_data <= "ZZZZZZZZ";
+
+            irq_ctrl_write <= '0';
+
+            -- irq write event
+            if irq_ctrl_write = '1' then
+
+              irq0_mask <= io_data(0);
+              irq1_mask <= io_data(1);
+              irq2_mask <= io_data(2);
+              irq3_mask <= io_data(3);
+
+              if io_data(0) = '0' then
+                irq0_isr <= '0';
+              end if;
+
+              if io_data(1) = '0' then
+                irq1_isr <= '0';
+              end if;
+
+              if io_data(2) = '0' then
+                irq2_isr <= '0';
+              end if;
+
+              if io_data(3) = '0' then
+                irq3_isr <= '0';
+              end if;
+
+            end if;
 
           end if;
 
