@@ -1,7 +1,9 @@
+
 # Paging Design
 
  - See [paging_thoughts.md](paging_thoughts.md) for ideas considered.
  - The terms paging, banking, and mapping are used interchangeably.
+
 
 ## Goals
 
@@ -9,16 +11,12 @@
  - Software controlled.
  - Minimise CPLD resources where possible.
 
+
 ## Design
 
 The design provides a very flexible mapping system at the expense of a 16 bit mapping table in the CPLD (therefore at least 16 macro cells). To minimise the number of inputs needed into each macro cell the number of conditions (if statements) is kept as small as possible.
 
-The Solo86 is designed for real-mode operation and assumes only 1 MB of logical address space will be used. The platform has 1 MB of RAM, 1 MB of ROM, and memory mapped peripherals can be connected to the expansion bus.
-
-The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to RAM.
-The top half of the address space (0x80000->FFFFF) is broken into 4 x 128kB pages.
-
-A 4 bit row in the banking table controls the mapping of RAM, ROM, and external peripherals into each of the 4 pages.
+Solo/86 is designed for real-mode operation and assumes only 1 MB of logical address space will be used. The platform has 1 MB of RAM, 1 MB of ROM, and memory mapped peripherals can be connected to the expansion bus. The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to RAM. The top half of the address space (0x80000->FFFFF) is broken into 4 x 128kB pages. A 4 bit row in the banking table controls the mapping of RAM, ROM, and external peripherals into each of the 4 pages.
 
 The row mapping is:
  - Row 0, I/O address 0x10, logical address 0x80000->9FFFF
@@ -26,18 +24,19 @@ The row mapping is:
  - Row 2, I/O address 0x14, logical address 0xC0000->DFFFF
  - Row 3, I/O address 0x16, logical address 0xE0000->FFFFF
 
-When writing to a row the 4 LSBs are used, the rest are ignored.
-When reading a row the 4 LSBs contain the row value, the remaining bits should be ignored as their value is not guaranteed.
+When writing to a row the 4 LSBs are used, the remaining bits are reserved. When reading a row the 4 LSBs contain the row value, the remaining bits should be ignored as their value is reserved.
 
 On reset the banking table is set to all zeros (every row contains "0000").
 
 Each row is interpreted as follows:
- - Bit 3 (MSB) 0 == ROM, 1 == RAM or external peripheral
+ - Bit 3 (MSB) 0 == ROM, 1 == RAM / external peripheral
  - Bit 2 hardware signal A19
  - Bit 1 hardware signal A18
  - Bit 0 (LSB) hardware signal A17
 
 When bit 3 is 1, bit 2 selects between RAM and an external peripheral. 1 == RAM, 0 == external peripheral.
+
+The following table illustrates all possible mappings:
 
 (0) 0000 => ROM 0x00000 -> 0x1FFFF
 (1) 0001 => ROM 0x20000 -> 0x3FFFF
@@ -59,7 +58,7 @@ When bit 3 is 1, bit 2 selects between RAM and an external peripheral. 1 == RAM,
 (F) 1111 => RAM 0xE0000 -> 0xFFFFF
 
 
-## Examples
+## Example mappings
 
 ```
 # ROM
@@ -75,6 +74,4 @@ Row 0 = 1000 => logical address 0x80000->9FFFF, peripheral address 0x00000->0x1F
 Row 3 = 1011 => logical address 0xE0000->FFFFF, peripheral address 0x60000->0x7FFFF
 
 ```
-
-
 

@@ -28,7 +28,7 @@ SD Card and Compact Flash
   - CF direct bus access in 16 bit mode
 
 
- ## Time
+## Time
 
  Real time clock and interval timer
   - Address decode
@@ -66,3 +66,4 @@ A proper UART, not an emulation
   - 2 ports ideally
   - 16 bytes buffer (or more)
   - Automatic RTS/CTS controls
+
