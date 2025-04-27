@@ -92,6 +92,11 @@
  - 14h Bank table; row 2
  - 16h Bank table; row 3
 
+#### Mainboard interrupt controller (CPLD)
+
+ - 18h INT Ctrl
+ - 1Ah INT EOI (end of interrupt)
+
 #### PiUART module
 
  - 20h UART Ctrl
