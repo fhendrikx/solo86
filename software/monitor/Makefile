@@ -11,7 +11,7 @@ all: $(NAME)
 version.inc:
 	rm -f version.inc
 	printf >> version.inc \
-		"mon_version db 0Ah, 'Solo/86 Release 0.2.1 git $(shell git log --abbrev-commit | head -1)', 0Ah\n"
+		"mon_version db 0Ah, 'Solo/86 Release 0.3.0 git $(shell git log --abbrev-commit | head -1)', 0Ah\n"
 	printf >> version.inc \
 		"            db 'Build date: $(shell date '+%Y-%b-%d @ %T %z')', 0Ah, 0Ah, 00h\n"
 
