@@ -36,6 +36,10 @@ init:
     cli
     cld
 
+    ; reset interrupt controller
+    xor al,al
+    out INT_CTRL, al
+
     leds 11111111b          ; 8 LEDs
 
     ; copy ROM to RAM (F000:0000 => 0000:0000)
@@ -119,6 +123,10 @@ relocate:
 
 .no_sound:
     leds 00000011b          ; 2 LEDs
+
+    ; enable all 4 IRQ lines
+    mov al,0Fh
+    out INT_CTRL,al
 
     ; enable interrupts
     sti

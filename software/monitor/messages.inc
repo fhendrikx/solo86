@@ -20,38 +20,38 @@ rom_select          db 0Ah, '[ Select ]', 0Ah, 0Ah, 00h
 
 ; exceptions
 
-exc_00              db 0Ah, '[ EXCEPTION ] Divide by zero', 0Ah, 00h
-exc_01              db 0Ah, '[ EXCEPTION ] Single step', 0Ah, 00h
-exc_02              db 0Ah, '[ EXCEPTION ] NMI', 0Ah, 00h
-exc_03              db 0Ah, '[ EXCEPTION ] Breakpoint', 0Ah, 00h
-exc_04              db 0Ah, '[ EXCEPTION ] INTO overflow', 0Ah, 00h
-exc_05              db 0Ah, '[ EXCEPTION ] BOUND range', 0Ah, 00h
-exc_06              db 0Ah, '[ EXCEPTION ] Invalid opcode', 0Ah, 00h
-exc_07              db 0Ah, '[ EXCEPTION ] Extension not available', 0Ah, 00h
-exc_08              db 0Ah, '[ EXCEPTION ] Interrupt table too small', 0Ah, 00h
-exc_09              db 0Ah, '[ EXCEPTION ] Segment overrun', 0Ah, 00h
-exc_0A              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_0B              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_0C              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_0D              db 0Ah, '[ EXCEPTION ] Segment overrun', 0Ah, 00h
-exc_0E              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_0F              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_10              db 0Ah, '[ EXCEPTION ] Extension error', 0Ah, 00h
-exc_11              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_12              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_13              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_14              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_15              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_16              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_17              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_18              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_19              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1A              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1B              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1C              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1D              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1E              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
-exc_1F              db 0Ah, '[ EXCEPTION ] Reserved', 0Ah, 00h
+exc_00              db 0Ah, '[ EXCEPTION 00 ] Divide by zero', 0Ah, 00h
+exc_01              db 0Ah, '[ EXCEPTION 01 ] Single step', 0Ah, 00h
+exc_02              db 0Ah, '[ EXCEPTION 02 ] NMI', 0Ah, 00h
+exc_03              db 0Ah, '[ EXCEPTION 03 ] Breakpoint', 0Ah, 00h
+exc_04              db 0Ah, '[ EXCEPTION 04 ] INTO overflow', 0Ah, 00h
+exc_05              db 0Ah, '[ EXCEPTION 05 ] BOUND range', 0Ah, 00h
+exc_06              db 0Ah, '[ EXCEPTION 06 ] Invalid opcode', 0Ah, 00h
+exc_07              db 0Ah, '[ EXCEPTION 07 ] Extension not available', 0Ah, 00h
+exc_08              db 0Ah, '[ EXCEPTION 08 ] Interrupt table too small', 0Ah, 00h
+exc_09              db 0Ah, '[ EXCEPTION 09 ] Segment overrun', 0Ah, 00h
+exc_0A              db 0Ah, '[ EXCEPTION 0A ] Reserved', 0Ah, 00h
+exc_0B              db 0Ah, '[ EXCEPTION 0B ] Reserved', 0Ah, 00h
+exc_0C              db 0Ah, '[ EXCEPTION 0C ] Reserved', 0Ah, 00h
+exc_0D              db 0Ah, '[ EXCEPTION 0D ] Segment overrun', 0Ah, 00h
+exc_0E              db 0Ah, '[ EXCEPTION 0E ] Reserved', 0Ah, 00h
+exc_0F              db 0Ah, '[ EXCEPTION 0F ] Reserved', 0Ah, 00h
+exc_10              db 0Ah, '[ EXCEPTION 10 ] Extension error', 0Ah, 00h
+exc_11              db 0Ah, '[ EXCEPTION 11 ] Reserved', 0Ah, 00h
+exc_12              db 0Ah, '[ EXCEPTION 12 ] Reserved', 0Ah, 00h
+exc_13              db 0Ah, '[ EXCEPTION 13 ] Reserved', 0Ah, 00h
+exc_14              db 0Ah, '[ EXCEPTION 14 ] Reserved', 0Ah, 00h
+exc_15              db 0Ah, '[ EXCEPTION 15 ] Reserved', 0Ah, 00h
+exc_16              db 0Ah, '[ EXCEPTION 16 ] Reserved', 0Ah, 00h
+exc_17              db 0Ah, '[ EXCEPTION 17 ] Reserved', 0Ah, 00h
+exc_18              db 0Ah, '[ EXCEPTION 18 ] Reserved', 0Ah, 00h
+exc_19              db 0Ah, '[ EXCEPTION 19 ] Reserved', 0Ah, 00h
+exc_1A              db 0Ah, '[ EXCEPTION 1A ] Reserved', 0Ah, 00h
+exc_1B              db 0Ah, '[ EXCEPTION 1B ] Reserved', 0Ah, 00h
+exc_1C              db 0Ah, '[ EXCEPTION 1C ] Reserved', 0Ah, 00h
+exc_1D              db 0Ah, '[ EXCEPTION 1D ] Reserved', 0Ah, 00h
+exc_1E              db 0Ah, '[ EXCEPTION 1E ] Reserved', 0Ah, 00h
+exc_1F              db 0Ah, '[ EXCEPTION 1F ] Reserved', 0Ah, 00h
 
 
 ; debug

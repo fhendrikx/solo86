@@ -23,10 +23,10 @@ BNK_ROW_0       equ 10h
 BNK_ROW_1       equ 12h
 BNK_ROW_2       equ 14h
 BNK_ROW_3       equ 16h
-BNK_ROW_4       equ 18h
-BNK_ROW_5       equ 1Ah
-BNK_ROW_6       equ 1Ch
-BNK_ROW_7       equ 1Eh
+
+; Interrupt Controller
+INT_CTRL        equ 18h
+INT_EOI         equ 1Ah
 
 ; PIT I/O
 PIT_PRESENT     equ 02h
