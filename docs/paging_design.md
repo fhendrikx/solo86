@@ -26,8 +26,6 @@ The row mapping is:
 
 When writing to a row the 4 LSBs are used, the remaining bits are reserved. When reading a row the 4 LSBs contain the row value, the remaining bits should be ignored as their value is reserved.
 
-On reset the banking table is set to all zeros (every row contains "0000").
-
 Each row is interpreted as follows:
  - Bit 3 (MSB) 0 == ROM, 1 == RAM / external peripheral
  - Bit 2 hardware signal A19
@@ -57,6 +55,17 @@ The following table illustrates all possible mappings:
 (E) 1110 => RAM 0xC0000 -> 0xDFFFF
 (F) 1111 => RAM 0xE0000 -> 0xFFFFF
 
+
+## Power on state
+
+On reset the banking table is set to all zeros (every row contains "0000"). e.g.
+
+ - Row 1, logical address 0x80000->0x9FFFF, ROM physical address 0x00000->0x1FFFF.
+ - Row 2, logical address 0xA0000->0xBFFFF, ROM physical address 0x00000->0x1FFFF.
+ - Row 3, logical address 0xC0000->0xDFFFF, ROM physical address 0x00000->0x1FFFF.
+ - Row 4, logical address 0xE0000->0xFFFFF, ROM physical address 0x00000->0x1FFFF.
+
+This means code designed to run on reset should reside at 0x1FFF0 in the ROM.
 
 ## Example mappings
 
