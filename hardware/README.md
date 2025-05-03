@@ -5,11 +5,11 @@ This directory contains the specifications, instructions and any code for the So
 
 The key components of the Solo/86 system are:
 
-- [Main](/solo86/hardware/main/README.md) the Mainboard
-- [UART](/solo86/hardware/uart/README.md) the Terminal (Keyboard, Mouse)
-- [Epoch](/solo86/hardware/epoch/README.md) the clock and timer
-- [Console](/solo86/hardware/console/README.md) the "Control Panel"
-- [Panel](/solo86/hardware/panel/README.md) the "Control Panel" (a version of Console that contains everything on one card)
+- [Main](/hardware/main/README.md) the Mainboard
+- [UART](/hardware/uart/README.md) the Terminal (Keyboard, Mouse)
+- [Epoch](/hardware/epoch/README.md) the clock and timer
+- [Console](/hardware/console/README.md) the "Control Panel"
+- [Panel](/hardware/panel/README.md) the "Control Panel" (a version of Console that contains everything on one card)
 
 
 ## What do I need to build Solo/86?
