@@ -30,7 +30,7 @@ A Console or Panel expansion card should also be built if you want to select Sol
 
 ## Card orientation
 
-Each expansion card slots into the mainboard. Each card should face the front of the mainboard.
+Each expansion card card should have a male slot soldered to it's front. When seated on the mainboard, all the cards should face the front of the mainboard (i.e. where the Solo86 words can be found). The only possible exception is the last slot on the mainboard, this may have a 90 degree angled male slot, allowing you to easily work on new or experimental expansion cards.
 
 ![Card slot](image/card1.jpg)
 
