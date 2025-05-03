@@ -3,8 +3,6 @@
 
 This directory contains the specifications, instructions and any code for the Solo/86 hardware.
 
-![Solo86 in a Retro Case](image/retro.jpg)
-
 The key components of the Solo/86 system are:
 
 - Main; the Mainboard
