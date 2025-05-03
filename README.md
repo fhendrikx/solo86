@@ -1,52 +1,36 @@
-# Solo/86
 
-This repository contains the tools and binaries required to build and operate
-the Solo/86 platform.
+``
+     _____       _          _______   ____
+    /  ___|     | |        / /  _  | / ___|
+    \ `--.  ___ | | ___   / / \ V / / /___
+     `--. \/ _ \| |/ _ \ / /  / _ \ | ___ \
+    /\__/ / (_) | | (_) / /  | |_| || \_/ |
+    \____/ \___/|_|\___/_/   \_____/\_____/
+
+``
+
+This repository contains the tools and source code required to build and operate the Solo/86 platform.
+
 
 ## What is Solo/86?
 
-An expandable computer built on the Intel IA16 architecture. The computer
-comes with 1MB RAM and 1MB of ROM. Solo/86 utilises a BUS that has been
-designed to be easy to use.
+An expandable computer built on the Intel IA16 architecture. The computer comes with a 80286 processor and has 1MB RAM and 1MB of ROM.
 
-As we wanted a clean and simple architecture, the Solo/86 platform is not
-compatible with IBM XT and AT-style machines.
+As we wanted a clean and simple architecture, the Solo/86 platform is not compatible with IBM XT and AT-style machines.
 
-
-## RAM/ROM in Solo/86
-
-The Solo/86 is designed for real-mode operation and assumes only 1 MB of
-logical address space will be available. The platform has 1 MB of RAM, 1 MB
-of ROM. Memory mapped peripherals can be connected to the expansion bus.
-
-The bottom half of the address space (0x00000->7FFFF) is mapped exclusively
-to RAM. This cannot be changed.  However, the top half of the address space
-(0x80000->FFFFF) is broken into 4 x 128kB blocks. These can be mapped to ROM,
-RAM or an external peripheral.
+We utilise through-hole parts where possible, as this meets our personal __retro__ requirements.
 
 
-## Building Solo/86
+## Hardware
 
-## What tools do I need to build Solo/86?
+Solo/86 can be used directly with a display, keyboard and mouse, or through a telnet session over WiFi.
 
-You'll need to install the following:
-- make
-- nasm
-- perl
+Please see [Hardware](/hardware/README.md) for more information about the mainboard and expansion cards.
 
 
-### Building
+## Software
 
-Load the environment for building:
+Solo/86 is compatible with ELKS (Embedded Linux Kernel Subset).
 
-    source env.sh
-
-Then build the system:
-
-    make
-
-The ROM binaries will be written to the rom/ directory.
-
-Uploadable Intel Hex Files will be written to the hex/ directory. These can be
-uploaded directly to a running instance of the monitor using the Load command.
+Please see [Software](/software/README.md) for more information about the software and ROMs.
 

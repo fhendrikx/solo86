@@ -6,5 +6,5 @@
 
 ## Building
 
-Please see the instructions for panel, as this is essentially the same board.
+Please see the [Panel](/hardware/panel/README.md), as this is essentially the same board.
 
