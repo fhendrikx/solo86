@@ -6,17 +6,18 @@ This directory contains the specifications, instructions and any code for the So
 
 ## Introduction
 
-The Solo/86 mainboard contains a CPU, RAM, ROM and a CPLD. The system relies heavily on the CPLD as this contains the core logic that replaces a whole series of external chips. At a minimum, the UART expansion card will be required to boot the system to the monitor.
+The Solo/86 mainboard contains a CPU, RAM, ROM and a CPLD. The system relies heavily on the CPLD as this contains the core logic (that replaces a whole series of circuits on other computers). At a minimum, the Mainboard and UART expansion card will be required to boot the system to the Solo/86 Monitor.
 
-The Solo/86 is designed for real-mode operation and assumes only 1 MB of logical address space will be available. The platform has 1 MB of RAM, and 1 MB of ROM. Memory mapped peripherals can be connected to the expansion bus.
+The Solo/86 is designed for real-mode operation and assumes only 1 MB of logical address space will be available. The platform has 1 MB of RAM, and 1 MB of ROM. Memory mapped peripherals can be connected to the expansion bus. The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to RAM. This cannot be changed. However, the top half of the address space (0x80000->FFFFF) is broken into 4 x 128kB blocks. These can be mapped to ROM, RAM or an external peripheral.
 
-The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to RAM. This cannot be changed. However, the top half of the address space (0x80000->FFFFF) is broken into 4 x 128kB blocks. These can be mapped to ROM, RAM or an external peripheral.
+
+## Components
 
 The key components of the Solo/86 system are:
 
-- [Main](/hardware/main/README.md) - Mainboard
-- [UART](/hardware/uart/README.md) - Terminal (Keyboard, Mouse)
-- [Epoch](/hardware/epoch/README.md) - Clock and timer
+- [Mainboard](/hardware/main/README.md) - Mainboard
+- [UART](/hardware/uart/README.md) - Terminal (Keyboard, Mouse and TELNET)
+- [Epoch](/hardware/epoch/README.md) - Clock and programmable timer
 - [Console](/hardware/console/README.md) - "Control Panel"
 - [Panel](/hardware/panel/README.md) - "Control Panel" (everything on one card)
 
@@ -37,19 +38,18 @@ At the minimum you'll need:
 (although pre-programmed CPLD and PLDs may be available upon request)
 
 
-## Which parts do I need to build?
+## Which components do I need to build?
 
-At the minimum, you will need to build:
+At the minimum, you will need to build the following components:
 
-- Main
+- Mainboard
 - UART expansion card
 
 If you want to run an operating system (such as ELKS), you will need to build:
 
-- Main
+- Mainboard
 - UART expansion card
 - Epoch expansion card
 
 A Console or Panel expansion card should also be built if you want to select Solo/86 options at boot time, or need hardware debugging.
-
 

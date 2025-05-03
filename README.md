@@ -30,7 +30,12 @@ Please see [Hardware](/hardware/README.md) for more information about the mainbo
 
 ## Software
 
-Solo/86 is compatible with ELKS (Embedded Linux Kernel Subset).
+Solo/86 boots to the Solo/86 Monitor and is compatible with ELKS (Embedded Linux Kernel Subset).
 
 Please see [Software](/software/README.md) for more information about the software and ROMs.
+
+
+## Who is behind Solo/86?
+
+Dylan Hall and Ferry Hendrikx developed and built Solo/86. It is a homage to our youth, when computers were simpler and every byte mattered.
 
