@@ -1,5 +1,10 @@
 
-Build Instructions
+# Solo/86 UART
+
+![Solo/86 UART](board.jpg)
+
+
+## Building
 
 Install the components on the board in this order:
 
@@ -12,10 +17,11 @@ Install the components on the board in this order:
 
 
 
+## Settings
 
 - "BRK EN": if present, this allows the client to send a BREAK signal
-  which causes the Solo86 board to reset.
+  which causes the Solo/86 board to reset.
 
 - "RUN EN": if present, the PI will reboot when the rest of the system
-  reboots.
+  reboots. This is not always desirable.
 

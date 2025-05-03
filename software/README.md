@@ -1,5 +1,5 @@
 
-## ROM
+# Solo/86 Software and ROMs
 
-This directory contains ROMs for the Solo86 system.
+This directory contains software and ROMs for the Solo/86 system.
 
