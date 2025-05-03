@@ -12,7 +12,23 @@ The key components of the Solo/86 system are:
 - Panel expansion card; the "Control Panel" (a version of Console that contains everything on one card)
 
 
-## Requirements
+## What do I need to build Solo/86?
+
+You'll need some experience building electronics and some ability to debug hardware, if things go wrong.
+
+All the parts are through-hole, so you'll need just a plain soldering iron and some patience.
+
+At the minimum you'll need:
+
+- Multi-meter
+- Soldering Iron
+- Programmer for CPLD (e.g. XXXXXX)
+- Programmer for PLDs (e.g. TL866II plus)
+
+(although pre-programmed CPLD and PLDs may be available upon request)
+
+
+## Which parts do I need to build?
 
 At the minimum, you will need to build:
 
@@ -35,4 +51,5 @@ Each expansion card card should have a male slot soldered to it's front. When se
 ![Card slot](image/card1.jpg)
 
 ![Card slot](image/card2.jpg)
+
 
