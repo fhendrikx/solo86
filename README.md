@@ -1,5 +1,4 @@
 
-``
      _____       _          _______   ____
     /  ___|     | |        / /  _  | / ___|
     \ `--.  ___ | | ___   / / \ V / / /___
@@ -7,7 +6,6 @@
     /\__/ / (_) | | (_) / /  | |_| || \_/ |
     \____/ \___/|_|\___/_/   \_____/\_____/
 
-``
 
 This repository contains the tools and source code required to build and operate the Solo/86 platform.
 
