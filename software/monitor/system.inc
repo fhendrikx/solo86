@@ -109,8 +109,9 @@ sys_remap:
     call sys_remap_seg
 
     add ax,02000h           ; increment segment
-    dec cl
-    cmp cl,0                ; decrement count
+
+    dec cl                  ; decrement count
+    cmp cl,0
     jg .loop
 
 .exit:
