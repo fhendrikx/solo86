@@ -1,0 +1,100 @@
+Name     cf ;
+PartNo   ATF22V10C ;
+Date     2025-05-04 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly  ;
+Location  ;
+Device   g22v10 ;
+
+PIN  1 = CLK;
+// PIN  2 = A1;
+// PIN  3 = A2;
+// PIN  4 = A3;
+PIN  5 = A4;
+PIN  6 = A5;
+PIN  7 = A6;
+PIN  8 = A7;
+PIN  9 = !IOWR;
+PIN 10 = !IORD;
+PIN 11 = !BHE;
+// PIN 12 = GND;
+PIN 13 = A0;
+PIN 14 = !PATTERN_EN;   // 8 PTERMS
+PIN 15 = !DIOW;         // 10 PTERMS
+PIN 16 = !DIOR;         // 12 PTERMS
+// PIN 17 = ;           // 14 PTERMS
+PIN 18 = !CS1;          // 16 PTERMS
+PIN 19 = !CS3;          // 16 PTERMS
+PIN 20 = !RESET;        // 14 PTERMS
+PIN 21 = S0;            // 12 PTERMS
+PIN 22 = S1;            // 10 PTERMS
+PIN 23 = S2;            // 8 PTERMS
+// PIN 24 = VCC;
+
+$DEFINE WAIT_FOR_EVENT_START  0
+$DEFINE DELAY_CLK_1           1
+$DEFINE DELAY_CLK_2           2
+$DEFINE WAIT_FOR_EVENT_END    3
+$DEFINE DELAY_FINISH          4
+
+FIELD IOADDR = [A7..5];
+FIELD STATE  = [S2..0];
+
+/* valid I/O address */
+ADDR_MATCH = IOADDR:[040..05F];
+
+/* respond with our signature on the high data bus */
+PATTERN_EN = ADDR_MATCH & IORD & BHE & A0;
+
+/* event for the cf card */
+EVENT = (IORD # IOWR) & ADDR_MATCH & !A0;
+
+// synchronous outputs
+SEQUENCE STATE {
+    PRESENT WAIT_FOR_EVENT_START
+        IF EVENT & !A4 NEXT DELAY_CLK_1 OUT CS1;
+        IF EVENT & A4 NEXT DELAY_CLK_1 OUT CS3;
+        DEFAULT NEXT WAIT_FOR_EVENT_START;
+
+    PRESENT DELAY_CLK_1
+        IF !A4 NEXT DELAY_CLK_2 OUT CS1;
+        IF A4 NEXT DELAY_CLK_2 OUT CS3;
+
+    PRESENT DELAY_CLK_2
+        IF IOWR & !A4 NEXT WAIT_FOR_EVENT_END OUT CS1 OUT DIOW;
+        IF IORD & !A4 NEXT WAIT_FOR_EVENT_END OUT CS1 OUT DIOR;
+        IF IOWR & A4 NEXT WAIT_FOR_EVENT_END OUT CS3 OUT DIOW;
+        IF IORD & A4 NEXT WAIT_FOR_EVENT_END OUT CS3 OUT DIOR;
+        // shouldn't be needed, in case of glitches?
+        DEFAULT NEXT WAIT_FOR_EVENT_END;
+
+    PRESENT WAIT_FOR_EVENT_END
+        IF !EVENT & !A4 NEXT DELAY_FINISH OUT CS1;
+        IF !EVENT & A4 NEXT DELAY_FINISH OUT CS3;
+        IF EVENT & IOWR & !A4 NEXT WAIT_FOR_EVENT_END OUT CS1 OUT DIOW;
+        IF EVENT & IORD & !A4 NEXT WAIT_FOR_EVENT_END OUT CS1 OUT DIOR;
+        IF EVENT & IOWR & A4 NEXT WAIT_FOR_EVENT_END OUT CS3 OUT DIOW;
+        IF EVENT & IORD & A4 NEXT WAIT_FOR_EVENT_END OUT CS3 OUT DIOR;
+        // shouldn't be needed, in case of glitches?
+        DEFAULT NEXT WAIT_FOR_EVENT_END;
+
+    PRESENT DELAY_FINISH
+        NEXT WAIT_FOR_EVENT_START;
+}
+
+STATE.AR = RESET;
+STATE.SP = 'b'0;
+
+CS1.AR = RESET;
+CS1.SP = 'b'0;
+
+CS3.AR = RESET;
+CS3.SP = 'b'0;
+
+DIOW.AR = RESET;
+DIOW.SP = 'b'0;
+
+DIOR.AR = RESET;
+DIOR.SP = 'b'0;
