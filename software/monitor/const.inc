@@ -75,5 +75,5 @@ ATA_CYL_LO      equ 48h
 ATA_CYL_HI      equ 4Ah
 ATA_DRV_HEAD    equ 4Ch
 ATA_CMND        equ 4Eh
-ATA_CTRL        equ 50h
+ATA_CTRL        equ 5Ch
 
