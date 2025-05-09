@@ -512,14 +512,14 @@ cmd_ata_ident:
     jne syntax
 
     call inp_word           ; offset
-    mov si,ax
+    mov di,ax
 
-    push ds
-    mov ds,bx
+    push es
+    mov es,bx
 
     call ata_ident
 
-    pop ds
+    pop es
 
     cmp al,0
     je .good
