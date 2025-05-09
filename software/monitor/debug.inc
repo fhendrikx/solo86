@@ -42,7 +42,7 @@ debug_menu:
     je  cmd_mem_dump
     cmp al,'F'
     je  cmd_mem_fill
-    cmp al,'r'
+    cmp al,'R'
     je  cmd_mem_remap
     cmp al,'S'
     je  cmd_unasm_style
@@ -59,7 +59,6 @@ debug_menu:
     je  cmd_timer
     cmp al,'X'
     je  cmd_halt
-
     cmp al,'Z'
     je  cmd_shutdown
 
@@ -67,6 +66,13 @@ debug_menu:
     je  cmd_clock_time
     cmp al,'d'
     je  cmd_clock_date
+
+    cmp al,'c'
+    je  cmd_ata_detect
+    cmp al,'i'
+    je  cmd_ata_ident
+    cmp al,'r'
+    je  cmd_ata_reset
 
     cmp al,'L'
     je  cmd_ihx_load
@@ -449,6 +455,7 @@ cmd_halt:
 
     jmp debug_menu.loop
 
+
 cmd_shutdown:
     call spaces
 
@@ -480,6 +487,61 @@ cmd_shutdown:
     ; however, if we do, the stack pointer is broken, do nothing
 .loop:
     jmp cmd_shutdown.loop
+
+
+cmd_ata_detect:
+    call ata_detect
+
+    print dbg_detect
+
+    call print_word
+
+    mov al,0Ah
+    call print_chr
+
+    jmp debug_menu.loop
+
+
+cmd_ata_ident:
+    call spaces
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov si,ax
+
+    push ds
+    mov ds,bx
+
+    call ata_ident
+
+    pop ds
+
+    cmp al,0
+    je .good
+    cmp al,1
+    je .nodev
+
+    print dbg_ident_err
+    jmp debug_menu.loop
+
+.good:
+    print dbg_ident
+    jmp debug_menu.loop
+
+.nodev:
+    print dbg_ident_nodev
+    jmp debug_menu.loop
+
+
+cmd_ata_reset:
+    print dbg_reset
+
+    jmp debug_menu.loop
 
 
 cmd_ihx_load:

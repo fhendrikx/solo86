@@ -164,6 +164,7 @@ relocate:
 ; code
 ;======================================================================
 
+%include "ata.inc"
 %include "beep.inc"
 %include "debug.inc"
 %include "delay.inc"
