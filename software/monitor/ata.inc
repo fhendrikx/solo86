@@ -137,6 +137,7 @@ ata_ident:
 
 .read:
     in ax,dx
+    xchg al,ah              ; should this be here?
     stosw
     loop .read
 
