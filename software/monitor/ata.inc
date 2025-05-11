@@ -80,7 +80,7 @@ ata_detect:
     mov al,0A0h             ; master A0, slave B0
     out dx,al
 
-    call delay_10us
+    call ata_wait
 
     ; signature
     mov dx,ATA_CYL_LO
@@ -122,7 +122,6 @@ ata_ident:
 
     call ata_wait
 
-    ; error
     mov dx,ATA_ERROR
     xor al,al
     out dx,al
@@ -156,7 +155,7 @@ ata_ident:
     test al,1               ; err
     jnz .error
     test al,8               ; drq
-    jz  .wait
+    jz .wait
 
     ; read sector into buffer at ES:DI
     mov dx,ATA_DATA
@@ -248,7 +247,7 @@ ata_read:
     test al,1               ; err
     jnz .error
     test al,8               ; drq
-    jz  .wait
+    jz .wait
 
     ; sector count loop
     xor ch,ch
@@ -348,7 +347,7 @@ ata_write:
     test al,1               ; err
     jnz .error
     test al,8               ; drq
-    jz  .wait
+    jz .wait
 
     ; sector count loop
     xor ch,ch
