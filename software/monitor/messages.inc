@@ -80,6 +80,8 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'c                   - ATA device detect', 0Ah
                     db 'i SSSS:OOOO         - ATA device identify', 0Ah
                     db 'r                   - ATA device reset', 0Ah
+                    db 'e SSSS:OOOO NNNN    - ATA device read sector NNNN into SSSS:OOOO', 0Ah
+                    db 'f SSSS:OOOO NNNN    - ATA device write sector NNNN from SSSS:OOOO', 0Ah
 
                     db 'L                   - IHX LOAD', 0Ah
                     db 'E                   - IHX EXEC', 0Ah
@@ -111,9 +113,12 @@ dbg_shutdown        db '[ CPU SHUTDOWN ]', 0Ah, 00h
 
 dbg_detect          db '[ ATA DETECT ] Type: ', 00h
 dbg_ident           db '[ ATA IDENT ]', 0Ah, 00h
-dbg_ident_nodev     db '[ ATA IDENT No Device ]', 0Ah, 00h
 dbg_ident_err       db '[ ATA IDENT ERR ]', 0Ah, 00h
 dbg_reset           db '[ ATA RESET ]', 0Ah, 00h
+dbg_read            db '[ ATA READ ]', 0Ah, 00h
+dbg_read_err        db '[ ATA READ ERR ]', 0Ah, 00h
+dbg_write           db '[ ATA WRITE ]', 0Ah, 00h
+dbg_write_err       db '[ ATA WRITE ERR ]', 0Ah, 00h
 
 dbg_load            db '[ IHX LOAD ]', 0Ah, 00h
 dbg_load_addr       db '[ IHX LOAD ] Segment: ', 00h

@@ -73,6 +73,10 @@ debug_menu:
     je  cmd_ata_ident
     cmp al,'r'
     je  cmd_ata_reset
+    cmp al,'e'
+    je  cmd_ata_read
+    cmp al,'f'
+    je  cmd_ata_write
 
     cmp al,'L'
     je  cmd_ihx_load
@@ -523,8 +527,6 @@ cmd_ata_ident:
 
     cmp al,0
     je .good
-    cmp al,1
-    je .nodev
 
     print dbg_ident_err
     jmp debug_menu.loop
@@ -533,14 +535,85 @@ cmd_ata_ident:
     print dbg_ident
     jmp debug_menu.loop
 
-.nodev:
-    print dbg_ident_nodev
-    jmp debug_menu.loop
-
 
 cmd_ata_reset:
     print dbg_reset
 
+    jmp debug_menu.loop
+
+
+cmd_ata_read:
+    call spaces
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov di,ax
+
+    push es
+    mov es,bx
+
+    call spaces
+    call inp_word           ; LBA (0-16 bits)
+    call print_word
+
+    xor bx,bx
+    mov cx,1                ; count
+
+    call ata_read
+
+    pop es
+
+    cmp al,0
+    je .good
+
+    print dbg_read_err
+    jmp debug_menu.loop
+
+.good:
+    print dbg_read
+    jmp debug_menu.loop
+
+
+cmd_ata_write:
+    call spaces
+    call inp_word           ; seg
+    mov bx,ax
+
+    mov al,':'
+    call expect
+    jne syntax
+
+    call inp_word           ; offset
+    mov cx,ax
+
+    call spaces
+    call inp_word           ; LBA (0-16 bits)
+    call print_word
+
+    push ds
+    mov ds,bx
+    mov si,cx
+
+    xor bx,bx
+    mov cx,1                ; count
+
+    call ata_write
+
+    pop ds
+
+    cmp al,0
+    je .good
+
+    print dbg_write_err
+    jmp debug_menu.loop
+
+.good:
+    print dbg_write
     jmp debug_menu.loop
 
 
@@ -852,10 +925,7 @@ expect:
 inp_hex:
     call .nibble
     mov ah,al
-    shl ah,1                ; shl al,4 not possible
-    shl ah,1
-    shl ah,1
-    shl ah,1
+    shl ah,4
     call .nibble
     or al,ah
     ret
