@@ -24,10 +24,7 @@ print_chr:
 print_hex:
     push ax
     push ax
-    shr al,1                ; shr al,4 not possible
-    shr al,1
-    shr al,1
-    shr al,1
+    shr al,4
     call .nibble
 
     pop ax
@@ -141,10 +138,7 @@ raw_chr:
 raw_hex:
     call .nibble
     mov ah,al
-    shl ah,1                ; shl al,4 not possible
-    shl ah,1
-    shl ah,1
-    shl ah,1
+    shl ah,4
 
     call .nibble
     or al,ah
