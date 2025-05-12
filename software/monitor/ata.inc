@@ -1,4 +1,30 @@
 
+%imacro wait_not_busy 0
+    mov dx,ATA_CMND
+%%busy:
+    in al,dx
+    test al,080h
+    jnz %%busy
+%endm
+
+%imacro wait_drq_err 0
+    mov dx,ATA_CMND
+%%wait:
+    in al,dx
+    test al,1               ; ERR
+    jnz .error
+    test al,8               ; DRQ
+    jz %%wait
+%endm
+
+%imacro check_err 0
+    mov dx,ATA_CMND
+    in al,dx
+    test al,1               ; ERR
+    jnz .error
+%endm
+
+
 ;=========================================================================
 ; ata_init
 ; Input:
@@ -7,28 +33,6 @@
 ;   None
 ;-------------------------------------------------------------------------
 ata_init:
-    ret
-
-
-;=========================================================================
-; ata_wait
-; Input:
-;   None
-; Output:
-;   None
-;-------------------------------------------------------------------------
-ata_wait:
-    push ax
-    push dx
-    mov dx,ATA_CMND
-
-.busy:
-    in al,dx
-    test al,080h
-    jnz .busy
-
-    pop dx
-    pop ax
     ret
 
 
@@ -76,11 +80,13 @@ ata_detect:
     push cx
     push dx
 
+    wait_not_busy
+
     mov dx,ATA_DRV_HEAD
     mov al,0A0h             ; master A0, slave B0
     out dx,al
 
-    call ata_wait
+    wait_not_busy
 
     ; signature
     mov dx,ATA_CYL_LO
@@ -120,7 +126,13 @@ ata_ident:
 
     cld
 
-    call ata_wait
+    wait_not_busy
+
+    mov dx,ATA_DRV_HEAD
+    mov al,0A0h             ; master A0, slave B0
+    out dx,al
+
+    wait_not_busy
 
     mov dx,ATA_ERROR
     xor al,al
@@ -138,24 +150,13 @@ ata_ident:
     mov dx,ATA_CYL_HI
     out dx,al
 
-    mov dx,ATA_DRV_HEAD
-    mov al,0A0h             ; master A0, slave B0
-    out dx,al
-
     ; command
     mov dx,ATA_CMND
     mov al,0ECh
     out dx,al
 
-    call ata_wait
-
-    mov dx,ATA_CMND
-.wait:
-    in al,dx
-    test al,1               ; err
-    jnz .error
-    test al,8               ; drq
-    jz .wait
+    wait_not_busy
+    wait_drq_err
 
     ; read sector into buffer at ES:DI
     mov dx,ATA_DATA
@@ -188,7 +189,7 @@ ata_ident:
 ;   CL - count
 ;   ES:DI - buffer to write to
 ; Output:
-;   Data in buffer
+;   1 sector in the buffer
 ;-------------------------------------------------------------------------
 ata_read:
     push bx
@@ -198,8 +199,18 @@ ata_read:
     cld
 
     push ax
+    push bx
 
-    call ata_wait
+    wait_not_busy
+
+    ; LBA 24-27 (and drive setting)
+    mov dx,ATA_DRV_HEAD
+    shr bx,8
+    or bl,11100000b
+    mov al,bl
+    out dx,al
+
+    wait_not_busy
 
     ; error
     mov dx,ATA_ERROR
@@ -208,9 +219,10 @@ ata_read:
 
     ; count
     mov dx,ATA_SEC_COUNT
-    mov al,cl
+    mov al,1
     out dx,al
 
+    pop bx
     pop ax
 
     ; LBA 00-07
@@ -227,45 +239,22 @@ ata_read:
     mov ax,bx
     out dx,al
 
-    ; LBA 24-27 (and drive setting)
-    mov dx,ATA_DRV_HEAD
-    shr bx,8
-    or bl,11100000b
-    mov al,bl
-    out dx,al
-
     ; command
     mov dx,ATA_CMND
     mov al,020h
     out dx,al
 
-    call ata_wait
-
-    mov dx,ATA_CMND
-.wait:
-    in al,dx
-    test al,1               ; err
-    jnz .error
-    test al,8               ; drq
-    jz .wait
-
-    ; sector count loop
-    xor ch,ch
-    mov bx,cx
+    wait_not_busy
+    wait_drq_err
 
     ; read sector into buffer at ES:DI
     mov dx,ATA_DATA
-
-.start:
     mov cx,256              ; 256 words
 
 .read:
     in ax,dx
     stosw
     loop .read
-
-    dec bx
-    jnz .start
 
     xor ax,ax
     jmp .exit
@@ -285,10 +274,9 @@ ata_read:
 ; Input:
 ;   AX - LBA (00-15)
 ;   BX - LBA (16-27)
-;   CL - count
 ;   DS:SI - buffer to read from
 ; Output:
-;   None
+;   1 sector written from buffer
 ;-------------------------------------------------------------------------
 ata_write:
     push bx
@@ -298,8 +286,18 @@ ata_write:
     cld
 
     push ax
+    push bx
 
-    call ata_wait
+    wait_not_busy
+
+    ; LBA 24-27 (and drive setting)
+    mov dx,ATA_DRV_HEAD
+    shr bx,8
+    or bl,11100000b
+    mov al,bl
+    out dx,al
+
+    wait_not_busy
 
     ; error
     mov dx,ATA_ERROR
@@ -308,9 +306,10 @@ ata_write:
 
     ; count
     mov dx,ATA_SEC_COUNT
-    mov al,cl
+    mov al,1
     out dx,al
 
+    pop bx
     pop ax
 
     ; LBA 00-07
@@ -327,36 +326,16 @@ ata_write:
     mov ax,bx
     out dx,al
 
-    ; LBA 24-27 (and drive setting)
-    mov dx,ATA_DRV_HEAD
-    shr bx,8
-    or bl,11100000b
-    mov al,bl
-    out dx,al
-
     ; command
     mov dx,ATA_CMND
     mov al,030h
     out dx,al
 
-    call ata_wait
-
-    mov dx,ATA_CMND
-.wait:
-    in al,dx
-    test al,1               ; err
-    jnz .error
-    test al,8               ; drq
-    jz .wait
-
-    ; sector count loop
-    xor ch,ch
-    mov bx,cx
+    wait_not_busy
+    wait_drq_err
 
     ; write sector from buffer at DS:SI
     mov dx,ATA_DATA
-
-.start:
     mov cx,256              ; 256 words
 
 .write:
@@ -364,10 +343,8 @@ ata_write:
     out dx,ax
     loop .write
 
-    dec bx
-    jnz .start
-
-    call ata_wait
+    wait_not_busy
+    check_err
 
     xor ax,ax
     jmp .exit

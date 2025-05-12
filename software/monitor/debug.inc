@@ -562,7 +562,6 @@ cmd_ata_read:
     call print_word
 
     xor bx,bx
-    mov cx,1                ; count
 
     call ata_read
 
@@ -600,7 +599,6 @@ cmd_ata_write:
     mov si,cx
 
     xor bx,bx
-    mov cx,1                ; count
 
     call ata_write
 
