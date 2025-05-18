@@ -18,6 +18,7 @@ The key components of the Solo/86 system are:
 - [Mainboard](/hardware/main/README.md) - Mainboard
 - [UART](/hardware/uart/README.md) - Terminal (Keyboard, Mouse and TELNET)
 - [Epoch](/hardware/epoch/README.md) - Clock and programmable timer
+- [Flash](/hardware/cf/README.md) - Compact Flash storage
 - [Console](/hardware/console/README.md) - "Control Panel"
 - [Panel](/hardware/panel/README.md) - "Control Panel" (everything on one card)
 
@@ -50,6 +51,7 @@ If you want to run an operating system (such as ELKS), you will need to build:
 - Mainboard
 - UART expansion card
 - Epoch expansion card
+- Flash expansion card
 
 A Console or Panel expansion card should also be built if you want to select Solo/86 options at boot time, or need hardware debugging.
 
