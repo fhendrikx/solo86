@@ -37,3 +37,27 @@ delay_ms:
     pop bx          ; CLK = 5
     ret             ; CLK = 11 + m
 
+
+;=========================================================================
+; delay_10us
+; Input:
+;   None
+; Output:
+;   None
+;-------------------------------------------------------------------------
+delay_10us:
+    push cx         ; CLK = 3
+    mov cx,7        ; CLK = 2
+
+.loop:
+    nop             ; CLK = 3
+    nop             ; CLK = 3
+    nop             ; CLK = 3
+    nop             ; CLK = 3
+    nop             ; CLK = 3
+    nop             ; CLK = 3
+    loop .loop      ; CLK = 8 + m OR 4
+
+    pop cx          ; CLK = 5
+    ret             ; CLK = 11 + m
+

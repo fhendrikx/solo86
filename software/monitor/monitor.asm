@@ -3,7 +3,7 @@
 ; Ferry Hendrikx/Dylan Hall, April 2024
 ;======================================================================
 
-cpu 8086
+cpu 286
 
 org 0
 
@@ -164,6 +164,7 @@ relocate:
 ; code
 ;======================================================================
 
+%include "ata.inc"
 %include "beep.inc"
 %include "debug.inc"
 %include "delay.inc"

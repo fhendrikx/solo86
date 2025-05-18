@@ -63,7 +63,7 @@ dbg_syntax          db 0Ah, '[ Syntax Error ]', 0Ah, 00h
 dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'D SSSS:OOOO         - MEM DUMP addr SSSS:OOOO', 0Ah
                     db 'F SSSS:OOOO CC XX   - MEM FILL addr SSSS:OOOO count CC byte XX', 0Ah
-                    db 'r SSSS CC           - MEM RMAP ROM segment SSSS (+ count CC) as RAM', 0Ah
+                    db 'R SSSS CC           - MEM RMAP ROM segment SSSS (+ count CC) as RAM', 0Ah
                     db 'S                   - MEM UASM style', 0Ah
                     db 'U SSSS:OOOO         - MEM UASM addr SSSS:OOOO', 0Ah
 
@@ -76,6 +76,12 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
 
                     db 't HH:MM:SS          - CLK time set', 0Ah
                     db 'd YYYY-MM-DD        - CLK date set', 0Ah
+
+                    db 'c                   - ATA device detect', 0Ah
+                    db 'i SSSS:OOOO         - ATA device identify', 0Ah
+                    db 'r                   - ATA device reset', 0Ah
+                    db 'e SSSS:OOOO NNNN    - ATA device read sector NNNN into SSSS:OOOO', 0Ah
+                    db 'f SSSS:OOOO NNNN    - ATA device write sector NNNN from SSSS:OOOO', 0Ah
 
                     db 'L                   - IHX LOAD', 0Ah
                     db 'E                   - IHX EXEC', 0Ah
@@ -104,13 +110,23 @@ dbg_timer           db '[ CPU TMR ] State: On', 0Ah, 00h
 dbg_timer_off       db '[ CPU TMR ] State: Off', 0Ah, 00h
 dbg_halt            db '[ CPU HLT ]', 0Ah, 00h
 dbg_shutdown        db '[ CPU SHUTDOWN ]', 0Ah, 00h
-dbg_echo            db '[ ECHO ]', 0Ah, 00h
+
+dbg_detect          db '[ ATA DETECT ] Type: ', 00h
+dbg_ident           db '[ ATA IDENT ]', 0Ah, 00h
+dbg_ident_err       db '[ ATA IDENT ERR ]', 0Ah, 00h
+dbg_reset           db '[ ATA RESET ]', 0Ah, 00h
+dbg_read            db '[ ATA READ ]', 0Ah, 00h
+dbg_read_err        db '[ ATA READ ERR ]', 0Ah, 00h
+dbg_write           db '[ ATA WRITE ]', 0Ah, 00h
+dbg_write_err       db '[ ATA WRITE ERR ]', 0Ah, 00h
 
 dbg_load            db '[ IHX LOAD ]', 0Ah, 00h
 dbg_load_addr       db '[ IHX LOAD ] Segment: ', 00h
 dbg_load_err        db '[ IHX LOAD ERR ]', 0Ah, 00h
 dbg_exec            db '[ IHX EXEC ]', 0Ah, 00h
 dbg_exec_err        db '[ IHX EXEC ERR ]', 0Ah, 00h
+
+dbg_echo            db '[ ECHO ]', 0Ah, 00h
 
 dbg_info            db '[ SYS INFO ]', 0Ah, 00h
 dbg_info_sys        db 'System', 0Ah, 00h
