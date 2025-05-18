@@ -69,11 +69,13 @@ PNL_DETECT      equ 31h
 ; ATA I/O
 ATA_DATA        equ 40h
 ATA_ERROR       equ 42h
-ATA_SEC_COUNT   equ 44h
-ATA_SEC_NUM     equ 46h
-ATA_CYL_LO      equ 48h
-ATA_CYL_HI      equ 4Ah
-ATA_DRV_HEAD    equ 4Ch
+ATA_FEAT        equ 42h
+ATA_COUNT       equ 44h
+ATA_LBA_LO      equ 46h
+ATA_LBA_MD      equ 48h
+ATA_LBA_HI      equ 4Ah
+ATA_DRVH        equ 4Ch
 ATA_CMND        equ 4Eh
+ATA_STATUS      equ 4Eh
 ATA_CTRL        equ 5Ch
 

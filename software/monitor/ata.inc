@@ -1,6 +1,6 @@
 
 %imacro wait_not_busy 0
-    mov dx,ATA_CMND
+    mov dx,ATA_STATUS
 %%busy:
     in al,dx
     test al,080h
@@ -8,7 +8,7 @@
 %endm
 
 %imacro wait_drq_err 0
-    mov dx,ATA_CMND
+    mov dx,ATA_STATUS
 %%wait:
     in al,dx
     test al,1               ; ERR
@@ -18,7 +18,7 @@
 %endm
 
 %imacro check_err 0
-    mov dx,ATA_CMND
+    mov dx,ATA_STATUS
     in al,dx
     test al,1               ; ERR
     jnz .error
@@ -82,19 +82,19 @@ ata_detect:
 
     wait_not_busy
 
-    mov dx,ATA_DRV_HEAD
+    mov dx,ATA_DRVH
     mov al,0A0h             ; master A0, slave B0
     out dx,al
 
     wait_not_busy
 
     ; signature
-    mov dx,ATA_CYL_LO
+    mov dx,ATA_LBA_MD
     in al,dx
     mov cl,al
 
     ; signature
-    mov dx,ATA_CYL_HI
+    mov dx,ATA_LBA_HI
     in al,dx
     mov ch,al
 
@@ -128,26 +128,26 @@ ata_ident:
 
     wait_not_busy
 
-    mov dx,ATA_DRV_HEAD
+    mov dx,ATA_DRVH
     mov al,0A0h             ; master A0, slave B0
     out dx,al
 
     wait_not_busy
 
-    mov dx,ATA_ERROR
+    mov dx,ATA_FEAT
     xor al,al
     out dx,al
 
-    mov dx,ATA_SEC_COUNT
+    mov dx,ATA_COUNT
     out dx,al
 
-    mov dx,ATA_SEC_NUM
+    mov dx,ATA_LBA_LO
     out dx,al
 
-    mov dx,ATA_CYL_LO
+    mov dx,ATA_LBA_MD
     out dx,al
 
-    mov dx,ATA_CYL_HI
+    mov dx,ATA_LBA_HI
     out dx,al
 
     ; command
@@ -204,7 +204,7 @@ ata_read:
     wait_not_busy
 
     ; LBA 24-27 (and drive setting)
-    mov dx,ATA_DRV_HEAD
+    mov dx,ATA_DRVH
     shr bx,8
     or bl,11100000b
     mov al,bl
@@ -213,12 +213,12 @@ ata_read:
     wait_not_busy
 
     ; error
-    mov dx,ATA_ERROR
+    mov dx,ATA_FEAT
     xor al,al
     out dx,al
 
     ; count
-    mov dx,ATA_SEC_COUNT
+    mov dx,ATA_COUNT
     mov al,1
     out dx,al
 
@@ -226,16 +226,16 @@ ata_read:
     pop ax
 
     ; LBA 00-07
-    mov dx,ATA_SEC_NUM
+    mov dx,ATA_LBA_LO
     out dx,al
 
     ; LBA 08-15
-    mov dx,ATA_CYL_LO
+    mov dx,ATA_LBA_MD
     xchg al,ah
     out dx,al
 
     ; LBA 16-23
-    mov dx,ATA_CYL_HI
+    mov dx,ATA_LBA_HI
     mov ax,bx
     out dx,al
 
@@ -291,7 +291,7 @@ ata_write:
     wait_not_busy
 
     ; LBA 24-27 (and drive setting)
-    mov dx,ATA_DRV_HEAD
+    mov dx,ATA_DRVH
     shr bx,8
     or bl,11100000b
     mov al,bl
@@ -300,12 +300,12 @@ ata_write:
     wait_not_busy
 
     ; error
-    mov dx,ATA_ERROR
+    mov dx,ATA_FEAT
     xor al,al
     out dx,al
 
     ; count
-    mov dx,ATA_SEC_COUNT
+    mov dx,ATA_COUNT
     mov al,1
     out dx,al
 
@@ -313,16 +313,16 @@ ata_write:
     pop ax
 
     ; LBA 00-07
-    mov dx,ATA_SEC_NUM
+    mov dx,ATA_LBA_LO
     out dx,al
 
     ; LBA 08-15
-    mov dx,ATA_CYL_LO
+    mov dx,ATA_LBA_MD
     xchg al,ah
     out dx,al
 
     ; LBA 16-23
-    mov dx,ATA_CYL_HI
+    mov dx,ATA_LBA_HI
     mov ax,bx
     out dx,al
 
