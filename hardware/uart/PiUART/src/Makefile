@@ -4,8 +4,8 @@
 
 CIRCLEHOME = ../circle
 
-OBJS =  main.o kernel.o i2clogger.o ringbuf.o terminal.o terminaltask.o \
-        keyboardtask.o tcplistenertask.o tcptelnettask.o tcprawtask.o \
+OBJS =  main.o kernel.o i2clogger.o ringbuf.o keyboardtask.o \
+        tcplistenertask.o tcptelnettask.o tcprawtask.o \
         libtelnet.o strbits.o
 
 LIBS =  $(CIRCLEHOME)/lib/usb/libusb.a \

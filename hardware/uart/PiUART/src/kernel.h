@@ -22,11 +22,11 @@
 #include <fatfs/ff.h>
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
+#include <circle/terminal.h>
 
 #include "common.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
-#include "terminal.h"
 
 
 /*
@@ -192,7 +192,7 @@ private:
     bool m_bBufferSwapped;
 
     // Terminal emulator
-    CTerminal m_Terminal;
+    CTerminalDevice  *m_pTerminalDevice;
 
     // OLED/LCD display
     CSSD1306Device m_LCD;

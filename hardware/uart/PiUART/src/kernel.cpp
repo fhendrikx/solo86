@@ -1,5 +1,4 @@
 #include "kernel.h"
-#include "terminaltask.h"
 #include "keyboardtask.h"
 #include "tcplistenertask.h"
 #include "palette/vga_rgb565.h"
@@ -85,26 +84,7 @@ bool CKernel::Initialize() {
     klog(LogNotice, "Temperature: %u", CCPUThrottle::Get()->GetTemperature());
     klog(LogNotice, "Clock: %u MHz", CCPUThrottle::Get()->GetClockRate() / 1000000);
 
-    if (!InitFB(m_CmdLine.GetWidth(), m_CmdLine.GetHeight())) {
-            klog(LogError, "FrameBuffer init failed");
-            return false;
-    } else
-        klog(LogNotice, "FrameBuffer init complete");
 
-    m_nScreenWidth = m_pFrameBuffer->GetWidth();
-    m_nScreenHeight = m_pFrameBuffer->GetHeight();
-    m_nScreenPitch = m_pFrameBuffer->GetPitch();
-
-    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
-    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
-    klog(LogNotice, "ScreenPitch %u", m_nScreenPitch);
-    klog(LogNotice, "DEPTH %u", DEPTH);
-
-    if (!m_Terminal.Initialize(m_nScreenWidth, m_nScreenHeight, m_nScreenPitch)) {
-        klog(LogError, "Terminal init failed");
-        return false;
-    } else
-        klog(LogNotice, "Terminal init complete");
 
     // fails if deferred :(
     if (!m_USBHCI.Initialize(false)) {
@@ -202,6 +182,47 @@ void CKernel::Run(unsigned nCore) {
 
 void CKernel::Display() {
 
+    m_pFrameBuffer = new CBcmFrameBuffer(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(), 16);
+    m_pFrameBuffer->Initialize();
+
+    m_nScreenWidth = m_pFrameBuffer->GetWidth();
+    m_nScreenHeight = m_pFrameBuffer->GetHeight();
+    m_nScreenPitch = m_pFrameBuffer->GetPitch();
+
+    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
+    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
+    klog(LogNotice, "ScreenPitch %u", m_nScreenPitch);
+
+    m_pTerminalDevice = new CTerminalDevice(m_pFrameBuffer);
+    m_pTerminalDevice->Initialize();
+
+    klog(LogNotice, "Cols %u", m_pTerminalDevice->GetColumns());
+    klog(LogNotice, "Rows %u", m_pTerminalDevice->GetRows());
+
+    while(true) {
+
+        while (m_ToTerminal.GetCount()) {
+
+            // klog(LogNotice, "Char waiting %u", m_ToTerminal.GetCount());
+
+            u8 buf[16];
+
+            // unsigned nStartTime = CTimer::GetClockTicks();
+            m_ToTerminal.Lock();
+            int removed = m_ToTerminal.Remove(buf, 16);
+            m_ToTerminal.Unlock();
+
+            // unsigned nEndTime = CTimer::GetClockTicks();
+            // klog(LogNotice, "Lock time %u", nEndTime - nStartTime);
+
+            m_pTerminalDevice->Write((char *)buf, removed);
+
+        }
+
+        CTimer::SimpleusDelay(1);
+
+    }
+
     while(true) {
 
         // make a local copy of Mode, we don't want it changing midway through
@@ -257,7 +278,7 @@ void CKernel::Display() {
 
         case MODE_CON:
 
-            m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
+            // m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
             UpdateFB();
             break;
 
@@ -370,9 +391,6 @@ void CKernel::Main() {
       This method runs on core 0 so handles all interrupts and multi-tasking.
       Don't do anything that requires accurate timing here.
     */
-
-    // launch the task that updates the terminal with new data
-    new CTerminalTask(&m_Terminal, &m_ToTerminal);
 
     // finish the rest of the initialisation
     if (!DeferredInitialize())
@@ -490,6 +508,8 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
     //unsigned nStartTime = CTimer::GetClockTicks();
 
+    /*
+
     unsigned nModeWidth = 256;
     unsigned nModeHeight = 192;
 
@@ -549,6 +569,8 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
     }
 
+    */
+
     //unsigned nEndTime = CTimer::GetClockTicks();
     //klog(LogNotice, "frame time %u", nEndTime - nStartTime);
 
@@ -556,6 +578,7 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
 bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 
+    /*
     klog(LogDebug, "InitFB");
 
     if (m_pFrameBuffer != NULL)
@@ -589,6 +612,8 @@ bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 
     memset(m_pBuffer0, 0, m_pFrameBuffer->GetSize());
 
+    */
+
     return true;
 
 }
@@ -598,6 +623,7 @@ bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 // and the target resolution
 bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth, unsigned nTargetHeight) {
 
+    /*
     unsigned nNextWidth = nWidth >> 1;
     unsigned nNextHeight = nHeight >> 1;
 
@@ -629,6 +655,10 @@ bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth,
     }
 
     return bModeSet;
+
+    */
+
+    return false;
 
 }
 
