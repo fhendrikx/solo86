@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# MW-10400000
 Device          g22v10  Library DLIB-h-40-1
-Created         Thu May 08 19:20:46 2025
+Created         Mon May 26 18:09:47 2025
 Name            cf 
 Partno          ATF22V10C 
 Revision        01 
@@ -22,7 +22,7 @@ Location
 ADDR_MATCH =>
     !A5 & A6 & !A7
 
-CS1.d  =>
+CS0.d  =>
     !A0 & !A4 & !A5 & A6 & !A7 & IOWR & !S0 & !S1 & !S2
   # !A0 & !A4 & !A5 & A6 & !A7 & IORD & !S0 & !S1 & !S2
   # !A4 & S0 & !S1 & !S2
@@ -36,13 +36,13 @@ CS1.d  =>
   # !A0 & !A4 & !A5 & A6 & !A7 & IOWR & S0 & S1 & !S2
   # !A0 & !A4 & !A5 & A6 & !A7 & IORD & S0 & S1 & !S2
 
-CS1.ar  =>
+CS0.ar  =>
     RESET
 
-CS1.sp  =>
+CS0.sp  =>
     0 
 
-CS3.d  =>
+CS1.d  =>
     !A0 & A4 & !A5 & A6 & !A7 & IOWR & !S0 & !S1 & !S2
   # !A0 & A4 & !A5 & A6 & !A7 & IORD & !S0 & !S1 & !S2
   # A4 & S0 & !S1 & !S2
@@ -56,10 +56,10 @@ CS3.d  =>
   # !A0 & A4 & !A5 & A6 & !A7 & IOWR & S0 & S1 & !S2
   # !A0 & A4 & !A5 & A6 & !A7 & IORD & S0 & S1 & !S2
 
-CS3.ar  =>
+CS1.ar  =>
     RESET
 
-CS3.sp  =>
+CS1.sp  =>
     0 
 
 DIOR.d  =>
@@ -137,10 +137,10 @@ S2.sp  =>
 STATE =>
     S2 , S1 , S0
 
-CS1.oe  =>
+CS0.oe  =>
     1 
 
-CS3.oe  =>
+CS1.oe  =>
     1 
 
 DIOR.oe  =>
@@ -151,9 +151,6 @@ DIOW.oe  =>
 
 PATTERN_EN.oe  =>
     1 
-
-RESET.oe  =>
-    0 
 
 S0.oe  =>
     1 
@@ -173,22 +170,22 @@ Pin Variable                                    Pterms   Max     Min
 Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
 --- --------            ---     ---     ----    ------  ------  -----   
 
-    A0                          13       V        -       -       -     
-    A4                          5        V        -       -       -     
-    A5                          6        V        -       -       -     
-    A6                          7        V        -       -       -     
-    A7                          8        V        -       -       -     
+    A0                          9        V        -       -       -     
+    A4                          2        V        -       -       -     
+    A5                          3        V        -       -       -     
+    A6                          4        V        -       -       -     
+    A7                          5        V        -       -       -     
     ADDR_MATCH                  0        I        1       -       -     
- !  BHE                         11       V        -       -       -     
+ !  BHE                         8        V        -       -       -     
     CLK                         1        V        -       -       -     
- !  CS1                         18       V        -       -       -     
- !  CS1                 d       18       X        12      16      1     
-    CS1                 ar      18       X        1       1       1     
-    CS1                 sp      18       X        1       1       1     
- !  CS3                         19       V        -       -       -     
- !  CS3                 d       19       X        12      16      1     
-    CS3                 ar      19       X        1       1       1     
-    CS3                 sp      19       X        1       1       1     
+ !  CS0                         18       V        -       -       -     
+ !  CS0                 d       18       X        12      16      1     
+    CS0                 ar      18       X        1       1       1     
+    CS0                 sp      18       X        1       1       1     
+ !  CS1                         19       V        -       -       -     
+ !  CS1                 d       19       X        12      16      1     
+    CS1                 ar      19       X        1       1       1     
+    CS1                 sp      19       X        1       1       1     
  !  DIOR                        16       V        -       -       -     
  !  DIOR                d       16       X        2       12      1     
     DIOR                ar      16       X        1       1       1     
@@ -199,32 +196,31 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
     DIOW                sp      15       X        1       1       1     
     EVENT                       0        I        2       -       -     
     IOADDR                      0        F        -       -       -     
- !  IORD                        10       V        -       -       -     
- !  IOWR                        9        V        -       -       -     
- !  PATTERN_EN                  14       V        1       8       1     
- !  RESET                       20       V        -       -       -     
-    S0                          21       V        -       -       -     
-    S0                  d       21       X        7       12      1     
-    S0                  ar      21       X        1       1       1     
-    S0                  sp      21       X        1       1       1     
-    S1                          22       V        -       -       -     
-    S1                  d       22       X        6       10      1     
-    S1                  ar      22       X        1       1       1     
-    S1                  sp      22       X        1       1       1     
-    S2                          23       V        -       -       -     
-    S2                  d       23       X        5       8       1     
-    S2                  ar      23       X        1       1       1     
-    S2                  sp      23       X        1       1       1     
+ !  IORD                        7        V        -       -       -     
+ !  IOWR                        6        V        -       -       -     
+ !  PATTERN_EN                  23       V        1       8       1     
+ !  RESET                       10       V        -       -       -     
+    S0                          20       V        -       -       -     
+    S0                  d       20       X        7       14      1     
+    S0                  ar      20       X        1       1       1     
+    S0                  sp      20       X        1       1       1     
+    S1                          21       V        -       -       -     
+    S1                  d       21       X        6       12      1     
+    S1                  ar      21       X        1       1       1     
+    S1                  sp      21       X        1       1       1     
+    S2                          22       V        -       -       -     
+    S2                  d       22       X        5       10      1     
+    S2                  ar      22       X        1       1       1     
+    S2                  sp      22       X        1       1       1     
     STATE                       0        F        -       -       -     
-    CS1                 oe      18       D        1       1       0     
-    CS3                 oe      19       D        1       1       0     
+    CS0                 oe      18       D        1       1       0     
+    CS1                 oe      19       D        1       1       0     
     DIOR                oe      16       D        1       1       0     
     DIOW                oe      15       D        1       1       0     
-    PATTERN_EN          oe      14       D        1       1       0     
-    RESET               oe      20       D        1       1       0     
-    S0                  oe      21       D        1       1       0     
-    S1                  oe      22       D        1       1       0     
-    S2                  oe      23       D        1       1       0     
+    PATTERN_EN          oe      23       D        1       1       0     
+    S0                  oe      20       D        1       1       0     
+    S1                  oe      21       D        1       1       0     
+    S2                  oe      22       D        1       1       0     
 
 
 LEGEND    D : default variable         F : field      G : group
@@ -241,53 +237,53 @@ SP
  05764 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 
 AR 
- 00000 ---------------x---------------------------- 
+ 00000 -------------------------------------x------ 
 
-Pin #23  05808 Mode  -x 
+Pin #23  05808 Mode  x- 
  00044 -------------------------------------------- 
- 00088 --x----x---x--------x----------------------- 
- 00132 --x----x---x--------------------x---x------- 
- 00176 --x----x---x------------------------------x- 
- 00220 --x----x---x----------------x--------------- 
- 00264 --x----x---x-------------x------------------ 
+ 00088 ---------x--x----x-------x---x--x----------- 
+ 00132 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00176 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00220 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 00264 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00308 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00352 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00396 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #22  05810 Mode  -x 
  00440 -------------------------------------------- 
- 00484 --x----x---x---------x--x----x-------x-----x 
- 00528 --x---x----x-------------------------------- 
- 00572 --x----x--x----------------------x---------- 
- 00616 --x----x--x--------------------------x------ 
- 00660 --x----x--x---------------------x---x------- 
- 00704 --x----x---x---------x--x----x---x---------x 
+ 00484 ------x-x--x---x---------------------------- 
+ 00528 ------x----x---x----x---x------------------- 
+ 00572 ------x----x---x----------------x----------- 
+ 00616 ------x----x---xx--------------------------- 
+ 00660 ------x----x-x-x---------------------------- 
+ 00704 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00748 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00792 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00836 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  00880 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #21  05812 Mode  -x 
  00924 -------------------------------------------- 
- 00968 --x---x---x----------x--x----x---x---------x 
- 01012 --x---x---x----------x--x----x-------x-----x 
- 01056 --x----x---x---------x--x----x-------x-----x 
- 01100 --x----x--x----------------------x---------- 
- 01144 --x----x--x--------------------------x------ 
- 01188 --x----x--x---------------------x---x------- 
- 01232 --x----x---x---------x--x----x---x---------x 
+ 00968 ------x--x-xx--x-x-------x-------x---------- 
+ 01012 ------x---x----x---------------------------- 
+ 01056 ------x----x--x------x---------------------- 
+ 01100 ------x----x--x----------x------------------ 
+ 01144 ------x----x--x-----x---x------------------- 
+ 01188 ------x--x-xx--x-x---x-----------x---------- 
+ 01232 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01276 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01320 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01364 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01408 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01452 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #20  05814 Mode  x- 
- 01496 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01540 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01584 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01628 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01672 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01716 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01760 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
- 01804 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+Pin #20  05814 Mode  -x 
+ 01496 -------------------------------------------- 
+ 01540 ------x--xx-x-x--x---x-----------x---------- 
+ 01584 ------x--xx-x-x--x-------x-------x---------- 
+ 01628 ------x--x-xx--x-x-------x-------x---------- 
+ 01672 ------x----x--x------x---------------------- 
+ 01716 ------x----x--x----------x------------------ 
+ 01760 ------x----x--x-----x---x------------------- 
+ 01804 ------x--x-xx--x-x---x-----------x---------- 
  01848 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01892 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  01936 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -297,36 +293,36 @@ Pin #20  05814 Mode  x-
  02112 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #19  05816 Mode  xx 
  02156 -------------------------------------------- 
- 02200 --x---x---x-----x----x--x----x---x---------x 
- 02244 --x---x---x-----x----x--x----x-------x-----x 
- 02288 --x---x----x----x--------------------------- 
- 02332 --x----x--x-----x----------------x---------- 
- 02376 --x----x--x-----x--------------------x------ 
- 02420 --x----x---x----x---------------x---x------- 
- 02464 --x----x---x----x-------------------------x- 
- 02508 --x----x---x----x-----------x--------------- 
- 02552 --x----x---x----x--------x------------------ 
- 02596 --x----x---x----x---x----------------------- 
- 02640 --x----x---x----x----x--x----x---x---------x 
- 02684 --x----x---x----x----x--x----x-------x-----x 
+ 02200 ----x-x--xx-x-x--x---x-----------x---------- 
+ 02244 ----x-x--xx-x-x--x-------x-------x---------- 
+ 02288 ----x-x---x----x---------------------------- 
+ 02332 ----x-x----x--x------x---------------------- 
+ 02376 ----x-x----x--x----------x------------------ 
+ 02420 ----x-x----x---x----x---x------------------- 
+ 02464 ----x-x----x---x----------------x----------- 
+ 02508 ----x-x----x---xx--------------------------- 
+ 02552 ----x-x----x-x-x---------------------------- 
+ 02596 ----x-x-x--x---x---------------------------- 
+ 02640 ----x-x--x-xx--x-x---x-----------x---------- 
+ 02684 ----x-x--x-xx--x-x-------x-------x---------- 
  02728 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  02772 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  02816 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  02860 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #18  05818 Mode  xx 
  02904 -------------------------------------------- 
- 02948 --x---x---x------x---x--x----x---x---------x 
- 02992 --x---x---x------x---x--x----x-------x-----x 
- 03036 --x---x----x-----x-------------------------- 
- 03080 --x----x--x------x---------------x---------- 
- 03124 --x----x--x------x-------------------x------ 
- 03168 --x----x---x-----x--------------x---x------- 
- 03212 --x----x---x-----x------------------------x- 
- 03256 --x----x---x-----x----------x--------------- 
- 03300 --x----x---x-----x-------x------------------ 
- 03344 --x----x---x-----x--x----------------------- 
- 03388 --x----x---x-----x---x--x----x---x---------x 
- 03432 --x----x---x-----x---x--x----x-------x-----x 
+ 02948 -----xx--xx-x-x--x---x-----------x---------- 
+ 02992 -----xx--xx-x-x--x-------x-------x---------- 
+ 03036 -----xx---x----x---------------------------- 
+ 03080 -----xx----x--x------x---------------------- 
+ 03124 -----xx----x--x----------x------------------ 
+ 03168 -----xx----x---x----x---x------------------- 
+ 03212 -----xx----x---x----------------x----------- 
+ 03256 -----xx----x---xx--------------------------- 
+ 03300 -----xx----x-x-x---------------------------- 
+ 03344 -----xx-x--x---x---------------------------- 
+ 03388 -----xx--x-xx--x-x---x-----------x---------- 
+ 03432 -----xx--x-xx--x-x-------x-------x---------- 
  03476 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  03520 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  03564 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -349,8 +345,8 @@ Pin #17  05820 Mode  xx
  04268 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #16  05822 Mode  xx 
  04312 -------------------------------------------- 
- 04356 --x----x--x--------------------------x------ 
- 04400 --x----x---x---------x--x----x-------x-----x 
+ 04356 ------x----x--x----------x------------------ 
+ 04400 ------x--x-xx--x-x-------x-------x---------- 
  04444 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  04488 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  04532 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -363,8 +359,8 @@ Pin #16  05822 Mode  xx
  04840 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
 Pin #15  05824 Mode  xx 
  04884 -------------------------------------------- 
- 04928 --x----x--x----------------------x---------- 
- 04972 --x----x---x---------x--x----x---x---------x 
+ 04928 ------x----x--x------x---------------------- 
+ 04972 ------x--x-xx--x-x---x-----------x---------- 
  05016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05060 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05104 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -373,9 +369,9 @@ Pin #15  05824 Mode  xx
  05236 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05280 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05324 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
-Pin #14  05826 Mode  x- 
- 05368 -------------------------------------------- 
- 05412 ---------------------x--x----x-------x---xx- 
+Pin #14  05826 Mode  xx 
+ 05368 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
+ 05412 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05456 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05500 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
  05544 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 
@@ -395,16 +391,16 @@ LEGEND    X : fuse not blown
                                ______________
                               |      cf      |
                       CLK x---|1           24|---x Vcc                      
-                          x---|2           23|---x S2                       
-                          x---|3           22|---x S1                       
-                          x---|4           21|---x S0                       
-                       A4 x---|5           20|---x !RESET                   
-                       A5 x---|6           19|---x !CS3                     
-                       A6 x---|7           18|---x !CS1                     
-                       A7 x---|8           17|---x                          
-                    !IOWR x---|9           16|---x !DIOR                    
-                    !IORD x---|10          15|---x !DIOW                    
-                     !BHE x---|11          14|---x !PATTERN_EN              
-                      GND x---|12          13|---x A0                       
+                       A4 x---|2           23|---x !PATTERN_EN              
+                       A5 x---|3           22|---x S2                       
+                       A6 x---|4           21|---x S1                       
+                       A7 x---|5           20|---x S0                       
+                    !IOWR x---|6           19|---x !CS1                     
+                    !IORD x---|7           18|---x !CS0                     
+                     !BHE x---|8           17|---x                          
+                       A0 x---|9           16|---x !DIOR                    
+                   !RESET x---|10          15|---x !DIOW                    
+                          x---|11          14|---x                          
+                      GND x---|12          13|---x                          
                               |______________|
 
