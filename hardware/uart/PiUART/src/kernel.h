@@ -4,7 +4,7 @@
 #include <circle/machineinfo.h>
 #include <circle/koptions.h>
 #include <circle/devicenameservice.h>
-#include <circle/bcmframebuffer.h>
+#include <circle/screen.h>
 #include <circle/exceptionhandler.h>
 #include <circle/interrupt.h>
 #include <circle/timer.h>
@@ -22,12 +22,14 @@
 #include <fatfs/ff.h>
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
-#include <circle/terminal.h>
 
 #include "common.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
 
+#if DEPTH != 8
+#error Bad DEPTH
+#endif
 
 /*
   GPIO 0 PWAIT (output)
@@ -106,6 +108,7 @@
 #define CORE_MAIN 0
 #define CORE_DISPLAY 1
 #define CORE_GPIO 2
+#define CORE_SHOW 3
 
 #define RAM_SIZE 49152 // 256 x 192
 
@@ -126,6 +129,7 @@ private:
     // Cores
     void GPIO();
     void Display();
+    void Show();
     void Main();
 
     // Helper functions
@@ -185,14 +189,14 @@ private:
     CScheduler m_Scheduler;
 
     // HDMI display
-    CBcmFrameBuffer *m_pFrameBuffer;
     TPixel *m_pBuffer;
     TPixel *m_pBuffer0;
     TPixel *m_pBuffer1;
     bool m_bBufferSwapped;
+    volatile bool m_bDisplayInitComplete;
 
     // Terminal emulator
-    CTerminalDevice  *m_pTerminalDevice;
+    CScreenDevice *m_pTerminal;
 
     // OLED/LCD display
     CSSD1306Device m_LCD;

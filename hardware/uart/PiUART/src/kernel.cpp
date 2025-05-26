@@ -35,11 +35,13 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
 {
 
     m_nLogLevel = m_CmdLine.GetLogLevel();
-    m_pFrameBuffer = NULL;
+    // m_pFrameBuffer = NULL;
+    m_pTerminal = NULL;
     m_pBuffer = NULL;
     m_pBuffer0 = NULL;
     m_pBuffer1 = NULL;
     m_bBufferSwapped = true;
+    m_bDisplayInitComplete = false;
 
     m_nMode = MODE_CON;
     m_nPrevMode = MODE_CON;
@@ -168,6 +170,13 @@ void CKernel::Run(unsigned nCore) {
 
         break;
 
+    case CORE_SHOW:
+
+        klog(LogNotice, "CKernel::Run CORE_SHOW");
+        Show();
+
+        break;
+
     default:
         klog(LogNotice, "CKernel::Run default");
         break;
@@ -180,49 +189,94 @@ void CKernel::Run(unsigned nCore) {
 //  Cores
 //
 
-void CKernel::Display() {
+void CKernel::Show() {
 
-    m_pFrameBuffer = new CBcmFrameBuffer(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(), 16);
-    m_pFrameBuffer->Initialize();
-
-    m_nScreenWidth = m_pFrameBuffer->GetWidth();
-    m_nScreenHeight = m_pFrameBuffer->GetHeight();
-    m_nScreenPitch = m_pFrameBuffer->GetPitch();
-
-    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
-    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
-    klog(LogNotice, "ScreenPitch %u", m_nScreenPitch);
-
-    m_pTerminalDevice = new CTerminalDevice(m_pFrameBuffer);
-    m_pTerminalDevice->Initialize();
-
-    klog(LogNotice, "Cols %u", m_pTerminalDevice->GetColumns());
-    klog(LogNotice, "Rows %u", m_pTerminalDevice->GetRows());
+    /*
 
     while(true) {
 
+        if (m_bDisplayInitComplete) {
+
+            if (m_pFrameBuffer != NULL)
+                m_pFrameBuffer->WaitForVerticalSync();
+
+            unsigned nStartTime = CTimer::GetClockTicks();
+
+            if (m_pTerminalDevice != NULL)
+                m_pTerminalDevice->Update(0);
+            
+            unsigned nEndTime = CTimer::GetClockTicks();
+            if ((nEndTime - nStartTime) > 10)
+                klog(LogNotice, "Update time %u", nEndTime - nStartTime);
+        }
+
+        // } else {
+        //     klog(LogNotice, "Show Waiting");
+        //     CTimer::SimpleMsDelay(500);
+
+        // }
+    }
+
+    */
+
+}
+
+void CKernel::Display() {
+
+    m_pTerminal = new CScreenDevice(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(),
+                                    DEFAULT_FONT, CCharGenerator::FontFlagsNone);
+
+    m_pTerminal->Initialize();
+    // TODO error check
+
+    m_nScreenWidth = m_pTerminal->GetWidth();
+    m_nScreenHeight = m_pTerminal->GetHeight();
+    // m_nScreenPitch = m_pFrameBuffer->GetPitch();
+
+    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
+    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
+
+    // m_pTerminal->Update(1);
+
+    klog(LogNotice, "Cols %u", m_pTerminal->GetColumns());
+    klog(LogNotice, "Rows %u", m_pTerminal->GetRows());
+
+    m_bDisplayInitComplete = true;
+
+    while(true) {
+
+        int peak_waiting = 0;
+
         while (m_ToTerminal.GetCount()) {
 
-            // klog(LogNotice, "Char waiting %u", m_ToTerminal.GetCount());
+            int waiting = m_ToTerminal.GetCount();
+            if (waiting > peak_waiting)
+                peak_waiting = waiting;
 
-            u8 buf[16];
+            //klog(LogNotice, "Char waiting %u", m_ToTerminal.GetCount());
+
+            // remove 16 chars at a time from the ring buffer
+            // we could do more, but then we'd be holding the lock for longer
+            u8 buf[256];
 
             // unsigned nStartTime = CTimer::GetClockTicks();
-            m_ToTerminal.Lock();
-            int removed = m_ToTerminal.Remove(buf, 16);
-            m_ToTerminal.Unlock();
-
+             int removed = m_ToTerminal.Remove(buf, 256);
+ 
             // unsigned nEndTime = CTimer::GetClockTicks();
             // klog(LogNotice, "Lock time %u", nEndTime - nStartTime);
 
-            m_pTerminalDevice->Write((char *)buf, removed);
+            m_pTerminal->Write((char *)buf, removed);
 
+        }
+
+        if (peak_waiting) {
+            klog(LogNotice, "Peak %u", peak_waiting);
         }
 
         CTimer::SimpleusDelay(1);
 
     }
-
+/*
     while(true) {
 
         // make a local copy of Mode, we don't want it changing midway through
@@ -310,7 +364,7 @@ void CKernel::Display() {
             break;
         }
 
-    }
+    } */
 }
 
 void CKernel::GPIO() {
@@ -462,9 +516,7 @@ void CKernel::Main() {
 
                 if (RawListener->IsConnected()) {
 
-                    m_ToNetwork.Lock();
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-                    m_ToNetwork.Unlock();
 
                     RawListener->Write(Buffer, nBytesSent);
                     nNetworkDelayClockTicks = 0;
@@ -479,9 +531,7 @@ void CKernel::Main() {
 
                 } else if (TelnetListener->IsConnected()) {
 
-                    m_ToNetwork.Lock();
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-                    m_ToNetwork.Unlock();
 
                     TelnetListener->Write(Buffer, nBytesSent);
                     nNetworkDelayClockTicks = 0;
@@ -663,15 +713,16 @@ bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth,
 }
 
 void CKernel::UpdateFB() {
-
+/*
     m_pFrameBuffer->SetVirtualOffset(0, m_bBufferSwapped ? m_pFrameBuffer->GetHeight() : 0);
     m_pBuffer = m_bBufferSwapped ? m_pBuffer0 : m_pBuffer1;
     m_pFrameBuffer->WaitForVerticalSync();
     m_bBufferSwapped = !m_bBufferSwapped;
+*/
 
 }
 
-u32 CKernel::BusIORead(u32 address) {
+inline u32 CKernel::BusIORead(u32 address) {
 
     u32 data;
 
@@ -688,9 +739,7 @@ u32 CKernel::BusIORead(u32 address) {
     case UART_DATA:
         // read UART data register
 
-        m_ToSerial.Lock();
-        data = m_ToSerial.RemoveChar();
-        m_ToSerial.Unlock();
+        data = m_ToSerial.Remove();
 
         if (m_bUartIntActive) {
             m_bUartIntActive = false;
@@ -741,7 +790,7 @@ u32 CKernel::BusIORead(u32 address) {
     return data;
 }
 
-void CKernel::BusIOWrite(u32 address, u8 data) {
+inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
@@ -755,13 +804,8 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     case UART_DATA:
         // write UART data register
-        m_ToTerminal.Lock();
-        m_ToTerminal.AddChar(data);
-        m_ToTerminal.Unlock();
-
-        m_ToNetwork.Lock();
-        m_ToNetwork.AddChar(data);
-        m_ToNetwork.Unlock();
+        m_ToTerminal.Add(data);
+        m_ToNetwork.Add(data);
 
         break;
 

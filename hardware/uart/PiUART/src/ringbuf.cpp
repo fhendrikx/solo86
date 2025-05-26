@@ -16,113 +16,93 @@ CRingBuf::~CRingBuf() {
     delete[] m_pBuffer;
 }
 
-int CRingBuf::AddChar(u8 c) {
+int CRingBuf::Add(u8 c) {
+
+    m_Lock.Acquire();
 
     m_pBuffer[m_nWritePos] = c;
     m_nWritePos = (m_nWritePos + 1) % m_nSize;
     if (m_nCount < m_nSize) {
         // space in the buffer
         m_nCount++;
+        m_Lock.Release();
         return 1;
     } else {
         // buffer was full, we have overwitten the oldest value
         m_nReadPos = (m_nReadPos + 1) % m_nSize;
+        m_Lock.Release();
         return 0;
+    }
+
+}
+
+void CRingBuf::AddSafe(u8 c) {
+
+    bool bWritten = false;
+
+    while(true) {
+
+        m_Lock.Acquire();
+
+        if (m_nCount < m_nSize) {
+            // space in the buffer
+            m_pBuffer[m_nWritePos] = c;
+            m_nWritePos = (m_nWritePos + 1) % m_nSize;
+            m_nCount++;
+            m_Lock.Release();
+            return;
+        } else {
+            m_Lock.Release();
+            if (CScheduler::IsActive())
+                CScheduler::Get()->MsSleep(1);
+        }
+
     }
 
 }
 
 int CRingBuf::Add(u8 *c, int nLen) {
-
-    /*
-      this could be more efficient using memcpy etc but by calling
-      AddChar all the reasoning about updating the indexes
-      is handled in one place and simpler
-    */
-
+    
     int nWritten = 0;
     for (int i = 0; i < nLen; i++)
-        nWritten += AddChar(c[i]);
+        nWritten += Add(c[i]);
+
     return nWritten;
 
 }
 
-int CRingBuf::AddCharSafe(u8 c) {
+void CRingBuf::AddSafe(u8 *c, int nLen) {
 
-    bool bWritten = false;
+    for (int i = 0; i < nLen; i++)
+        AddSafe(c[i]);
 
-    do {
-
-        Lock();
-
-        if (GetFree() > 0) {
-            AddChar(c);
-            Unlock();
-            bWritten = true;
-        } else {
-            Unlock();
-            if (CScheduler::IsActive())
-                CScheduler::Get()->MsSleep(1);
-        }
-
-    } while (bWritten == false);
-
-    return 1;
+    return;
 
 }
 
-int CRingBuf::AddSafe(u8 *c, int nLen) {
+int CRingBuf::Remove(u8 *c) {
 
-    if (nLen > m_nSize)
-        return 0;
-
-    bool bWritten = false;
-
-    do {
-
-        Lock();
-
-        if (GetFree() >= nLen) {
-            Add(c, nLen);
-            Unlock();
-            bWritten = true;
-        } else {
-            Unlock();
-            if (CScheduler::IsActive())
-                CScheduler::Get()->MsSleep(10);
-        }
-
-    } while (bWritten == false);
-
-    return nLen;
-
-}
-
-u8 CRingBuf::RemoveChar() {
-
-    u8 c = 0;
-
+    m_Lock.Acquire();
+    
     if (m_nCount > 0) {
-        c = m_pBuffer[m_nReadPos];
+        *c = m_pBuffer[m_nReadPos];
         m_nReadPos = (m_nReadPos + 1) % m_nSize;
         m_nCount--;
+        m_Lock.Release();
+        return 1;
     }
 
-    return c;
+    m_Lock.Release();
+    return 0;
 
 }
 
 int CRingBuf::Remove(u8 *c, int nSize) {
 
-    /*
-      this could be more efficient using memcpy etc but by calling
-      RemoveChar all the reasoning about updating the indexes
-      is handled in one place and simpler
-    */
-
     int nRemoved = 0;
-    while(m_nCount > 0 && nRemoved < nSize)
-        c[nRemoved++] = RemoveChar();
+
+    while(nRemoved < nSize && Remove(&c[nRemoved]))
+        nRemoved++;
 
     return nRemoved;
 
@@ -134,13 +114,5 @@ int CRingBuf::GetCount() {
 
 int CRingBuf::GetFree() {
     return m_nSize - m_nCount;
-}
-
-void CRingBuf::Lock() {
-    m_Lock.Acquire();
-}
-
-void CRingBuf::Unlock() {
-    m_Lock.Release();
 }
 

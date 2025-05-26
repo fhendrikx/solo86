@@ -13,7 +13,7 @@
 
 enum TCPMode { telnet, raw };
 
-typedef u16 TPixel;
+typedef u8 TPixel;
 
 // the system logger writes ALL messages to an internal log regardless of the loglevel
 // this is slow, too slow for timing critcal regions so we skip logging altogether

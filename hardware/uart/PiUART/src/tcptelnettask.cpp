@@ -118,7 +118,7 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
-            me->m_pToSerial->AddCharSafe(c);
+            me->m_pToSerial->AddSafe(c);
 
         }
 
