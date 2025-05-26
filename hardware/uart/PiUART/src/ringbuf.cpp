@@ -38,8 +38,6 @@ int CRingBuf::Add(u8 c) {
 
 void CRingBuf::AddSafe(u8 c) {
 
-    bool bWritten = false;
-
     while(true) {
 
         m_Lock.Acquire();

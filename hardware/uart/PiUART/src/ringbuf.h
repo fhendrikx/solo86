@@ -20,9 +20,12 @@ public:
   to the buffer. The delay is to stop the routine hogging the buffer lock and
   allow other threads to run.
 
+  Remove() returns the number of elements removed from the buffer.
+
   To minimise latency the lock is only held for long enough to add or remove one
   element at a time.
-  There are are multiple threads calling Add() data may be interleved. 
+
+  If there are are multiple threads calling Add() or AddSafe() data may be interleved.
 */
 
     int Add(u8 c);

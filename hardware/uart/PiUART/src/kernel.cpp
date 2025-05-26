@@ -260,7 +260,7 @@ void CKernel::Display() {
             u8 buf[256];
 
             // unsigned nStartTime = CTimer::GetClockTicks();
-             int removed = m_ToTerminal.Remove(buf, 256);
+            int removed = m_ToTerminal.Remove(buf, 256);
  
             // unsigned nEndTime = CTimer::GetClockTicks();
             // klog(LogNotice, "Lock time %u", nEndTime - nStartTime);
@@ -739,7 +739,8 @@ inline u32 CKernel::BusIORead(u32 address) {
     case UART_DATA:
         // read UART data register
 
-        data = m_ToSerial.Remove();
+        data = 0;
+        m_ToSerial.Remove((u8 *)&data);
 
         if (m_bUartIntActive) {
             m_bUartIntActive = false;
