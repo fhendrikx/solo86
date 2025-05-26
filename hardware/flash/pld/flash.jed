@@ -1,8 +1,8 @@
 
 CUPL(WM)        5.0a  Serial# MW-10400000
 Device          g22v10  Library DLIB-h-40-1
-Created         Mon May 26 18:09:47 2025
-Name            cf 
+Created         Mon May 26 19:13:48 2025
+Name            flash 
 Partno          ATF22V10C 
 Revision        01 
 Date            2025-05-04 
@@ -103,4 +103,4 @@ Location
 *L05824 00000100000101010100010001100011
 *L05856 00100011001001010110001100010011
 *C1555
-*F796
+*F8D8
