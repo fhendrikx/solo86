@@ -12,7 +12,7 @@ static const telnet_telopt_t my_telopts[] = {
     { -1, 0, 0 }
 };
 
-CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf *pToSerial) {
+CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
 
     m_Name.Format("tcptelnettask-%x", pSocket);
     From = m_Name;

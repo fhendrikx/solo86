@@ -86,8 +86,6 @@ bool CKernel::Initialize() {
     klog(LogNotice, "Temperature: %u", CCPUThrottle::Get()->GetTemperature());
     klog(LogNotice, "Clock: %u MHz", CCPUThrottle::Get()->GetClockRate() / 1000000);
 
-
-
     // fails if deferred :(
     if (!m_USBHCI.Initialize(false)) {
         klog(LogError, "USBHCI init failed");
@@ -170,13 +168,6 @@ void CKernel::Run(unsigned nCore) {
 
         break;
 
-    case CORE_SHOW:
-
-        klog(LogNotice, "CKernel::Run CORE_SHOW");
-        Show();
-
-        break;
-
     default:
         klog(LogNotice, "CKernel::Run default");
         break;
@@ -189,42 +180,10 @@ void CKernel::Run(unsigned nCore) {
 //  Cores
 //
 
-void CKernel::Show() {
-
-    /*
-
-    while(true) {
-
-        if (m_bDisplayInitComplete) {
-
-            if (m_pFrameBuffer != NULL)
-                m_pFrameBuffer->WaitForVerticalSync();
-
-            unsigned nStartTime = CTimer::GetClockTicks();
-
-            if (m_pTerminalDevice != NULL)
-                m_pTerminalDevice->Update(0);
-            
-            unsigned nEndTime = CTimer::GetClockTicks();
-            if ((nEndTime - nStartTime) > 10)
-                klog(LogNotice, "Update time %u", nEndTime - nStartTime);
-        }
-
-        // } else {
-        //     klog(LogNotice, "Show Waiting");
-        //     CTimer::SimpleMsDelay(500);
-
-        // }
-    }
-
-    */
-
-}
-
 void CKernel::Display() {
 
     m_pTerminal = new CScreenDevice(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(),
-                                    DEFAULT_FONT, CCharGenerator::FontFlagsNone);
+                                    Font12x22, CCharGenerator::FontFlagsNone);
 
     m_pTerminal->Initialize();
     // TODO error check

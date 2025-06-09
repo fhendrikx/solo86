@@ -4,7 +4,7 @@
 
 CIRCLEHOME = ../circle
 
-OBJS =  main.o kernel.o i2clogger.o ringbuf.o keyboardtask.o \
+OBJS =  main.o kernel.o i2clogger.o keyboardtask.o \
         tcplistenertask.o tcptelnettask.o tcprawtask.o \
         libtelnet.o strbits.o
 

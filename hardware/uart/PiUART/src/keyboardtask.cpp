@@ -7,7 +7,7 @@ LOGMODULE("keyboardtask");
 
 CKeyboardTask *CKeyboardTask::s_pThis = NULL;
 
-CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf *pKeyBuf) {
+CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf) {
 
     SetName("keyboardtask");
 

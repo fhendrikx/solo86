@@ -108,7 +108,6 @@
 #define CORE_MAIN 0
 #define CORE_DISPLAY 1
 #define CORE_GPIO 2
-#define CORE_SHOW 3
 
 #define RAM_SIZE 49152 // 256 x 192
 
@@ -129,7 +128,6 @@ private:
     // Cores
     void GPIO();
     void Display();
-    void Show();
     void Main();
 
     // Helper functions
@@ -214,9 +212,9 @@ private:
     CWPASupplicant m_WPASupplicant;
 
     // ring buffers
-    CRingBuf m_ToSerial; // data for the UART to output
-    CRingBuf m_ToTerminal; // data for the terminal to display
-    CRingBuf m_ToNetwork; // data for the network to send
+    CRingBuf<u8> m_ToSerial; // data for the UART to output
+    CRingBuf<u8> m_ToTerminal; // data for the terminal to display
+    CRingBuf<u8> m_ToNetwork; // data for the network to send
 
     unsigned m_nLogLevel;
     u8 m_pRam[RAM_SIZE * 2];
