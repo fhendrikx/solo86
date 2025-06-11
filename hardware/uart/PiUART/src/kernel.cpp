@@ -183,7 +183,7 @@ void CKernel::Run(unsigned nCore) {
 void CKernel::Display() {
 
     m_pTerminal = new CScreenDevice(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(),
-                                    Font12x22, CCharGenerator::FontFlagsNone);
+                                    TerminusBold24x12, CCharGenerator::FontFlagsNone);
 
     m_pTerminal->Initialize();
     // TODO error check

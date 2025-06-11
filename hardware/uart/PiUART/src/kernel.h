@@ -26,6 +26,7 @@
 #include "common.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
+#include "fonts.h"
 
 #if DEPTH != 8
 #error Bad DEPTH
