@@ -188,6 +188,8 @@ void CKernel::Display() {
     m_pTerminal->Initialize();
     // TODO error check
 
+    m_pTerminal->SetCursorBlock(true);
+
     m_nScreenWidth = m_pTerminal->GetWidth();
     m_nScreenHeight = m_pTerminal->GetHeight();
     // m_nScreenPitch = m_pFrameBuffer->GetPitch();
@@ -414,10 +416,6 @@ void CKernel::Main() {
     // launch the task that looks after the USB keyboard
     new CKeyboardTask(&m_USBHCI, &m_ToSerial);
 
-    // dodgy hack, stop new tasks from running so the DHCP process doesn't start
-    // also interferes with the netphy task
-    m_Scheduler.SuspendNewTasks();
-
     klog(LogNotice, "WPA waiting for connection");
 
     // wait for WPA to become connected
@@ -426,9 +424,6 @@ void CKernel::Main() {
     }
 
     klog(LogNotice, "WPA connected");
-
-    // allow dhcp to run now
-    m_Scheduler.ResumeNewTasks();
 
     // wait for the network (dhcp) to be ready
     while(!m_Net.IsRunning()) {
