@@ -192,7 +192,6 @@ private:
     TPixel *m_pBuffer0;
     TPixel *m_pBuffer1;
     bool m_bBufferSwapped;
-    volatile bool m_bDisplayInitComplete;
 
     // Terminal emulator
     CScreenDevice *m_pTerminal;
@@ -234,7 +233,6 @@ private:
 
     unsigned m_nScreenWidth;
     unsigned m_nScreenHeight;
-    unsigned m_nScreenPitch;
 
     u8 m_nTestPort;
 
