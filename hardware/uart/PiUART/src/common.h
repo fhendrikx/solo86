@@ -13,13 +13,7 @@
 
 enum TCPMode { telnet, raw };
 
-#if DEPTH == 8
 typedef u8 TPixel;
-#elif DEPTH == 16
-typedef u16 TPixel;
-#else
-#error Bad DEPTH
-#endif
 
 // the system logger writes ALL messages to an internal log regardless of the loglevel
 // this is slow, too slow for timing critcal regions so we skip logging altogether

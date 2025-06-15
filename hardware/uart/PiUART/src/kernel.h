@@ -4,7 +4,7 @@
 #include <circle/machineinfo.h>
 #include <circle/koptions.h>
 #include <circle/devicenameservice.h>
-#include <circle/bcmframebuffer.h>
+#include <circle/screen.h>
 #include <circle/exceptionhandler.h>
 #include <circle/interrupt.h>
 #include <circle/timer.h>
@@ -26,8 +26,11 @@
 #include "common.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
-#include "terminal.h"
+#include "fonts.h"
 
+#if DEPTH != 8
+#error Bad DEPTH
+#endif
 
 /*
   GPIO 0 PWAIT (output)
@@ -185,14 +188,13 @@ private:
     CScheduler m_Scheduler;
 
     // HDMI display
-    CBcmFrameBuffer *m_pFrameBuffer;
     TPixel *m_pBuffer;
     TPixel *m_pBuffer0;
     TPixel *m_pBuffer1;
     bool m_bBufferSwapped;
 
     // Terminal emulator
-    CTerminal m_Terminal;
+    CScreenDevice *m_pTerminal;
 
     // OLED/LCD display
     CSSD1306Device m_LCD;
@@ -210,9 +212,9 @@ private:
     CWPASupplicant m_WPASupplicant;
 
     // ring buffers
-    CRingBuf m_ToSerial; // data for the UART to output
-    CRingBuf m_ToTerminal; // data for the terminal to display
-    CRingBuf m_ToNetwork; // data for the network to send
+    CRingBuf<u8> m_ToSerial; // data for the UART to output
+    CRingBuf<u8> m_ToTerminal; // data for the terminal to display
+    CRingBuf<u8> m_ToNetwork; // data for the network to send
 
     unsigned m_nLogLevel;
     u8 m_pRam[RAM_SIZE * 2];
@@ -231,7 +233,6 @@ private:
 
     unsigned m_nScreenWidth;
     unsigned m_nScreenHeight;
-    unsigned m_nScreenPitch;
 
     u8 m_nTestPort;
 

@@ -1,5 +1,4 @@
 #include "kernel.h"
-#include "terminaltask.h"
 #include "keyboardtask.h"
 #include "tcplistenertask.h"
 #include "palette/vga_rgb565.h"
@@ -36,7 +35,8 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
 {
 
     m_nLogLevel = m_CmdLine.GetLogLevel();
-    m_pFrameBuffer = NULL;
+    // m_pFrameBuffer = NULL;
+    m_pTerminal = NULL;
     m_pBuffer = NULL;
     m_pBuffer0 = NULL;
     m_pBuffer1 = NULL;
@@ -84,27 +84,6 @@ bool CKernel::Initialize() {
     klog(LogNotice, "Compile time: " __DATE__ " " __TIME__);
     klog(LogNotice, "Temperature: %u", CCPUThrottle::Get()->GetTemperature());
     klog(LogNotice, "Clock: %u MHz", CCPUThrottle::Get()->GetClockRate() / 1000000);
-
-    if (!InitFB(m_CmdLine.GetWidth(), m_CmdLine.GetHeight())) {
-            klog(LogError, "FrameBuffer init failed");
-            return false;
-    } else
-        klog(LogNotice, "FrameBuffer init complete");
-
-    m_nScreenWidth = m_pFrameBuffer->GetWidth();
-    m_nScreenHeight = m_pFrameBuffer->GetHeight();
-    m_nScreenPitch = m_pFrameBuffer->GetPitch();
-
-    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
-    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
-    klog(LogNotice, "ScreenPitch %u", m_nScreenPitch);
-    klog(LogNotice, "DEPTH %u", DEPTH);
-
-    if (!m_Terminal.Initialize(m_nScreenWidth, m_nScreenHeight, m_nScreenPitch)) {
-        klog(LogError, "Terminal init failed");
-        return false;
-    } else
-        klog(LogNotice, "Terminal init complete");
 
     // fails if deferred :(
     if (!m_USBHCI.Initialize(false)) {
@@ -202,6 +181,103 @@ void CKernel::Run(unsigned nCore) {
 
 void CKernel::Display() {
 
+    // create a frame buffer briefly to determine the screen width, height, and font
+    CBcmFrameBuffer *fb = new CBcmFrameBuffer(m_CmdLine.GetWidth(), m_CmdLine.GetHeight(), DEPTH);
+
+    if (fb == NULL or !fb->Initialize()) {
+        // framebuffer object is unusable, bomb out
+        klog(LogPanic, "Failed to create or init frame buffer");
+        CMultiCoreSupport::HaltAll();
+    } else
+        klog(LogNotice, "Temp frame buffer init");
+
+    m_nScreenWidth = fb->GetWidth();
+    m_nScreenHeight = fb->GetHeight();
+
+    klog(LogNotice, "ScreenWidth %u", m_nScreenWidth);
+    klog(LogNotice, "ScreenHeight %u", m_nScreenHeight);
+
+    TFont font;
+
+    if (m_nScreenHeight <= 600) {
+        // 640x480, 800x600
+        klog(LogNotice, "Using TerminusBoldVGA16");
+        font = TerminusBoldVGA16;
+    } else if (m_nScreenHeight <= 900) {
+        // 1024x768
+        klog(LogNotice, "Using TerminusBold24x12");
+        font = TerminusBold24x12;
+    } else {
+        // everything larger
+        klog(LogNotice, "Using TerminusBold32x16");
+        font = TerminusBold32x16;
+    }
+
+    delete fb;
+
+    // create the terminal emulator
+    m_pTerminal = new CScreenDevice(m_nScreenWidth, m_nScreenHeight, font);
+
+    if (m_pTerminal == NULL or !m_pTerminal->Initialize()) {
+        // terminal is unusable, bomb out
+        klog(LogPanic, "Failed to create or init Terminal");
+        CMultiCoreSupport::HaltAll();
+    } else {
+        klog(LogNotice, "Terminal init");
+    }
+
+    // clear the screen as it doesn't always appear to be blank
+    /*
+    fb = m_pTerminal->GetFrameBuffer();
+    u32 nBufferPtr = fb->GetBuffer();
+    u32 nBufferSize = fb->GetSize();
+    memset((void *)nBufferPtr, 0, nBufferSize);
+    */
+
+    // m_pTerminal->Write(VERSION "\n", strlen(VERSION) + 1);
+
+    m_pTerminal->SetCursorBlock(true);
+
+    m_nScreenWidth = m_pTerminal->GetWidth();
+    m_nScreenHeight = m_pTerminal->GetHeight();
+
+    klog(LogNotice, "Cols %u", m_pTerminal->GetColumns());
+    klog(LogNotice, "Rows %u", m_pTerminal->GetRows());
+
+    while(true) {
+
+        // int peak_waiting = 0;
+
+        while (m_ToTerminal.GetCount()) {
+
+            // int waiting = m_ToTerminal.GetCount();
+            // if (waiting > peak_waiting)
+            //     peak_waiting = waiting;
+
+            //klog(LogNotice, "Char waiting %u", m_ToTerminal.GetCount());
+
+            // remove 16 chars at a time from the ring buffer
+            // we could do more, but then we'd be holding the lock for longer
+            u8 buf[256];
+
+            // unsigned nStartTime = CTimer::GetClockTicks();
+            int removed = m_ToTerminal.Remove(buf, 256);
+
+            // unsigned nEndTime = CTimer::GetClockTicks();
+            // klog(LogNotice, "Lock time %u", nEndTime - nStartTime);
+
+            m_pTerminal->Write((char *)buf, removed);
+
+        }
+
+        // if (peak_waiting) {
+        //     klog(LogNotice, "Peak %u", peak_waiting);
+        // }
+
+        CTimer::SimpleusDelay(1);
+
+    }
+/*
     while(true) {
 
         // make a local copy of Mode, we don't want it changing midway through
@@ -257,7 +333,7 @@ void CKernel::Display() {
 
         case MODE_CON:
 
-            m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
+            // m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
             UpdateFB();
             break;
 
@@ -289,7 +365,7 @@ void CKernel::Display() {
             break;
         }
 
-    }
+    } */
 }
 
 void CKernel::GPIO() {
@@ -371,9 +447,6 @@ void CKernel::Main() {
       Don't do anything that requires accurate timing here.
     */
 
-    // launch the task that updates the terminal with new data
-    new CTerminalTask(&m_Terminal, &m_ToTerminal);
-
     // finish the rest of the initialisation
     if (!DeferredInitialize())
         return;
@@ -383,10 +456,6 @@ void CKernel::Main() {
     // launch the task that looks after the USB keyboard
     new CKeyboardTask(&m_USBHCI, &m_ToSerial);
 
-    // dodgy hack, stop new tasks from running so the DHCP process doesn't start
-    // also interferes with the netphy task
-    m_Scheduler.SuspendNewTasks();
-
     klog(LogNotice, "WPA waiting for connection");
 
     // wait for WPA to become connected
@@ -395,9 +464,6 @@ void CKernel::Main() {
     }
 
     klog(LogNotice, "WPA connected");
-
-    // allow dhcp to run now
-    m_Scheduler.ResumeNewTasks();
 
     // wait for the network (dhcp) to be ready
     while(!m_Net.IsRunning()) {
@@ -444,9 +510,7 @@ void CKernel::Main() {
 
                 if (RawListener->IsConnected()) {
 
-                    m_ToNetwork.Lock();
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-                    m_ToNetwork.Unlock();
 
                     RawListener->Write(Buffer, nBytesSent);
                     nNetworkDelayClockTicks = 0;
@@ -461,9 +525,7 @@ void CKernel::Main() {
 
                 } else if (TelnetListener->IsConnected()) {
 
-                    m_ToNetwork.Lock();
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
-                    m_ToNetwork.Unlock();
 
                     TelnetListener->Write(Buffer, nBytesSent);
                     nNetworkDelayClockTicks = 0;
@@ -489,6 +551,8 @@ void CKernel::Main() {
 void CKernel::UpdateMode256x192(u8 *pRam) {
 
     //unsigned nStartTime = CTimer::GetClockTicks();
+
+    /*
 
     unsigned nModeWidth = 256;
     unsigned nModeHeight = 192;
@@ -549,6 +613,8 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
     }
 
+    */
+
     //unsigned nEndTime = CTimer::GetClockTicks();
     //klog(LogNotice, "frame time %u", nEndTime - nStartTime);
 
@@ -556,6 +622,7 @@ void CKernel::UpdateMode256x192(u8 *pRam) {
 
 bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 
+    /*
     klog(LogDebug, "InitFB");
 
     if (m_pFrameBuffer != NULL)
@@ -589,6 +656,8 @@ bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 
     memset(m_pBuffer0, 0, m_pFrameBuffer->GetSize());
 
+    */
+
     return true;
 
 }
@@ -598,6 +667,7 @@ bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
 // and the target resolution
 bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth, unsigned nTargetHeight) {
 
+    /*
     unsigned nNextWidth = nWidth >> 1;
     unsigned nNextHeight = nHeight >> 1;
 
@@ -630,18 +700,23 @@ bool CKernel::ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth,
 
     return bModeSet;
 
+    */
+
+    return false;
+
 }
 
 void CKernel::UpdateFB() {
-
+/*
     m_pFrameBuffer->SetVirtualOffset(0, m_bBufferSwapped ? m_pFrameBuffer->GetHeight() : 0);
     m_pBuffer = m_bBufferSwapped ? m_pBuffer0 : m_pBuffer1;
     m_pFrameBuffer->WaitForVerticalSync();
     m_bBufferSwapped = !m_bBufferSwapped;
+*/
 
 }
 
-u32 CKernel::BusIORead(u32 address) {
+inline u32 CKernel::BusIORead(u32 address) {
 
     u32 data;
 
@@ -658,9 +733,8 @@ u32 CKernel::BusIORead(u32 address) {
     case UART_DATA:
         // read UART data register
 
-        m_ToSerial.Lock();
-        data = m_ToSerial.RemoveChar();
-        m_ToSerial.Unlock();
+        data = 0;
+        m_ToSerial.Remove((u8 *)&data);
 
         if (m_bUartIntActive) {
             m_bUartIntActive = false;
@@ -711,7 +785,7 @@ u32 CKernel::BusIORead(u32 address) {
     return data;
 }
 
-void CKernel::BusIOWrite(u32 address, u8 data) {
+inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
@@ -725,13 +799,8 @@ void CKernel::BusIOWrite(u32 address, u8 data) {
 
     case UART_DATA:
         // write UART data register
-        m_ToTerminal.Lock();
-        m_ToTerminal.AddChar(data);
-        m_ToTerminal.Unlock();
-
-        m_ToNetwork.Lock();
-        m_ToNetwork.AddChar(data);
-        m_ToNetwork.Unlock();
+        m_ToTerminal.Add(data);
+        m_ToNetwork.Add(data);
 
         break;
 

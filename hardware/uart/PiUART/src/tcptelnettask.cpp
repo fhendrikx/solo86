@@ -12,7 +12,7 @@ static const telnet_telopt_t my_telopts[] = {
     { -1, 0, 0 }
 };
 
-CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf *pToSerial) {
+CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
 
     m_Name.Format("tcptelnettask-%x", pSocket);
     From = m_Name;
@@ -118,7 +118,7 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
-            me->m_pToSerial->AddCharSafe(c);
+            me->m_pToSerial->AddSafe(c);
 
         }
 

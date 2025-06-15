@@ -7,7 +7,7 @@ LOGMODULE("keyboardtask");
 
 CKeyboardTask *CKeyboardTask::s_pThis = NULL;
 
-CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf *pKeyBuf) {
+CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf) {
 
     SetName("keyboardtask");
 
@@ -76,7 +76,7 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
             klog(LogDebug, "KeyPress: %02x", *pString);
         }
 
-        s_pThis->m_pKeyBuf->AddCharSafe(*pString);
+        s_pThis->m_pKeyBuf->AddSafe(*pString);
 
         pString++;
     }

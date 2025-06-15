@@ -13,7 +13,7 @@
 
 class CTCPListenerTask : public CTask {
 public:
-    CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf *pToSerial, TCPMode TMode);
+    CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u8> *pToSerial, TCPMode TMode);
     ~CTCPListenerTask();
 
     void Run();
@@ -24,7 +24,7 @@ public:
 private:
     CNetSubSystem *m_pNet;
     u16 m_nListenPort;
-    CRingBuf *m_pToSerial;
+    CRingBuf<u8> *m_pToSerial;
     CSocket *m_pListenSocket;
     CTCPTelnetTask *m_pTelnetTask;
     CTCPRawTask *m_pRawTask;

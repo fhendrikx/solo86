@@ -3,7 +3,7 @@
 #include <circle/sched/scheduler.h>
 #include <circle/net/in.h>
 
-CTCPRawTask::CTCPRawTask(CSocket *pSocket, CRingBuf *pToSerial) {
+CTCPRawTask::CTCPRawTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
 
     m_Name.Format("tcprawtask-%x", pSocket);
     From = m_Name;

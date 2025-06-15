@@ -13,7 +13,7 @@
 class CTCPTelnetTask : public CTask {
 public:
 
-    CTCPTelnetTask(CSocket *pSocket, CRingBuf *pToSerial);
+    CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial);
     ~CTCPTelnetTask();
 
     void Run();
@@ -25,7 +25,7 @@ private:
     static void TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *arg);
     
     CSocket *m_pSocket;
-    CRingBuf *m_pToSerial;
+    CRingBuf<u8> *m_pToSerial;
     telnet_t *m_pTelnet;
 
     // define local instance of From rather than use LOGMODULE
