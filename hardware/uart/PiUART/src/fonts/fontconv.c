@@ -81,7 +81,7 @@ int main (int argc, char **argv) {
     if (Header2.magic == PSF_FONT_MAGIC) {
 
         // check the font file looks legit
-        if (Header2.numglyph != 256) {
+        if ((Header2.numglyph != 256) && (Header2.numglyph != 512)) {
             fprintf(stderr, "Expecting 256 glyphs, got %u\n", Header2.numglyph);
             fclose(fin);
             return 1;
@@ -116,17 +116,17 @@ int readGlyph(FILE *fin, char *fname, uint32_t bytesperglyph, uint32_t width, ui
     // To conform with Latin1 the characters 0x80 .. 0x9F of the original font have been
     // moved to 0xC0 .. 0xDF and have been replaced with character 0x00 (question mark).
 
-    uint8_t Clipboard[2][bytesperglyph];
-    for (unsigned i = 0x00; i <= 0x1F; i++) { COPY (0x80 + i); PASTE (0xC0 + i); }
+    // uint8_t Clipboard[2][bytesperglyph];
+    // for (unsigned i = 0x00; i <= 0x1F; i++) { COPY (0x80 + i); PASTE (0xC0 + i); }
 
-    COPY (0);
-    for (unsigned i = 0x7F; i <= 0x9F; i++) PASTE (i);
+    // COPY (0);
+    // for (unsigned i = 0x7F; i <= 0x9F; i++) PASTE (i);
 
 
     printf("//\n// %s\n//\n\n", fname);
     printf("#include \"fonts.h\"\n\n");
-    printf("// To conform with Latin1 the characters 0x80 .. 0x9F of the original font have been\n");
-    printf("// moved to 0xC0 .. 0xDF and have been replaced with character 0x00 (question mark).\n\n");
+    // printf("// To conform with Latin1 the characters 0x80 .. 0x9F of the original font have been\n");
+    // printf("// moved to 0xC0 .. 0xDF and have been replaced with character 0x00 (question mark).\n\n");
     printf("static const unsigned char font_data[] = {\n");
 
     unsigned bytes_per_row = bytesperglyph / height;

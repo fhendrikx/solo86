@@ -201,16 +201,16 @@ void CKernel::Display() {
 
     if (m_nScreenHeight <= 600) {
         // 640x480, 800x600
-        klog(LogNotice, "Using TerminusBoldVGA16");
-        font = TerminusBoldVGA16;
+        klog(LogNotice, "Using small font");
+        font = ter_i16n;
     } else if (m_nScreenHeight <= 900) {
         // 1024x768
-        klog(LogNotice, "Using TerminusBold24x12");
-        font = TerminusBold24x12;
+        klog(LogNotice, "Using medium font");
+        font = ter_i24b;
     } else {
         // everything larger
-        klog(LogNotice, "Using TerminusBold32x16");
-        font = TerminusBold32x16;
+        klog(LogNotice, "Using large font");
+        font = ter_i32b;
     }
 
     delete fb;
@@ -226,16 +226,10 @@ void CKernel::Display() {
         klog(LogNotice, "Terminal init");
     }
 
-    // clear the screen as it doesn't always appear to be blank
-    /*
-    fb = m_pTerminal->GetFrameBuffer();
-    u32 nBufferPtr = fb->GetBuffer();
-    u32 nBufferSize = fb->GetSize();
-    memset((void *)nBufferPtr, 0, nBufferSize);
-    */
-
-    // m_pTerminal->Write(VERSION "\n", strlen(VERSION) + 1);
-
+    // by default CScreenDevice uses an underscore as a cursor, but it does so by
+    // placing it beneath the character. This requires the font to have extra height
+    // to accomodate it which makes the spacing look weird.
+    // instead use the block cursor so we can specify a zero extra height in our fonts
     m_pTerminal->SetCursorBlock(true);
 
     m_nScreenWidth = m_pTerminal->GetWidth();
