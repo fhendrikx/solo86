@@ -232,9 +232,6 @@ void CKernel::Display() {
     // instead use the block cursor so we can specify a zero extra height in our fonts
     m_pTerminal->SetCursorBlock(true);
 
-    m_nScreenWidth = m_pTerminal->GetWidth();
-    m_nScreenHeight = m_pTerminal->GetHeight();
-
     klog(LogNotice, "Cols %u", m_pTerminal->GetColumns());
     klog(LogNotice, "Rows %u", m_pTerminal->GetRows());
 
