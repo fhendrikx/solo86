@@ -7,7 +7,8 @@ CIRCLEHOME = ../circle
 OBJS =  main.o kernel.o i2clogger.o keyboardtask.o \
         tcplistenertask.o tcptelnettask.o tcprawtask.o \
         libtelnet.o strbits.o \
-        ter-i16n.o ter-i24b.o ter-i32b.o
+        ter-i16n.o ter-i24b.o ter-i32b.o \
+        cp437.o
 
 LIBS =  $(CIRCLEHOME)/lib/usb/libusb.a \
         $(CIRCLEHOME)/lib/input/libinput.a \

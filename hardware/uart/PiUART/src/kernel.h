@@ -27,6 +27,7 @@
 #include "i2clogger.h"
 #include "ringbuf.h"
 #include "fonts.h"
+#include "cp437.h"
 
 #if DEPTH != 8
 #error Bad DEPTH
@@ -113,6 +114,7 @@
 #define RAM_SIZE 49152 // 256 x 192
 
 #define RING_BUF_SIZE 262144
+#define TERM_BUF_SIZE 256
 
 #define NETWORK_DELAY_US 30000 // 30 ms
 #define NETWORK_DELAY_BYTES 132 // one xmodem packet

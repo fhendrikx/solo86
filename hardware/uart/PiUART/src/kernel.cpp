@@ -232,38 +232,37 @@ void CKernel::Display() {
     // instead use the block cursor so we can specify a zero extra height in our fonts
     m_pTerminal->SetCursorBlock(true);
 
-    klog(LogNotice, "Cols %u", m_pTerminal->GetColumns());
-    klog(LogNotice, "Rows %u", m_pTerminal->GetRows());
+    klog(LogNotice, "Terminal Cols %u", m_pTerminal->GetColumns());
+    klog(LogNotice, "Terminal Rows %u", m_pTerminal->GetRows());
 
     while(true) {
 
-        // int peak_waiting = 0;
-
         while (m_ToTerminal.GetCount()) {
 
-            // int waiting = m_ToTerminal.GetCount();
-            // if (waiting > peak_waiting)
-            //     peak_waiting = waiting;
+            u8 buf[TERM_BUF_SIZE];
+            int nRemoved = 0;
 
-            //klog(LogNotice, "Char waiting %u", m_ToTerminal.GetCount());
+            // copy chars into a buffer so we can handle multiple chars per Write()
+            // this is because each call to Write() results in a screen update so it's
+            // more efficient to bundle the chars together
+            while(nRemoved < TERM_BUF_SIZE && m_ToTerminal.Remove(&buf[nRemoved])) {
+                // copy the chars to the network converting to UTF-8 as we go
+                u8 c = buf[nRemoved];
+                if (c & 0x80) {
+                    u8 *cptr = (u8 *)cp437_conv[c & 0x7f];
+                    while(*cptr) {
+                        // klog(LogDebug, "%x %x", c, *cptr);
+                        m_ToNetwork.Add(*cptr++);
+                    }
+                } else {
+                    m_ToNetwork.Add(c);
+                }
+                nRemoved++;
+            }
 
-            // remove 16 chars at a time from the ring buffer
-            // we could do more, but then we'd be holding the lock for longer
-            u8 buf[256];
-
-            // unsigned nStartTime = CTimer::GetClockTicks();
-            int removed = m_ToTerminal.Remove(buf, 256);
-
-            // unsigned nEndTime = CTimer::GetClockTicks();
-            // klog(LogNotice, "Lock time %u", nEndTime - nStartTime);
-
-            m_pTerminal->Write((char *)buf, removed);
+            m_pTerminal->Write((char *)buf, nRemoved);
 
         }
-
-        // if (peak_waiting) {
-        //     klog(LogNotice, "Peak %u", peak_waiting);
-        // }
 
         CTimer::SimpleusDelay(1);
 
@@ -791,7 +790,6 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
     case UART_DATA:
         // write UART data register
         m_ToTerminal.Add(data);
-        m_ToNetwork.Add(data);
 
         break;
 
