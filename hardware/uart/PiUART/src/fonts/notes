@@ -1,0 +1,15 @@
+Fonts are from the Terminus package (https://terminus-font.sourceforge.net/).
+
+The CP437 fonts aren't distributed with Ubuntu so you need to download the 
+source and build them (make -j8 psf). From version 4.49.1.
+
+The pdf is built using tools from https://www.zap.org.au/projects/console-fonts-zap/
+  * psf2psftx
+  * psftx-codechart
+
+Font converted (.psf -> .cpp)
+  * gcc fontconv.c -o fontconv
+  * fontconv font.psf > font.cpp
+
+
+
