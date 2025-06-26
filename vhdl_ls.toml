@@ -1,0 +1,9 @@
+[libraries]
+
+lib.files = [
+"hardware/main/cpld/Control286.vhd",
+]
+
+[lint]
+misplaced_attribute_spec = false
+
