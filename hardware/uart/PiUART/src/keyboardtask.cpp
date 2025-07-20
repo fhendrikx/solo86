@@ -7,13 +7,14 @@ LOGMODULE("keyboardtask");
 
 CKeyboardTask *CKeyboardTask::s_pThis = NULL;
 
-CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf) {
+CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKernel *pKernel) {
 
     SetName("keyboardtask");
 
     m_pUSBHCI = pUSBHCI;
     m_pKeyboard = NULL;
     m_pKeyBuf = pKeyBuf;
+    m_pKernel = pKernel;
     s_pThis = this;
 }
 
@@ -37,6 +38,7 @@ void CKeyboardTask::Run() {
 
                 m_pKeyboard->RegisterRemovedHandler(KeyboardRemovedHandler);
                 m_pKeyboard->RegisterKeyPressedHandler(KeyPressedHandler);
+                m_pKeyboard->RegisterSelectConsoleHandler(SelectConsoleHandler);
 
             }
 
@@ -80,6 +82,16 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
 
         pString++;
     }
+
+}
+
+void CKeyboardTask::SelectConsoleHandler(unsigned nConsole) {
+
+    assert(s_pThis != NULL);
+
+    klog(LogDebug, "SelectConsoleHandler %d", nConsole);
+
+    s_pThis->m_pKernel->SetConsole(nConsole);
 
 }
 

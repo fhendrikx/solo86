@@ -23,6 +23,9 @@
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
 
+#include <circle/bcmframebuffer.h>
+#include <circle/2dgraphics.h>
+
 #include "common.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
@@ -42,7 +45,6 @@
   GPIO 19 PRDWR
 */
 
-#define PWAIT 0x1
 #define PEVENT 0x2
 #define PRDWR 0x80000
 
@@ -58,9 +60,9 @@
 // GPIO 20-29
 #define ARM_GPIO_GPFSEL2        (ARM_GPIO_BASE + 0x08)
 
-#define MODE_CON 0
-#define MODE_256x192 1
-#define MODE_256x192_DB 2
+// #define MODE_CON 0
+// #define MODE_256x192 1
+// #define MODE_256x192_DB 2
 
 // UART registers
 #define UART_CTRL 0     // 0x20
@@ -70,9 +72,9 @@
 
 // Video Control registers
 #define VC_CTRL 4       // 0x28
-#define VC_HIGH_ADDR 5  // 0x2A
-#define VC_LOW_ADDR 6   // 0x2C
-#define VC_DATA 7       // 0x2E
+#define VC_DATA 5       // 0x2A
+// RESERVED 6           // 0x2C
+// RESERVED 7           // 0x2E
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
@@ -101,6 +103,8 @@
 #define VC_CTRL_AUTO_INCREMENT_READ 0x20
 #define VC_CTRL_READY_FOR_SWAP 0x80
 
+#define VC_CMD 0x100
+
 // OLED I2C display
 #define LCD_HEIGHT 32
 #define LCD_WIDTH 128
@@ -111,13 +115,16 @@
 #define CORE_DISPLAY 1
 #define CORE_GPIO 2
 
-#define RAM_SIZE 49152 // 256 x 192
-
 #define RING_BUF_SIZE 262144
 #define TERM_BUF_SIZE 256
 
 #define NETWORK_DELAY_US 30000 // 30 ms
 #define NETWORK_DELAY_BYTES 132 // one xmodem packet
+
+#define NUM_CONSOLE_MODES 2
+enum TConsoleMode { TerminalMode = 0, LogMode = 1 };
+
+enum TDisplayMode { Uninitialised = -1, ConsoleMode = 0, GraphicsMode = 1 };
 
 class CKernel : public CMultiCoreSupport {
 public:
@@ -126,6 +133,7 @@ public:
 
     bool Initialize();
     void Run(unsigned nCore);
+    void SetConsole(unsigned nConsoleMode);
 
 private:
     // Cores
@@ -135,10 +143,11 @@ private:
 
     // Helper functions
     bool DeferredInitialize();
-    void UpdateMode256x192(u8 *pRam);
-    bool InitFB(unsigned nWidth, unsigned nHeight);
-    bool ResizeFB(unsigned nWidth, unsigned nHeight, unsigned nTargetWidth, unsigned nTargetHeight);
-    void UpdateFB();
+    void CreateConsole();
+    void DestroyConsole();
+    void UpdateConsole();
+    void CreateGraphics();
+    void DestroyGraphics();
 
     inline u32 BusIORead(u32 address);
     inline void BusIOWrite(u32 address, u8 data);
@@ -190,13 +199,33 @@ private:
     CScheduler m_Scheduler;
 
     // HDMI display
-    TPixel *m_pBuffer;
-    TPixel *m_pBuffer0;
-    TPixel *m_pBuffer1;
-    bool m_bBufferSwapped;
+    CBcmFrameBuffer *m_pFrameBuffer;
+    unsigned m_nScreenWidth;
+    unsigned m_nScreenHeight;
 
-    // Terminal emulator
-    CScreenDevice *m_pTerminal;
+    CRingBuf<u16> m_ToDisplay; // commands and data for the display
+
+    enum TDisplayMode m_nDisplayMode;
+    enum TDisplayMode m_nNextDisplayMode;
+
+    // Console
+    CTerminalDevice *m_pTerminal;
+    CTerminalDevice *m_pLog;
+    
+    u8 *m_pFrameBufferBackups[NUM_CONSOLE_MODES];
+    enum TConsoleMode m_nConsoleMode;
+    volatile enum TConsoleMode m_nNextConsoleMode;
+
+    TFont TLogFont;
+
+    // Graphics
+    C2DGraphics *m_p2DGraphics;
+
+    // HDMI display
+    // TPixel *m_pBuffer;
+    // TPixel *m_pBuffer0;
+    // TPixel *m_pBuffer1;
+    // bool m_bBufferSwapped;
 
     // OLED/LCD display
     CSSD1306Device m_LCD;
@@ -213,12 +242,20 @@ private:
     CNetSubSystem m_Net;
     CWPASupplicant m_WPASupplicant;
 
+    // UART
+    bool m_bUartIntEnable;
+    bool m_bUartIntActive;
+
     // ring buffers
     CRingBuf<u8> m_ToSerial; // data for the UART to output
+    CRingBuf<u8> m_FromSerial; // data received by the UART
     CRingBuf<u8> m_ToTerminal; // data for the terminal to display
     CRingBuf<u8> m_ToNetwork; // data for the network to send
 
+    // TODO, where do these belong?
     unsigned m_nLogLevel;
+
+    /*
     u8 m_pRam[RAM_SIZE * 2];
 
     u8 *m_pBusRam;
@@ -229,12 +266,7 @@ private:
     volatile bool m_bReadyForSwap;
     volatile bool m_bAutoIncrementWrite;
     volatile bool m_bAutoIncrementRead;
-
-    bool m_bUartIntEnable;
-    bool m_bUartIntActive;
-
-    unsigned m_nScreenWidth;
-    unsigned m_nScreenHeight;
+    */
 
     u8 m_nTestPort;
 

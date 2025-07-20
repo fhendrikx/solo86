@@ -106,6 +106,8 @@ int main (int argc, char **argv) {
 
 int readGlyph(FILE *fin, char *fname, uint32_t bytesperglyph, uint32_t width, uint32_t height) {
 
+    fprintf(stderr, "width = %u, height = %u\n", width, height);
+
     // read the font data
     uint8_t Buffer[256][bytesperglyph];
     if (fread(Buffer, sizeof Buffer,  1, fin) != 1) {
@@ -140,7 +142,7 @@ int readGlyph(FILE *fin, char *fname, uint32_t bytesperglyph, uint32_t width, ui
             case 1: {
                     uint8_t row = Buffer[i][j];
                     row = row >> (8 - width);
-                    printf ("0x%02X, ", Buffer[i][j]);
+                    printf ("0x%02X, ", row);
                 }
                 break;
 
