@@ -1,8 +1,10 @@
 #ifndef RINGBUF_H
 #define RINGBUF_H
 
+#include <circle/multicore.h>
 #include <circle/spinlock.h>
 #include <circle/sched/scheduler.h>
+#include <circle/timer.h>
 
 template <class T>
 class CRingBuf {
@@ -18,8 +20,10 @@ public:
 
   AddSafe() will wait for free space in the buffer before adding the data.
   AddSafe() will Lock and Unlock the buffer as necessary.
-  If the Scheduler is active AddSafe() will sleep for 1ms between attempts to write
-  to the buffer. The delay is to stop the routine hogging the buffer lock and
+  If running on core 0 and the Scheduler is active AddSafe() will sleep for 1ms
+  between attempts to write to the buffer. Otherwise it will delay for 5 uS between
+  attempts.
+  The delay is to stop the routine hogging the buffer lock and
   allow other threads to run.
 
   Remove() returns the number of elements removed from the buffer.
@@ -103,8 +107,11 @@ void CRingBuf<T>::AddSafe(T e) {
             return;
         } else {
             m_Lock.Release();
-            if (CScheduler::IsActive())
+            if (CMultiCoreSupport::ThisCore() == 0 && CScheduler::IsActive()) {
                 CScheduler::Get()->MsSleep(1);
+            } else {
+                CTimer::SimpleusDelay(5);
+            }
         }
 
     }

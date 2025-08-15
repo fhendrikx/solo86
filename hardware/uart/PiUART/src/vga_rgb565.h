@@ -1,4 +1,7 @@
-static const u16 pCMap[256] = {
+#ifndef VGA_RGB565
+#define VGA_RGB565
+
+static const u16 VGAPalette[256] = {
 	//        R    G    B
 	//   0    0    0    0
 	0,
@@ -513,3 +516,5 @@ static const u16 pCMap[256] = {
 	// 255    0    0    0
 	0,
 };
+
+#endif

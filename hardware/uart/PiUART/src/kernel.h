@@ -1,36 +1,36 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
-#include <circle/machineinfo.h>
-#include <circle/koptions.h>
+#include <circle/2dgraphics.h>
 #include <circle/devicenameservice.h>
-#include <circle/screen.h>
 #include <circle/exceptionhandler.h>
 #include <circle/interrupt.h>
-#include <circle/timer.h>
+#include <circle/koptions.h>
 #include <circle/logger.h>
-#include <circle/types.h>
-#include <circle/multicore.h>
-#include <circle/memory.h>
-#include <circle/util.h>
+#include <circle/machineinfo.h>
 #include <circle/memio.h>
+#include <circle/memory.h>
+#include <circle/screen.h>
+#include <circle/timer.h>
+#include <circle/types.h>
+#include <circle/util.h>
+#include <circle/bcmframebuffer.h>
 #include <circle/usb/usbhcidevice.h>
 #include <circle/sched/scheduler.h>
 #include <circle/net/netsubsystem.h>
 #include <display/ssd1306device.h>
-#include <SDCard/emmc.h>
 #include <fatfs/ff.h>
+#include <SDCard/emmc.h>
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
 
-#include <circle/bcmframebuffer.h>
-#include <circle/2dgraphics.h>
-
 #include "common.h"
+#include "cp437.h"
+#include "fonts.h"
+#include "graphics.h"
 #include "i2clogger.h"
 #include "ringbuf.h"
-#include "fonts.h"
-#include "cp437.h"
+#include "terminalwrapper.h"
 
 #if DEPTH != 8
 #error Bad DEPTH
@@ -60,50 +60,30 @@
 // GPIO 20-29
 #define ARM_GPIO_GPFSEL2        (ARM_GPIO_BASE + 0x08)
 
-// #define MODE_CON 0
-// #define MODE_256x192 1
-// #define MODE_256x192_DB 2
-
 // UART registers
 #define UART_CTRL 0     // 0x20
 #define UART_DATA 1     // 0x22
-// RESERVED 2              0x24
-// RESERVED 3              0x26
+// RESERVED 2           // 0x24
+// RESERVED 3           // 0x26
 
 // Video Control registers
-#define VC_CTRL 4       // 0x28
-#define VC_DATA 5       // 0x2A
-// RESERVED 6           // 0x2C
+#define VC_CTRL   4     // 0x28
+#define VC_PARAM  5     // 0x2A
+#define VC_DATA   6     // 0x2C
 // RESERVED 7           // 0x2E
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
 
 /*
-  VC_CTRL WRITE:
-
-  bit 7
-  bit 6
-  bit 5 : auto increment on read
-  bit 4 : auto increment on write
-  bit 3-0: video mode, console, 256x192, etc
-
   VC_CTRL READ:
 
-  bit 7 : ready for swap (double buffer)
-  bit 6 :
-  bit 5 : auto increment on read
-  bit 4 : auto increment on write
-  bit 3-0: video mode, console, 256x192, etc
+  bit 7 : busy
+  bit 6-0 : reserved
 
 */
 
-#define VC_CTRL_MODE_MASK 0x0F
-#define VC_CTRL_AUTO_INCREMENT_WRITE 0x10
-#define VC_CTRL_AUTO_INCREMENT_READ 0x20
-#define VC_CTRL_READY_FOR_SWAP 0x80
-
-#define VC_CMD 0x100
+#define VC_CTRL_BUSY 0x80
 
 // OLED I2C display
 #define LCD_HEIGHT 32
@@ -117,14 +97,14 @@
 
 #define RING_BUF_SIZE 262144
 #define TERM_BUF_SIZE 256
+#define PARAM_BUF_SIZE 32
 
 #define NETWORK_DELAY_US 30000 // 30 ms
 #define NETWORK_DELAY_BYTES 132 // one xmodem packet
 
-#define NUM_CONSOLE_MODES 2
-enum TConsoleMode { TerminalMode = 0, LogMode = 1 };
+#define NUM_DISPLAY_MODES 3
 
-enum TDisplayMode { Uninitialised = -1, ConsoleMode = 0, GraphicsMode = 1 };
+enum TDisplayMode { Uninitialised = -1, TerminalMode = 0, GraphicsMode = 1, DebugLogMode = 2 };
 
 class CKernel : public CMultiCoreSupport {
 public:
@@ -143,11 +123,6 @@ private:
 
     // Helper functions
     bool DeferredInitialize();
-    void CreateConsole();
-    void DestroyConsole();
-    void UpdateConsole();
-    void CreateGraphics();
-    void DestroyGraphics();
 
     inline u32 BusIORead(u32 address);
     inline void BusIOWrite(u32 address, u8 data);
@@ -162,8 +137,8 @@ private:
     inline void GPIODataOutput(u32 data);
     inline void GPIODataInput();
 
-    // Command line options ("cmdline.txt")
-    CKernelOptions m_CmdLine;
+    // Kernel Options, gives access to command line options ("cmdline.txt")
+    CKernelOptions m_KernelOptions;
 
     // needed by various Cirle internal functions
     CDeviceNameService m_DeviceNameService;
@@ -199,33 +174,19 @@ private:
     CScheduler m_Scheduler;
 
     // HDMI display
-    CBcmFrameBuffer *m_pFrameBuffer;
     unsigned m_nScreenWidth;
     unsigned m_nScreenHeight;
 
     CRingBuf<u16> m_ToDisplay; // commands and data for the display
 
     enum TDisplayMode m_nDisplayMode;
-    enum TDisplayMode m_nNextDisplayMode;
+    volatile TDisplayMode m_nNextDisplayMode;
 
-    // Console
-    CTerminalDevice *m_pTerminal;
-    CTerminalDevice *m_pLog;
-    
-    u8 *m_pFrameBufferBackups[NUM_CONSOLE_MODES];
-    enum TConsoleMode m_nConsoleMode;
-    volatile enum TConsoleMode m_nNextConsoleMode;
+    CTerminalWrapper *m_pTerminal;
+    CTerminalWrapper *m_pDebugLog;
+    CGraphics *m_pGraphics;
 
-    TFont TLogFont;
-
-    // Graphics
-    C2DGraphics *m_p2DGraphics;
-
-    // HDMI display
-    // TPixel *m_pBuffer;
-    // TPixel *m_pBuffer0;
-    // TPixel *m_pBuffer1;
-    // bool m_bBufferSwapped;
+    volatile bool m_bDisplayBusy;
 
     // OLED/LCD display
     CSSD1306Device m_LCD;
@@ -251,22 +212,6 @@ private:
     CRingBuf<u8> m_FromSerial; // data received by the UART
     CRingBuf<u8> m_ToTerminal; // data for the terminal to display
     CRingBuf<u8> m_ToNetwork; // data for the network to send
-
-    // TODO, where do these belong?
-    unsigned m_nLogLevel;
-
-    /*
-    u8 m_pRam[RAM_SIZE * 2];
-
-    u8 *m_pBusRam;
-    u8 *m_pDisRam;
-    volatile u8 m_nMode;
-    u8 m_nPrevMode;
-    volatile u32 m_nBusRamPtr;
-    volatile bool m_bReadyForSwap;
-    volatile bool m_bAutoIncrementWrite;
-    volatile bool m_bAutoIncrementRead;
-    */
 
     u8 m_nTestPort;
 

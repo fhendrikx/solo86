@@ -2,9 +2,6 @@
 #include "serialtask.h"
 #include "keyboardtask.h"
 #include "tcplistenertask.h"
-#include "palette/vga_rgb565.h"
-
-#define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define DRIVE           "SD:"
 #define FIRMWARE_PATH   DRIVE "/firmware/"              // firmware files must be provided here
@@ -18,7 +15,7 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     : CMultiCoreSupport(pMemorySystem),
       m_Timer(&m_InterruptSystem),
 #ifndef NDEBUG
-      m_Logger(m_CmdLine.GetLogLevel(), &m_Timer),
+      m_Logger(m_KernelOptions.GetLogLevel(), &m_Timer),
 #endif
       m_I2C(CMachineInfo::Get()->GetDevice(DeviceI2CMaster), true),
 #ifndef NDEBUG
@@ -37,40 +34,18 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
       m_ToNetwork(RING_BUF_SIZE)
 {
 
-    m_nLogLevel = m_CmdLine.GetLogLevel();
-
-    m_pFrameBuffer = NULL;
-    m_pTerminal = NULL;
-    m_pLog = NULL;
-    m_p2DGraphics = NULL;
-
-    // m_pBuffer = NULL;
-    // m_pBuffer0 = NULL;
-    // m_pBuffer1 = NULL;
-    // m_bBufferSwapped = true;
-
-    // m_nMode = MODE_CON;
-    // m_nPrevMode = MODE_CON;
-    // m_nBusRamPtr = 0;
-    // m_bReadyForSwap = true;
-    // m_bAutoIncrementWrite = false;
-    // m_bAutoIncrementRead = false;
-
-    m_nScreenWidth = m_CmdLine.GetWidth();
-    m_nScreenHeight = m_CmdLine.GetHeight();
-
+    m_nScreenWidth = m_KernelOptions.GetWidth();
+    m_nScreenHeight = m_KernelOptions.GetHeight();
     m_nDisplayMode = Uninitialised;
-    m_nNextDisplayMode = ConsoleMode;
+    m_nNextDisplayMode = TerminalMode;
+    m_bDisplayBusy = false;
 
-    m_nConsoleMode = TerminalMode;
-    m_nNextConsoleMode = TerminalMode;
+    m_pTerminal = NULL;
+    m_pDebugLog = NULL;
+    m_pGraphics = NULL;
 
     m_bUartIntEnable = false;
     m_bUartIntActive = false;
-
-    // memset(m_pRam, 0, RAM_SIZE * 2);
-    // m_pBusRam = m_pRam;
-    // m_pDisRam = &m_pRam[RAM_SIZE];
 
     m_nTestPort = 0;
 
@@ -106,8 +81,18 @@ bool CKernel::Initialize() {
     if (!m_USBHCI.Initialize(false)) {
         klog(LogError, "USBHCI init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "USBHCI init complete");
+    }
+
+    // create Graphics before we start multi-core in case GPIO tries to read video memory
+    m_pGraphics = new CGraphics();
+    if (!m_pGraphics->Initialize()) {
+        klog(LogError, "Graphics init failed");
+        return false;
+    } else {
+        klog(LogNotice, "Graphics init complete");
+    }
 
     // all other initialisation is deferred and handled by the MAIN core
 
@@ -120,8 +105,9 @@ bool CKernel::DeferredInitialize() {
     if (!m_LCD.Initialize()) {
         klog(LogError, "LCD init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "LCD init complete");
+    }
 
     // put something on the LCD display so we know it's working
     m_LCD.Write(VERSION "\n", strlen(VERSION) + 1);
@@ -129,32 +115,37 @@ bool CKernel::DeferredInitialize() {
     if (!m_EMMC.Initialize()) {
         klog(LogError, "EMMC init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "EMMC init complete");
+    }
 
     if (f_mount (&m_FileSystem, DRIVE, 1) != FR_OK) {
         klog(LogError, "Cannot mount drive: %s", DRIVE);
         return false;
-    } else
+    } else {
         klog(LogNotice, "Filesystem %s mounted", DRIVE);
+    }
 
     if (!m_WLAN.Initialize()) {
         klog(LogError, "WLAN init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "WLAN init complete");
+    }
 
     if (!m_Net.Initialize(false)) {
         klog(LogError, "Net init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "Net init complete");
+    }
 
     if (!m_WPASupplicant.Initialize()) {
         klog(LogError, "WPA Supplicant init failed");
         return false;
-    } else
+    } else {
         klog(LogNotice, "WPA Supplicant init complete");
+    }
 
     return true;
 }
@@ -194,9 +185,9 @@ void CKernel::Run(unsigned nCore) {
 
 void CKernel::SetConsole(unsigned nConsoleMode) {
 
-    if (nConsoleMode < NUM_CONSOLE_MODES) {
+    if (nConsoleMode < NUM_DISPLAY_MODES) {
         klog(LogDebug, "SetConsole %d", nConsoleMode);
-        m_nNextConsoleMode = (enum TConsoleMode) nConsoleMode;
+        m_nNextDisplayMode = (enum TDisplayMode) nConsoleMode;
     } else {
         klog(LogDebug, "SetConsole, ignoring %d", nConsoleMode);
     }
@@ -210,13 +201,87 @@ void CKernel::SetConsole(unsigned nConsoleMode) {
 
 void CKernel::Display() {
 
-    int x = 0;
-    int y = 0;
+    //
+    // create a temporary frame buffer to determine the screen resolution
+    //
 
+    CBcmFrameBuffer *pTmpFrameBuffer = new CBcmFrameBuffer(m_nScreenWidth, m_nScreenHeight, DEPTH);
+
+    if (pTmpFrameBuffer == NULL || !pTmpFrameBuffer->Initialize()) {
+        // framebuffer object is unusable, bomb out
+        klog(LogPanic, "Failed to create temp frame buffer");
+        CMultiCoreSupport::HaltAll();
+    }
+
+    m_nScreenWidth = pTmpFrameBuffer->GetWidth();
+    m_nScreenHeight = pTmpFrameBuffer->GetHeight();
+
+    klog(LogNotice, "Display %ux%u", m_nScreenWidth, m_nScreenHeight);
+
+    delete pTmpFrameBuffer;
+
+    //
+    // figure out which fonts to use based on the screen resolution
+    //
+
+    const TFont *pTerminalFont;
+    TFont TLogFont;
+
+    if (m_nScreenHeight <= 600) {
+        // 640x480, 800x600
+        klog(LogNotice, "Using small fonts");
+        pTerminalFont = &ter_i16n;
+        TLogFont = Font8x10;
+        TLogFont.extra_height = 0;
+    } else if (m_nScreenHeight <= 900) {
+        // 1024x768
+        klog(LogNotice, "Using medium fonts");
+        pTerminalFont = &ter_i24b;
+        TLogFont = Font8x14;
+        TLogFont.extra_height = 0;
+    } else {
+        // everything larger
+        klog(LogNotice, "Using large fonts");
+        pTerminalFont = &ter_i32b;
+        TLogFont = Font8x16;
+        TLogFont.extra_height = 0;
+    }
+
+    //
+    // Setup the display objects
+    //
+
+    m_pTerminal = new CTerminalWrapper("Terminal", m_nScreenWidth, m_nScreenHeight, *pTerminalFont);
+    if (m_pTerminal == NULL || !m_pTerminal->Initialize()) {
+        klog(LogPanic, "TerminalWrapper init failed");
+        CMultiCoreSupport::HaltAll();
+    }
+
+    m_pDebugLog = new CTerminalWrapper("DebugLog", m_nScreenWidth, m_nScreenHeight, TLogFont);
+    if (m_pDebugLog == NULL || !m_pDebugLog->Initialize()) {
+        klog(LogPanic, "TerminalWrapper init failed");
+        CMultiCoreSupport::HaltAll();
+    }
+
+    #ifdef NDEBUG
+    const char *NoDebugMsg = "Debugging disabled\n";
+    m_pDebugLog->Write(NoDebugMsg, strlen(NoDebugMsg));
+    #endif
+
+    u8 TermBuffer[TERM_BUF_SIZE];
+    u8 ParamBuffer[PARAM_BUF_SIZE];
+    unsigned nParamBufferIndex = 0;
+
+    //
     // main display loop
+    //
+
     while(true) {
 
-        if (m_nNextDisplayMode != m_nDisplayMode) {
+        // grab a copy of NextDisplayMode is it can't change while we're using it
+        enum TDisplayMode nNextDisplayMode = m_nNextDisplayMode;
+
+        if (nNextDisplayMode != m_nDisplayMode) {
 
             // clean up current mode
             switch(m_nDisplayMode) {
@@ -225,173 +290,160 @@ void CKernel::Display() {
                     // nothing to do
                 break;
 
-                case ConsoleMode:
-                    DestroyConsole();
+                case TerminalMode:
+                    if (!m_pTerminal->Deactivate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
                 break;
 
                 case GraphicsMode:
-                    DestroyGraphics();
+                    if (!m_pGraphics->Deactivate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
                 break;
 
+                case DebugLogMode:
+                    if (!m_pDebugLog->Deactivate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
+                break;
             }
 
             // setup next mode
-            switch(m_nNextDisplayMode) {
+            switch(nNextDisplayMode) {
 
                 case Uninitialised:
-                    klog(LogPanic, "Trying to switch to Uninitialised display mode");
+                    // klog(LogPanic, "Trying to switch to Uninitialised display mode");
+                    // CMultiCoreSupport::HaltAll();
                 break;
 
-                case ConsoleMode:
-                    CreateConsole();
+                case TerminalMode:
+                    if (!m_pTerminal->Activate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
                 break;
 
                 case GraphicsMode:
-                    CreateGraphics();
+                    if (!m_pGraphics->Activate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
+                break;
+
+                case DebugLogMode:
+                    if (!m_pDebugLog->Activate()) {
+                        CMultiCoreSupport::HaltAll();
+                    }
+                break;
+            }
+
+            m_nDisplayMode = nNextDisplayMode;
+
+        }
+
+        // update the terminal
+        if (m_ToTerminal.GetCount()) {
+
+            // copy chars into a buffer so we can handle multiple chars per Write()
+            // this is because each call to Write() results in a screen update so it's
+            // more efficient to bundle the chars together
+            int nRemoved = m_ToTerminal.Remove(TermBuffer, TERM_BUF_SIZE);
+
+            m_pTerminal->Write((char *)TermBuffer, nRemoved);
+
+        }
+
+
+        // update the debug log
+        #ifndef NDEBUG
+        int numBytes = m_Logger.Read(TermBuffer, TERM_BUF_SIZE, true);
+
+        if (numBytes > 0)
+            m_pDebugLog->Write(TermBuffer, numBytes);
+        #endif
+
+        // process commands and data
+        if (m_ToDisplay.GetCount()) {
+
+            u16 value = 0;
+            u16 type = 0;
+
+            m_bDisplayBusy = true;
+
+            m_ToDisplay.Remove(&value);
+
+            type = value >> 8;
+            value &= 0xFF;
+
+            switch(type) {
+
+                case VC_CTRL:
+
+                    switch(value) {
+
+                        case 0x00:
+                            m_nNextDisplayMode = TerminalMode;
+                        break;
+
+                        case 0x01:
+                            m_nNextDisplayMode = GraphicsMode;
+                        break;
+
+                        case 0x02:
+                            m_nNextDisplayMode = DebugLogMode;
+                        break;
+
+                        // 0x03 -> 0x3F reserved
+
+                        // case 0x10:
+                            // RESET
+                            // empty m_ToDisplay
+                            // nParamBufferIndex = 0
+                            // clear terminal
+                            // clear debug log (?)
+                            // reset graphics (can't delete, GPIO read)
+                        // break;
+
+                        default:
+
+                            if (value >= 0x40) {
+                                m_pGraphics->Command(value, ParamBuffer, nParamBufferIndex);
+                                nParamBufferIndex = 0;
+                            } else {
+                                klog(LogWarning, "Undefined VC_CTRL %u", value);
+                            }
+
+                        break;
+
+                    }
+
+                break;
+
+                case VC_PARAM:
+                    if (nParamBufferIndex < PARAM_BUF_SIZE) {
+                        ParamBuffer[nParamBufferIndex++] = value;
+                    } else {
+                        klog(LogWarning, "Param Buffer Full");
+                    }
+                break;
+
+                case VC_DATA:
+                    m_pGraphics->MemWrite(value);
+                break;
+
+                default:
+                    klog(LogWarning, "Unknown Type");
                 break;
 
             }
 
-            m_nDisplayMode = m_nNextDisplayMode;
+            m_bDisplayBusy = false;
 
         }
-
-        if (m_nDisplayMode == ConsoleMode) {
-            UpdateConsole();
-        }
-
-        if (m_nDisplayMode == GraphicsMode) {
-
-            unsigned nStartTime = CTimer::GetClockTicks();
-
-            m_p2DGraphics->ClearScreen(CDisplay::Black);
-
-            m_p2DGraphics->DrawCircle(x % 512, y % 384, 30, CDisplay::Green);
-
-            m_p2DGraphics->DrawRect((200 + x) % 512, (200 + y) % 384, 30, 30, CDisplay::Yellow);
-
-            unsigned nEndTime = CTimer::GetClockTicks();
-
-            klog(LogNotice, "frame time %u", nEndTime - nStartTime);
-
-
-            m_p2DGraphics->UpdateDisplay();
-
-
-
-            x++;
-            y++;
-
-        }
-
-        // TODO process commands and data
-        while (m_ToDisplay.GetCount()) {
-
-            u16 wibble = 0;
-            m_ToDisplay.Remove(&wibble);
-            klog(LogNotice, "ToDisplay %x", wibble);
-
-            if (wibble == 0x100) {
-                m_nNextDisplayMode = ConsoleMode;
-            }
-
-            if (wibble == 0x101) {
-                m_nNextDisplayMode = GraphicsMode;
-            }
-
-        }
-
 
         // CTimer::SimpleusDelay(1);
 
     }
-/*
-    while(true) {
 
-        // make a local copy of Mode, we don't want it changing midway through
-        // updating the screen
-        u8 nLocalMode = m_nMode;
-
-        // check for mode change
-        if (nLocalMode != m_nPrevMode) {
-
-            klog(LogNotice, "Mode switch %u", nLocalMode);
-
-            switch(nLocalMode) {
-
-            case MODE_CON:
-
-                if (InitFB(m_nScreenWidth, m_nScreenHeight)) {
-
-                    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
-
-                } else {
-                    // framebuffer object is unusable, bomb out
-                    klog(LogPanic, "Mode switch failed to init FB");
-                }
-
-                break;
-
-            case MODE_256x192:
-            case MODE_256x192_DB:
-
-                if (ResizeFB(m_nScreenWidth, m_nScreenHeight, 256, 192)) {
-
-                    klog(LogNotice, "Set FB to %ux%u", m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
-
-                } else {
-                    // framebuffer object is unusable, bomb out
-                    klog(LogPanic, "Mode switch failed to resize FB");
-                }
-
-                break;
-
-            default:
-                break;
-            }
-
-            m_nPrevMode = nLocalMode;
-
-        }
-
-        // update the screen
-        switch(nLocalMode) {
-
-        case MODE_CON:
-
-            // m_Terminal.UpdateDisplay((u8 *)m_pBuffer);
-            UpdateFB();
-            break;
-
-        case MODE_256x192:
-
-            UpdateMode256x192(m_pBusRam);
-            UpdateFB();
-            break;
-
-        case MODE_256x192_DB:
-
-            if (m_bReadyForSwap == false) {
-
-                UpdateMode256x192(m_pDisRam);
-                UpdateFB();
-
-                // clear the buffer
-                memset(m_pDisRam, 0, RAM_SIZE);
-
-                // signal redraw is done
-                m_bReadyForSwap = true;
-
-            }
-
-            break;
-
-        default:
-            CTimer::SimpleMsDelay(1);
-            break;
-        }
-
-    } */
 }
 
 void CKernel::GPIO() {
@@ -406,8 +458,7 @@ void CKernel::GPIO() {
     while (true) {
 
         // raise an interrupt if necessary
-        if (m_bUartIntEnable and not m_bUartIntActive and
-            m_ToSerial.GetCount() > 0) {
+        if (m_bUartIntEnable and not m_bUartIntActive and m_ToSerial.GetCount() > 0) {
 
             m_bUartIntActive = true;
             GPIOInterruptRaise();
@@ -473,6 +524,7 @@ void CKernel::Main() {
       Don't do anything that requires accurate timing here.
     */
 
+    // launch the task that moves serial data from the GPIO to the terminal and network
     new CSerialTask(&m_FromSerial, &m_ToTerminal, &m_ToNetwork);
 
     // finish the rest of the initialisation
@@ -522,8 +574,6 @@ void CKernel::Main() {
 
     // main loop
     while(true) {
-
-        //m_Scheduler.ListTasks(&m_I2CLogger);
 
         nBytesWaiting = m_ToNetwork.GetCount();
         unsigned nNow = CTimer::GetClockTicks();
@@ -576,370 +626,59 @@ void CKernel::Main() {
 //  Helper functions
 //
 
-void CKernel::CreateConsole() {
-
-    m_pFrameBuffer = new CBcmFrameBuffer(m_nScreenWidth, m_nScreenHeight, DEPTH);
-
-    if (m_pFrameBuffer == NULL) {
-        // framebuffer object is unusable, bomb out
-        klog(LogPanic, "Failed to create frame buffer");
-    }
-
-    m_pFrameBuffer->SetPalette (BLACK_COLOR, BLACK_COLOR);
-    m_pFrameBuffer->SetPalette (RED_COLOR, RED_COLOR16);
-    m_pFrameBuffer->SetPalette (GREEN_COLOR, GREEN_COLOR16);
-    m_pFrameBuffer->SetPalette (YELLOW_COLOR, YELLOW_COLOR16);
-    m_pFrameBuffer->SetPalette (BLUE_COLOR, BLUE_COLOR16);
-    m_pFrameBuffer->SetPalette (MAGENTA_COLOR, MAGENTA_COLOR16);
-    m_pFrameBuffer->SetPalette (CYAN_COLOR, CYAN_COLOR16);
-    m_pFrameBuffer->SetPalette (WHITE_COLOR, WHITE_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_BLACK_COLOR, BRIGHT_BLACK_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_RED_COLOR, BRIGHT_RED_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_GREEN_COLOR, BRIGHT_GREEN_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_YELLOW_COLOR, BRIGHT_YELLOW_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_BLUE_COLOR, BRIGHT_BLUE_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_MAGENTA_COLOR, BRIGHT_MAGENTA_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_CYAN_COLOR, BRIGHT_CYAN_COLOR16);
-    m_pFrameBuffer->SetPalette (BRIGHT_WHITE_COLOR, BRIGHT_WHITE_COLOR16);
-
-    if (!m_pFrameBuffer->Initialize()) {
-        // framebuffer object is unusable, bomb out
-        klog(LogPanic, "Failed to init frame buffer");
-    } else
-        klog(LogNotice, "Console frame buffer init %ux%u", m_pFrameBuffer->GetWidth(),
-                        m_pFrameBuffer->GetHeight());
-
-    m_nScreenWidth = m_pFrameBuffer->GetWidth();
-    m_nScreenHeight = m_pFrameBuffer->GetHeight();
-
-    const TFont *pTerminalFont;
-
-    if (m_nScreenHeight <= 600) {
-        // 640x480, 800x600
-        klog(LogNotice, "Using small fonts");
-        pTerminalFont = &ter_i16n;
-        TLogFont = Font8x10;
-        TLogFont.extra_height = 0;
-    } else if (m_nScreenHeight <= 900) {
-        // 1024x768
-        klog(LogNotice, "Using medium fonts");
-        pTerminalFont = &ter_i24b;
-        TLogFont = Font8x14;
-        TLogFont.extra_height = 0;
-    } else {
-        // everything larger
-        klog(LogNotice, "Using large fonts");
-        pTerminalFont = &ter_i32b;
-        TLogFont = Font8x16;
-        TLogFont.extra_height = 0;
-    }
-
-    m_pTerminal = new CTerminalDevice(m_pFrameBuffer, 0, *pTerminalFont);
-
-    if (m_pTerminal == NULL or !m_pTerminal->Initialize()) {
-        // terminal is unusable, bomb out
-        klog(LogPanic, "Failed to create or init Terminal");
-    } else {
-        klog(LogNotice, "Terminal init complete %ux%u", m_pTerminal->GetColumns(), m_pTerminal->GetRows());
-    }
-
-    m_pLog = new CTerminalDevice(m_pFrameBuffer, 0, TLogFont);
-
-    if (m_pLog == NULL or !m_pLog->Initialize()) {
-        // log is unusable, bomb out
-        klog(LogPanic, "Failed to create or init Log");
-    } else {
-        klog(LogNotice, "Log init complete %ux%u", m_pLog->GetColumns(), m_pLog->GetRows());
-    }
-
-    // by default CScreenDevice uses an underscore as a cursor, but it does so by
-    // placing it beneath the character. This requires the font to have extra height
-    // to accomodate it which makes the spacing look weird.
-    // instead use the block cursor so we can specify a zero extra height in our fonts
-    m_pTerminal->SetCursorBlock(true);
-    m_pLog->SetCursorBlock(true);
-
-    for (int i=0; i < NUM_CONSOLE_MODES; i++) {
-        m_pFrameBufferBackups[i] = new u8[m_pFrameBuffer->GetSize()];
-        memset(m_pFrameBufferBackups[i], 0, m_pFrameBuffer->GetSize());
-    }
-
-    m_nConsoleMode = TerminalMode;
-    m_nNextConsoleMode = TerminalMode;
-
-}
-
-void CKernel::DestroyConsole() {
-
-    klog(LogNotice, "DestroyConsole");
-
-    for (int i=0; i < NUM_CONSOLE_MODES; i++) {
-        if (m_pFrameBufferBackups[i] != NULL)
-            delete m_pFrameBufferBackups[i];
-        m_pFrameBufferBackups[i] = NULL;
-    }
-
-    if (m_pLog != NULL)
-        delete m_pLog;
-    m_pLog = NULL;
-
-    if (m_pTerminal != NULL)
-        delete m_pTerminal;
-    m_pTerminal = NULL;
-
-    if (m_pFrameBuffer != NULL)
-        delete m_pFrameBuffer;
-    m_pFrameBuffer = NULL;
-
-}
-
-void CKernel::UpdateConsole() {
-
-    enum TConsoleMode nNextConsoleMode = m_nNextConsoleMode;
-
-    if (m_nConsoleMode != m_nNextConsoleMode) {
-        // backup the current frame buffer, then restore the next frame buffer
-        memcpy(m_pFrameBufferBackups[m_nConsoleMode], (void *)m_pFrameBuffer->GetBuffer(), m_pFrameBuffer->GetSize());
-        memcpy((void *)m_pFrameBuffer->GetBuffer(), m_pFrameBufferBackups[nNextConsoleMode], m_pFrameBuffer->GetSize());
-        m_nConsoleMode = nNextConsoleMode;
-    }
-
-    if (m_nConsoleMode == TerminalMode) {
-
-        while (m_ToTerminal.GetCount()) {
-
-            // copy chars into a buffer so we can handle multiple chars per Write()
-            // this is because each call to Write() results in a screen update so it's
-            // more efficient to bundle the chars together
-            u8 buf[TERM_BUF_SIZE];
-            int nRemoved = m_ToTerminal.Remove(buf, TERM_BUF_SIZE);
-
-            m_pTerminal->Write((char *)buf, nRemoved);
-
-        }
-
-    }
-
-    if (m_nConsoleMode == LogMode) {
-
-        char text[LOGGER_BUFSIZE];
-
-        int numBytes = m_Logger.Read(text, LOGGER_BUFSIZE, true);
-
-        // Read returns -1 if there's nothing to read
-        if (numBytes > 0)
-            m_pLog->Write(text, numBytes);
-
-    }
-
-}
-
-void CKernel::CreateGraphics() {
-
-    m_p2DGraphics = new C2DGraphics(512, 384);
-
-    if (m_p2DGraphics == NULL || !m_p2DGraphics->Initialize()) {
-        klog(LogPanic, "Failed to create or init 2DGraphics");
-    } else {
-        klog(LogNotice, "2DGraphics init complete %ux%u", m_p2DGraphics->GetWidth(), m_p2DGraphics->GetHeight());
-    }
-
-    m_p2DGraphics->ClearScreen(CDisplay::Black);
-
-}
-
-void CKernel::DestroyGraphics() {
-
-    klog(LogNotice, "DestroyGraphics");
-
-    if (m_p2DGraphics != NULL)
-        delete m_p2DGraphics;
-    m_p2DGraphics = NULL;
-
-}
-
-/*
-void CKernel::UpdateMode256x192(u8 *pRam) {
-
-    //unsigned nStartTime = CTimer::GetClockTicks();
-
-    unsigned nModeWidth = 256;
-    unsigned nModeHeight = 192;
-
-    unsigned nFBWidth = m_pFrameBuffer->GetWidth();
-    unsigned nFBHeight = m_pFrameBuffer->GetHeight();
-
-    unsigned nHorizMult = nFBWidth / nModeWidth;
-    unsigned nVertMult = nFBHeight / nModeHeight;
-    unsigned nMult = min(nHorizMult, nVertMult);
-
-    unsigned nHorizGutter = (nFBWidth - (nMult * nModeWidth)) / 2;
-    unsigned nVertGutter = (nFBHeight - (nMult * nModeHeight)) / 2;
-
-    unsigned nIdxZ = 0;
-    unsigned nIdxP = 0;
-
-    nIdxP = nFBWidth * nVertGutter;
-
-    // klog(LogDebug, "nFBWidth %u", nFBWidth);
-    // klog(LogDebug, "nFBHeight %u", nFBHeight);
-    // klog(LogDebug, "nHorizMult %u", nHorizMult);
-    // klog(LogDebug, "nHorizGutter %u", nHorizGutter);
-    // klog(LogDebug, "nVertMult %u", nVertMult);
-    // klog(LogDebug, "nVertGutter %u", nVertGutter);
-    // klog(LogDebug, "nMult %u", nMult);
-
-    for (unsigned nY = 0; nY < nModeHeight; nY++) {
-
-        unsigned nIdxZZ = 0;
-
-        for (unsigned nYY = 0; nYY < nMult; nYY++) {
-
-            nIdxZZ = nIdxZ;
-            nIdxP += nHorizGutter;
-
-            for (unsigned nX = 0; nX < nModeWidth; nX++) {
-
-#if DEPTH == 8
-                TPixel nC = pRam[nIdxZZ++];
-#elif DEPTH == 16
-                TPixel nC = pCMap[pRam[nIdxZZ++]];
-#endif
-
-                for (unsigned nXX = 0; nXX < nMult; nXX++) {
-
-                    m_pBuffer[nIdxP++] = nC;
-
-                }
-
-            }
-
-            nIdxP += nHorizGutter;
-
-        }
-
-        nIdxZ = nIdxZZ;
-
-    }
-
-    //unsigned nEndTime = CTimer::GetClockTicks();
-    //klog(LogNotice, "frame time %u", nEndTime - nStartTime);
-
-}
-*/
-
-/*
-bool CKernel::InitFB(unsigned nWidth, unsigned nHeight) {
-
-    klog(LogDebug, "InitFB");
-
-    if (m_pFrameBuffer != NULL)
-        delete m_pFrameBuffer;
-
-    m_pFrameBuffer = new CBcmFrameBuffer (nWidth, nHeight, DEPTH, 0, 0, 0, true);
-
-    if (m_pFrameBuffer == NULL) {
-        klog(LogError, "FrameBuffer alloc failed");
-        return FALSE;
-    }
-
-#if DEPTH == 8
-
-    // set the palette
-    for (int i=0; i < 256; i++) {
-        m_pFrameBuffer->SetPalette(i, pCMap[i]);
-    }
-
-#endif
-
-    if (!m_pFrameBuffer->Initialize())
-        return false;
-
-    // setup the buffer pointers
-    m_pBuffer0 = (TPixel *) m_pFrameBuffer->GetBuffer();
-    m_pBuffer1 = m_pBuffer0 + m_pFrameBuffer->GetWidth() * m_pFrameBuffer->GetHeight();
-    m_pBuffer = m_pBuffer1;
-
-    m_bBufferSwapped = true;
-
-    memset(m_pBuffer0, 0, m_pFrameBuffer->GetSize());
-
-    return true;
-
-}
-*/
-
-/*
-void CKernel::UpdateFB() {
-
-    m_pFrameBuffer->SetVirtualOffset(0, m_bBufferSwapped ? m_pFrameBuffer->GetHeight() : 0);
-    m_pBuffer = m_bBufferSwapped ? m_pBuffer0 : m_pBuffer1;
-    m_pFrameBuffer->WaitForVerticalSync();
-    m_bBufferSwapped = !m_bBufferSwapped;
-
-}
-*/
-
 inline u32 CKernel::BusIORead(u32 address) {
 
     u32 data;
 
     switch(address) {
 
-    case UART_CTRL:
-        // read UART control register
+        case UART_CTRL:
+            // read UART control register
 
-        // return 0x1 if there are bytes waiting
-        data = m_ToSerial.GetCount() > 0;
-
-        break;
-
-    case UART_DATA:
-        // read UART data register
-
-        data = 0;
-        m_ToSerial.Remove((u8 *)&data);
-
-        if (m_bUartIntActive) {
-            m_bUartIntActive = false;
-            GPIOInterruptRelease();
-        }
+            // return 0x1 if there are bytes waiting
+            data = m_ToSerial.GetCount() > 0;
 
         break;
 
-    // case VC_CTRL:
+        case UART_DATA:
+            // read UART data register
 
-        // data = m_nMode;
+            data = 0;
+            m_ToSerial.Remove((u8 *)&data);
 
-        // if (m_bAutoIncrementWrite)
-        //     data |= VC_CTRL_AUTO_INCREMENT_WRITE;
+            if (m_bUartIntActive) {
+                m_bUartIntActive = false;
+                GPIOInterruptRelease();
+            }
 
-        // if (m_bAutoIncrementRead)
-        //     data |= VC_CTRL_AUTO_INCREMENT_READ;
+        break;
 
-        // if (m_bReadyForSwap)
-        //     data |= VC_CTRL_READY_FOR_SWAP;
+        case VC_CTRL:
 
-    //     break;
+            data = 0;
 
-    // case VC_HIGH_ADDR:
-        // data = m_nBusRamPtr >> 8;
-        // break;
+            if (m_bDisplayBusy || m_ToDisplay.GetCount() > 0) {
+                data |= VC_CTRL_BUSY;
+            }
 
-    // case VC_LOW_ADDR:
-        // data = m_nBusRamPtr & 0xff;
-        // break;
+        break;
 
-    // case VC_DATA:
-        // data = m_pBusRam[m_nBusRamPtr];
-        // if (m_bAutoIncrementRead)
-        //     m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
-        // break;
+        case VC_PARAM:
 
-    default:
+            data = 0;
 
-        klog(LogNotice, "IO_READ Address: 0x%x", address);
-        data = m_nTestPort;
+        break;
+
+        case VC_DATA:
+
+            data = m_pGraphics->MemRead();
+
+        break;
+
+        default:
+
+            klog(LogWarning, "IO_READ Address: 0x%x", address);
+            data = m_nTestPort;
         break;
 
     }
@@ -953,115 +692,39 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
-    // case UART_CTRL:
-    //     // write UART control register
+        case UART_CTRL:
+            // write UART control register
 
-    //     klog(LogNotice, "UART control write %u", data);
-    //     m_bUartIntEnable = data & UART_INT_ENABLE;
-
-    //     break;
-
-    case UART_DATA:
-        // write UART data register
-        m_FromSerial.Add(data);
+            klog(LogNotice, "UART control write %u", data);
+            m_bUartIntEnable = data & UART_INT_ENABLE;
 
         break;
 
-
-    case VC_CTRL:
-
-        m_ToDisplay.Add(VC_CMD | data);
-
-        break;
-
-    case VC_DATA:
-
-        m_ToDisplay.Add(data);
+        case UART_DATA:
+            // write UART data register
+            m_FromSerial.Add(data);
 
         break;
 
-    // case VC_CTRL:
-    //     // write Video Control register
-    //     {
-    //         u8 mode = data & VC_CTRL_MODE_MASK;
-    //         m_bAutoIncrementWrite = data & VC_CTRL_AUTO_INCREMENT_WRITE;
-    //         m_bAutoIncrementRead = data & VC_CTRL_AUTO_INCREMENT_READ;
+        case VC_CTRL:
+        case VC_PARAM:
+        case VC_DATA:
 
-    //         switch(mode) {
+            // use AddSafe otherwise data may be lost from the ring buffer
+            // lost data can result in commands with the wrong parameters
+            // or missing commands
+            m_ToDisplay.AddSafe((address << 8) | data);
 
-    //         case MODE_CON:
-    //             klog(LogNotice, "Setting mode %u", mode);
-    //             m_nMode = mode;
+        break;
 
-    //             break;
+        default:
 
-    //         case MODE_256x192:
-    //             klog(LogNotice, "Setting mode %u", mode);
-    //             m_nMode = mode;
-    //             m_nBusRamPtr = 0;
+            // DEBUGING, signal to scope we've seen an unexpected write
+            // GPIOInterruptRaise();
+            // GPIOInterruptRelease();
 
-    //             break;
-
-    //         case MODE_256x192_DB:
-
-    //             if (mode == m_nMode) {
-    //                 // double buffer swap
-    //                 if (m_bReadyForSwap) {
-    //                     u8 *tmp = m_pBusRam;
-    //                     m_pBusRam = m_pDisRam;
-    //                     m_pDisRam = tmp;
-
-    //                     m_bReadyForSwap = false;
-    //                     m_nBusRamPtr = 0;
-
-    //                 } else {
-    //                     klog(LogWarning, "Bad Swap");
-    //                 }
-    //             } else {
-    //                 // set video mode
-    //                 klog(LogNotice, "Setting mode %u", mode);
-    //                 m_nMode = mode;
-    //                 m_nBusRamPtr = 0;
-    //             }
-
-    //             break;
-
-    //         default:
-    //             klog(LogWarning, "Bad mode %u", mode);
-
-    //             break;
-    //         }
-    //     }
-    //     break;
-
-    // case VC_HIGH_ADDR:
-    //     // set high byte of video address
-    //     m_nBusRamPtr = ((data << 8) + (m_nBusRamPtr & 0xff)) % RAM_SIZE;
-
-    //     break;
-
-    // case VC_LOW_ADDR:
-    //     // set low byte of video address
-    //     m_nBusRamPtr = (m_nBusRamPtr & 0xff00) + data;
-
-    //     break;
-
-    // case VC_DATA:
-    //     // write byte to display ram
-    //     m_pBusRam[m_nBusRamPtr] = data;
-    //     if (m_bAutoIncrementWrite)
-    //         m_nBusRamPtr = ++m_nBusRamPtr % RAM_SIZE;
-
-    //     break;
-
-    default:
-
-        // DEBUGING, signal to scope we've seen an unexpected write
-        GPIOInterruptRaise();
-        GPIOInterruptRelease();
-
-        klog(LogError, "IO_WRITE Address: 0x%x Data: 0x%x", address, data);
-        m_nTestPort = data;
+            klog(LogWarning, "IO_WRITE Address: 0x%x Data: 0x%x", address, data);
+            m_nTestPort = data;
 
 
         break;

@@ -56,9 +56,8 @@ COM_DATA        equ 22h
 
 ; Video Control I/O
 VC_CTRL         equ 28h
-VC_HIGH_ADDR    equ 2Ah
-VC_LOW_ADDR     equ 2Ch
-VC_DATA         equ 2Eh
+VC_PARAM        equ 2Ah
+VC_DATA         equ 2Ch
 
 ; PANEL I/O
 PNL_PRESENT     equ 80h

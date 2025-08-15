@@ -26,7 +26,7 @@ void CKeyboardTask::Run() {
 
     while(true) {
 
-        boolean bUpdated = m_pUSBHCI->UpdatePlugAndPlay();
+        bool bUpdated = m_pUSBHCI->UpdatePlugAndPlay();
 
         if (bUpdated and m_pKeyboard == NULL) {
 

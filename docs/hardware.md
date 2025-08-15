@@ -57,11 +57,11 @@ The following document outlines the key IO ports and Interrupts that are present
 
  - 28h VC Ctrl
  - 29h UART Signature 0xAA (read) (alias)
- - 2Ah VC HI Address
+ - 2Ah VC Parameters
  - 2Bh UART Signature 0xAA (read) (alias)
- - 2Ch VC LO Address
+ - 2Ch VC Data
  - 2Dh UART Signature 0xAA (read) (alias)
- - 2Eh VC Data
+ - 2Eh VC Reserved
  - 2Fh UART Signature 0xAA (read) (alias)
 
 

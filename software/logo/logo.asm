@@ -29,7 +29,10 @@ init:
     mov sp,0FFFFh
 
     ; set the video mode
-    mov al,11h              ; mode 1 with auto increment on write
+    mov al,40h              ; 256x192
+    out VC_CTRL,al
+
+    mov al,01h              ; graphics mode
     out VC_CTRL,al
 
     cld
@@ -38,46 +41,54 @@ init:
     mov si,logo
     mov cx,49152
 
-.load_image:
+load_image:
     lodsb
     out VC_DATA,al
-    loop .load_image
+    loop load_image
 
     ; setup tune pointer
-    mov si,imperial
-    call tune
+    ;mov si,imperial
+    ;call tune
 
-    ; set the video mode
-    mov al,12h              ; mode 2 with auto increment on write
-    out VC_CTRL,al
 
-    ; bh == Y coord
-    ; bl == X coord
-
+    mov dl, 0
     xor bx,bx
 
-.loop:
+
+colour:
+
+    ; bh == X coord
+    ; bl == Y coord
+    mov cx,256
+
+wibble:
+
     mov al,bh
-    out VC_HIGH_ADDR,al
+    out VC_PARAM,al
     inc bh
 
     mov al,bl
-    out VC_LOW_ADDR,al
-    inc bl
+    out VC_PARAM,al
     inc bl
 
-    mov al,0Fh
-    out VC_DATA,al
+    mov al,dl
+    out VC_PARAM,al
 
-.wait_for_vsync:
-    in al,VC_CTRL
+    mov al, 060h            ; SetPixel
+    out VC_CTRL, al
+
+    loop wibble
+
+wait_for_idle:
+    in al, VC_CTRL
     test al,80h
-    jz .wait_for_vsync
+    jnz wait_for_idle
 
-    ; swap buffers by writing video mode again
-    out VC_CTRL,al
+    inc dl
+    inc bh
 
-    jmp .loop
+    jmp colour
+
 
     hlt
 

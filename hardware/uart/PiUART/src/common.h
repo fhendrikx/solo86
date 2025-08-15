@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <circle/multicore.h>
 #include <circle/koptions.h>
 #include <circle/logger.h>
 

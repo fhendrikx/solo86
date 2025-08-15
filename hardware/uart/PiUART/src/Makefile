@@ -8,7 +8,7 @@ OBJS =  main.o kernel.o i2clogger.o keyboardtask.o \
         tcplistenertask.o tcptelnettask.o tcprawtask.o \
         libtelnet.o strbits.o serialtask.o \
         ter-i16n.o ter-i24b.o ter-i32b.o \
-        cp437.o
+        cp437.o terminalwrapper.o graphics.o
 
 LIBS =  $(CIRCLEHOME)/lib/usb/libusb.a \
         $(CIRCLEHOME)/lib/input/libinput.a \
