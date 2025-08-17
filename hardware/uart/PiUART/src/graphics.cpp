@@ -6,14 +6,12 @@
 #define mk_u16(low, high) (u16)(((high) << 8) | (low))
 
 // modified from Adafruit_GFX library
-#ifndef _swap_s16
 #define _swap_s16(a, b) \
     {                   \
         s16 t = a;      \
         a = b;          \
         b = t;          \
     }
-#endif
 
 LOGMODULE("graphics");
 
@@ -21,6 +19,8 @@ CGraphics::CGraphics() {
 
     m_pFrameBuffer = NULL;
     m_pFrameBufferBackup = NULL;
+    m_pFrameBufferActive = NULL;
+    m_pFrameBufferStandby = NULL;
 
 }
 
@@ -55,8 +55,9 @@ bool CGraphics::Activate(bool bLock) {
 
         if (bLock)
             m_Lock.Acquire();
-        
-        m_pFrameBuffer = new CBcmFrameBuffer(m_nFrameBufferWidth, m_nFrameBufferHeight, DEPTH);
+
+        m_pFrameBuffer = new CBcmFrameBuffer(m_nFrameBufferWidth, m_nFrameBufferHeight, DEPTH,
+                                             0, 0, 0, m_bDoubleBuffered);
 
         if (m_pFrameBuffer == NULL) {
             // framebuffer object is unusable, bomb out
@@ -74,13 +75,16 @@ bool CGraphics::Activate(bool bLock) {
             klog(LogError, "Failed to init frame buffer");
             return false;
         } else {
-            klog(LogNotice, "Frame buffer init %ux%u",
-                m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight());
+            klog(LogNotice, "Frame buffer init %ux%u DB=%d",
+                 m_pFrameBuffer->GetWidth(), m_pFrameBuffer->GetHeight(), m_bDoubleBuffered);
         }
+
+        m_pFrameBufferActive = (u8 *)m_pFrameBuffer->GetBuffer();
+        m_pFrameBufferStandby = m_pFrameBufferActive + (m_nFrameBufferWidth * m_nFrameBufferHeight);
 
         m_pFrameBuffer->WaitForVerticalSync();
 
-        memcpy((void *)m_pFrameBuffer->GetBuffer(), m_pFrameBufferBackup, m_pFrameBuffer->GetSize());
+        memcpy(m_pFrameBufferActive, m_pFrameBufferBackup, m_nFrameBufferSize);
 
         if (bLock)
             m_Lock.Release();
@@ -103,10 +107,13 @@ bool CGraphics::Deactivate(bool bLock) {
         if (bLock)
             m_Lock.Acquire();
 
-        memcpy(m_pFrameBufferBackup, (void *)m_pFrameBuffer->GetBuffer(), m_pFrameBuffer->GetSize());
+        if (not m_bDoubleBuffered)
+            memcpy(m_pFrameBufferBackup, m_pFrameBufferActive, m_nFrameBufferSize);
 
         delete m_pFrameBuffer;
         m_pFrameBuffer = NULL;
+        m_pFrameBufferActive = NULL;
+        m_pFrameBufferStandby = NULL;
 
         if (bLock)
             m_Lock.Release();
@@ -154,13 +161,13 @@ u8 CGraphics::MemRead() {
 
 u8 *CGraphics::GetBuffer() {
 
-    if (m_pFrameBuffer == NULL) {
+    if (m_pFrameBuffer == NULL or m_bDoubleBuffered) {
 
         return m_pFrameBufferBackup;
 
     } else {
 
-        return (u8 *)m_pFrameBuffer->GetBuffer();
+        return m_pFrameBufferActive;
 
     }
 
@@ -185,7 +192,27 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
             SetResolution(Res1024x768);
         break;
 
-        // 0x43 - 0x47
+        case 0x43:
+            SetResolution(ResCustom, mk_u16(pParamBuffer[0], pParamBuffer[1]),
+                                     mk_u16(pParamBuffer[2], pParamBuffer[3]));
+        break;
+
+        case 0x44:
+            SetResolution(Res256x192DB);
+        break;
+
+        case 0x45:
+            SetResolution(Res512x384DB);
+        break;
+
+        case 0x46:
+            SetResolution(Res1024x768DB);
+        break;
+
+        case 0x47:
+            SetResolution(ResCustomDB, mk_u16(pParamBuffer[0], pParamBuffer[1]),
+                                       mk_u16(pParamBuffer[2], pParamBuffer[3]));
+        break;
 
         // set video memory read/write position
         // 8 bit
@@ -196,7 +223,7 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
         case 0x49:
             m_nMemWriteY = pParamBuffer[0] % m_nFrameBufferHeight;
         break;
-        
+
         case 0x4A:
             m_nMemReadX = pParamBuffer[0];
         break;
@@ -213,7 +240,7 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
         case 0x4D:
             m_nMemWriteY = mk_u16(pParamBuffer[0], pParamBuffer[1]) % m_nFrameBufferHeight;
         break;
-        
+
         case 0x4E:
             m_nMemReadX = mk_u16(pParamBuffer[0], pParamBuffer[1]) % m_nFrameBufferWidth;
         break;
@@ -222,7 +249,7 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
             m_nMemReadY = mk_u16(pParamBuffer[0], pParamBuffer[1]) % m_nFrameBufferHeight;
         break;
 
-        // Set Draw Mode
+        // misc commands
         case 0x50:
             m_nDrawMode = ClippingMode;
         break;
@@ -231,7 +258,19 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
             m_nDrawMode = WrapMode;
         break;
 
-        // 0x52 - 0x5F
+        case 0x52:
+            Update();
+        break;
+
+        case 0x53: // clear screen
+            memset(GetBuffer(), 0, m_nFrameBufferSize);
+        break;
+
+        case 0x54: // fill screen
+            memset(GetBuffer(), pParamBuffer[0], m_nFrameBufferSize);
+        break;
+
+        // 0x55 - 0x5F
 
         // drawing commands, 8 bit
         case 0x60:
@@ -246,7 +285,7 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
         // drawing commands, 16 bit
         case 0x80:
             DrawPixel(mk_u16(pParamBuffer[0], pParamBuffer[1]),
-                     mk_u16(pParamBuffer[2], pParamBuffer[3]), pParamBuffer[4]);
+                      mk_u16(pParamBuffer[2], pParamBuffer[3]), pParamBuffer[4]);
         break;
 
         case 0x81:
@@ -260,14 +299,73 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
 
 }
 
-void CGraphics::SetResolution(TResolution Res) {
+void CGraphics::SetResolution(TResolution Res, u16 width, u16 height) {
 
     m_Lock.Acquire();
 
+    switch(Res) {
+
+        case Res256x192:
+            m_nFrameBufferWidth = 256;
+            m_nFrameBufferHeight = 192;
+            m_bDoubleBuffered = false;
+        break;
+
+        case Res256x192DB:
+            m_nFrameBufferWidth = 256;
+            m_nFrameBufferHeight = 192;
+            m_bDoubleBuffered = true;
+        break;
+
+        case Res512x384:
+            m_nFrameBufferWidth = 512;
+            m_nFrameBufferHeight = 384;
+            m_bDoubleBuffered = false;
+        break;
+
+        case Res512x384DB:
+            m_nFrameBufferWidth = 512;
+            m_nFrameBufferHeight = 384;
+            m_bDoubleBuffered = true;
+        break;
+
+        case Res1024x768:
+            m_nFrameBufferWidth = 1024;
+            m_nFrameBufferHeight = 768;
+            m_bDoubleBuffered = false;
+        break;
+
+        case Res1024x768DB:
+            m_nFrameBufferWidth = 1024;
+            m_nFrameBufferHeight = 768;
+            m_bDoubleBuffered = true;
+        break;
+
+        case ResCustom:
+        case ResCustomDB:
+
+            if (width >= 64 && width <= GRAPHICS_MAX_WIDTH && width % 4 == 0 &&
+                height >= 64 && height <= GRAPHICS_MAX_HEIGHT && height % 4 == 0) {
+                m_nFrameBufferWidth = width;
+                m_nFrameBufferHeight = height;
+            } else {
+                m_Lock.Release();
+                klog(LogError, "Invalid resolution %ux%u", width, height);
+                return;
+            }
+
+            if (Res == ResCustomDB)
+                m_bDoubleBuffered = true;
+
+        break;
+
+    }
+
+    klog(LogNotice, "SetResolution %ux%u", m_nFrameBufferWidth, m_nFrameBufferHeight);
+
     m_nDrawMode = ClippingMode;
 
-    m_nFrameBufferWidth = Res * 256;
-    m_nFrameBufferHeight = Res * 192;
+    m_nFrameBufferSize = m_nFrameBufferWidth * m_nFrameBufferHeight;
 
     m_nMemReadX = 0;
     m_nMemReadY = 0;
@@ -276,9 +374,15 @@ void CGraphics::SetResolution(TResolution Res) {
 
     if (m_pFrameBuffer != NULL) {
 
-        Deactivate(false);
+        if (!Deactivate(false)) {
+            CMultiCoreSupport::HaltAll();
+        }
+
         memset(m_pFrameBufferBackup, 0, GRAPHICS_BUF_SIZE);
-        Activate(false);
+
+        if (!Activate(false)) {
+            CMultiCoreSupport::HaltAll();
+        }
 
     } else {
 
@@ -287,6 +391,27 @@ void CGraphics::SetResolution(TResolution Res) {
     }
 
     m_Lock.Release();
+
+}
+
+void CGraphics::Update() {
+
+    if (m_bDoubleBuffered) {
+
+        memcpy(m_pFrameBufferStandby, m_pFrameBufferBackup, m_nFrameBufferSize);
+
+        m_pFrameBuffer->WaitForVerticalSync();
+
+        if (m_pFrameBufferStandby > m_pFrameBufferActive)
+            m_pFrameBuffer->SetVirtualOffset(0, m_nFrameBufferHeight);
+        else
+            m_pFrameBuffer->SetVirtualOffset(0, 0);
+
+        u8 *tmp = m_pFrameBufferActive;
+        m_pFrameBufferActive = m_pFrameBufferStandby;
+        m_pFrameBufferStandby = tmp;
+
+    }
 
 }
 

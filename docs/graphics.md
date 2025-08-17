@@ -3,14 +3,14 @@
 ## I/O Ports
 
  - 0x28 VC_CTRL
-   - Write Commands
-   - Read Status
+   - I/O Write: Write commands to the video controller
+   - I/O Read:  Read status (see below)
  - 0x2A VC_PARAM
-   - Write Parameters for Commands
-   - Read Unused
+   - I/O Write: Write parameters for commands
+   - I/O Read:  Unused
  - 0x2C VC_DATA
-   - Write Video Memory with auto increment
-   - Read Video Memory with auto increment
+   - I/O Write: Write video memory with auto increment
+   - I/O Read:  Read video memory with auto increment
 
 ## VC_CTRL Read Status
 
@@ -30,6 +30,11 @@
  - 0x40 Set Resolution 256x192
  - 0x41 Set Resolution 512x384
  - 0x42 Set Resolution 1024x768
+ - 0x43 Set Custom Resolution (width_low, width_high, height_low, height_high)
+ - 0x44 Set Resolution 256x192 with double buffering
+ - 0x45 Set Resolution 512x384 with double buffering
+ - 0x46 Set Resolution 1024x768 with double buffering
+ - 0x47 Set Custom Resolution (width_low, width_high, height_low, height_high) with double buffering
 
 #### 8 Bit
 
@@ -45,10 +50,13 @@
  - 0x4E Set Mem Read X (x_low, x_high)
  - 0x4F Set Mem Read Y (y_low, y_high)
 
-### 
+### Misc
 
  - 0x50 Set Clipping Mode
  - 0x51 Set Wrap Mode
+ - 0x52 Update display when using double buffering
+ - 0x53 Clear screen
+ - 0x54 Full Screen (colour)
 
 ### 0x60 -> 0x7F Drawing Commands 8 Bit
 
@@ -59,4 +67,3 @@
 
  - 0x80 Set Pixel (x_low, x_high, y_low, y_high, colour)
  - 0x81 Draw line (x1_low, x1_high, y1_low, y1_high, x2_low, x2_high, y2_low, y2_high, colour)
- 
