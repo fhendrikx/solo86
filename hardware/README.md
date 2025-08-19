@@ -33,7 +33,7 @@ At the minimum you'll need:
 
 - Multi-meter
 - Soldering Iron
-- Programmer for CPLD (e.g. XXXXXX)
+- Programmer for CPLD (e.g. OpenOCD or maybe a Terasic Blaster)
 - Programmer for PLDs (e.g. TL866II plus)
 
 (although pre-programmed CPLD and PLDs may be available upon request)
