@@ -24,8 +24,8 @@ class CGraphics {
 
     bool Initialize();
 
-    bool Activate(bool bLock = true);
-    bool Deactivate(bool bLock = true);
+    bool Activate();
+    bool Deactivate();
 
     void MemWrite(u8 nColour);
     u8 MemRead();
@@ -34,6 +34,8 @@ class CGraphics {
 
     private:
 
+    bool Activate(bool bLock);
+    bool Deactivate(bool bLock);
     inline u8 *GetBuffer();
     void SetResolution(TResolution Res, u16 width = 0, u16 height = 0);
     void Update();

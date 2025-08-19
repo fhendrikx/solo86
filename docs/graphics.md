@@ -56,7 +56,7 @@
  - 0x51 Set Wrap Mode
  - 0x52 Update display when using double buffering
  - 0x53 Clear screen
- - 0x54 Full Screen (colour)
+ - 0x54 Fill Screen (colour)
 
 ### 0x60 -> 0x7F Drawing Commands 8 Bit
 

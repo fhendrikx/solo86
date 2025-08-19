@@ -49,6 +49,12 @@ bool CGraphics::Initialize() {
 
 }
 
+bool CGraphics::Activate() {
+
+    return Activate(true);
+
+}
+
 bool CGraphics::Activate(bool bLock) {
 
     if (m_pFrameBuffer == NULL) {
@@ -95,6 +101,12 @@ bool CGraphics::Activate(bool bLock) {
 
     klog(LogError, "Activate failed, FrameBuffer not null");
     return false;
+
+}
+
+bool CGraphics::Deactivate() {
+
+    return Deactivate(true);
 
 }
 
@@ -398,18 +410,35 @@ void CGraphics::Update() {
 
     if (m_bDoubleBuffered) {
 
-        memcpy(m_pFrameBufferStandby, m_pFrameBufferBackup, m_nFrameBufferSize);
+        if (m_pFrameBuffer != NULL) {
 
-        m_pFrameBuffer->WaitForVerticalSync();
+            memcpy(m_pFrameBufferStandby, m_pFrameBufferBackup, m_nFrameBufferSize);
 
-        if (m_pFrameBufferStandby > m_pFrameBufferActive)
-            m_pFrameBuffer->SetVirtualOffset(0, m_nFrameBufferHeight);
-        else
-            m_pFrameBuffer->SetVirtualOffset(0, 0);
+            m_pFrameBuffer->WaitForVerticalSync();
 
-        u8 *tmp = m_pFrameBufferActive;
-        m_pFrameBufferActive = m_pFrameBufferStandby;
-        m_pFrameBufferStandby = tmp;
+            if (m_pFrameBufferStandby > m_pFrameBufferActive)
+                m_pFrameBuffer->SetVirtualOffset(0, m_nFrameBufferHeight);
+            else
+                m_pFrameBuffer->SetVirtualOffset(0, 0);
+
+            u8 *tmp = m_pFrameBufferActive;
+            m_pFrameBufferActive = m_pFrameBufferStandby;
+            m_pFrameBufferStandby = tmp;
+
+        } else {
+
+            // this graphics object doesn't currently own the frame buffer.
+            // however we still want to wait for vsync so the Update() routine
+            // provides consistent timing.
+            // go direct to the graphics hardware and wait for vsync on the
+            // underlying display instead
+
+            // copied from bcmframebuffer.cpp WaitForVerticalSync()
+            CBcmPropertyTags Tags;
+            TPropertyTagSimple Dummy;
+            Tags.GetTag (PROPTAG_WAIT_FOR_VSYNC, &Dummy, sizeof Dummy);
+
+        }
 
     }
 
@@ -442,6 +471,8 @@ void CGraphics::DrawPixel(s16 x, s16 y, u8 c) {
 
 // modified from Adafruit_GFX library
 void CGraphics::DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c) {
+
+    // klog(LogNotice,"DrawLine %u %u %u %u %u", x0, y0, x1, y1, c);
 
     s16 steep = abs(y1 - y0) > abs(x1 - x0);
     if (steep) {
