@@ -408,39 +408,45 @@ void CGraphics::SetResolution(TResolution Res, u16 width, u16 height) {
 
 void CGraphics::Update() {
 
-    if (m_bDoubleBuffered) {
+    if (m_bDoubleBuffered && m_pFrameBuffer != NULL) {
 
-        if (m_pFrameBuffer != NULL) {
+        memcpy(m_pFrameBufferStandby, m_pFrameBufferBackup, m_nFrameBufferSize);
 
-            memcpy(m_pFrameBufferStandby, m_pFrameBufferBackup, m_nFrameBufferSize);
+        WaitForVerticalSync();
 
-            m_pFrameBuffer->WaitForVerticalSync();
+        if (m_pFrameBufferStandby > m_pFrameBufferActive)
+            m_pFrameBuffer->SetVirtualOffset(0, m_nFrameBufferHeight);
+        else
+            m_pFrameBuffer->SetVirtualOffset(0, 0);
 
-            if (m_pFrameBufferStandby > m_pFrameBufferActive)
-                m_pFrameBuffer->SetVirtualOffset(0, m_nFrameBufferHeight);
-            else
-                m_pFrameBuffer->SetVirtualOffset(0, 0);
+        u8 *tmp = m_pFrameBufferActive;
+        m_pFrameBufferActive = m_pFrameBufferStandby;
+        m_pFrameBufferStandby = tmp;
 
-            u8 *tmp = m_pFrameBufferActive;
-            m_pFrameBufferActive = m_pFrameBufferStandby;
-            m_pFrameBufferStandby = tmp;
+    } else {
 
-        } else {
+        // this graphics object doesn't currently own the frame buffer or
+        // we're not doing double buffering.
+        // however we still wait for vsync so the Update() routine
+        // provides consistent timing.
 
-            // this graphics object doesn't currently own the frame buffer.
-            // however we still want to wait for vsync so the Update() routine
-            // provides consistent timing.
-            // go direct to the graphics hardware and wait for vsync on the
-            // underlying display instead
-
-            // copied from bcmframebuffer.cpp WaitForVerticalSync()
-            CBcmPropertyTags Tags;
-            TPropertyTagSimple Dummy;
-            Tags.GetTag (PROPTAG_WAIT_FOR_VSYNC, &Dummy, sizeof Dummy);
-
-        }
+        WaitForVerticalSync();
 
     }
+
+}
+
+void CGraphics::WaitForVerticalSync() {
+
+    // we don't always own the framebuffer so go direct to the graphics hardware
+    // and wait for vsync on the underlying display instead
+
+    // only works on Pi <= 3 (e.g. not Pi 4 or 5 which have multiple displays)
+
+    // copied from bcmframebuffer.cpp WaitForVerticalSync()
+    CBcmPropertyTags Tags;
+    TPropertyTagSimple Dummy;
+    Tags.GetTag (PROPTAG_WAIT_FOR_VSYNC, &Dummy, sizeof Dummy);
 
 }
 

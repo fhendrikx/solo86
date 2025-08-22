@@ -39,6 +39,7 @@ class CGraphics {
     inline u8 *GetBuffer();
     void SetResolution(TResolution Res, u16 width = 0, u16 height = 0);
     void Update();
+    void WaitForVerticalSync();
     inline void DrawPixel(s16 x, s16 y, u8 c);
     void DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c);
 
