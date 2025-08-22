@@ -2,6 +2,8 @@
 ######################################################################
 # bin2hex - convert binary to Intel Hex File.
 #
+# This utility converts files into IHX files.
+#
 # This utility handles IHX files that are over 64KB. This is done by
 # simply ensuring that any writes over 65536 bytes are wrapped around
 # to 0, while a second segment record is inserted for the new segment.
@@ -107,7 +109,7 @@ sub usage
 ######################################################################
 
 my $file;
-my $seg;
+my $seg = 0;
 my $off = 0;
 my $addr;
 
