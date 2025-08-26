@@ -326,25 +326,20 @@ cmd_inp:
 
 cmd_out:
     call spaces
-    call inp_hex            ; byte
-
-    xor cx,cx
-    mov cl,al
-
-    print dbg_out
-
-    call spaces
     call inp_hex            ; port
 
     xor dx,dx
     mov dl,al
 
+    print dbg_out
     call print_hex
 
     mov al,'='
     call print_chr
 
-    mov al,cl
+    call spaces
+    call inp_hex            ; byte
+
     call print_hex
 
     out dx,al               ; OUT
