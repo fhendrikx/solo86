@@ -3,7 +3,7 @@
 
 This directory contains the specifications, instructions and any firmware for the Solo/86 hardware.
 
-![Solo/86 Hardware](hardware.jpg)
+<img src="hardware.jpg" alt="Solo/86 Hardware" width="500">
 
 
 ## Introduction

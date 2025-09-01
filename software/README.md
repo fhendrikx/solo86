@@ -3,7 +3,7 @@
 
 This directory contains software and ROMs for the Solo/86 system.
 
-![Solo/86 Unassembler](unasm.jpg)
+<img src="unasm.jpg" alt="Solo/86 Unassembler" width="500">
 
 
 ## Introduction
