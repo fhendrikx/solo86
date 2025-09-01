@@ -141,14 +141,13 @@ unasm:
 
     call clear
 
-; disassemble an instruction at DS:SI
+    ; disassemble an instruction at DS:SI
 
 .loop:
-
     call print_addr         ; print seg:offset
 
 
-; decode instruction
+    ; decode instruction
 
     call load_inst          ; load instruction
 
@@ -168,10 +167,8 @@ unasm:
 .special:
     call load_byte          ; skip special weird extra byte
 
-
-; decode operands
-
 .decode:
+    ; decode operands
     cmp byte [cs:inst_op1],ins_op_r8
     jb .operands            ; addressing byte only for op_r8 upwards
 
@@ -183,7 +180,6 @@ unasm:
 
 .operands:
     ; operand 1
-
     mov dl,[cs:inst_op1]
     cmp dl,ins_op_none
     je .print
@@ -191,13 +187,11 @@ unasm:
     call load_opr
 
     ; operand 2
-
     mov dl,[cs:inst_op2]
     cmp dl,ins_op_none
     je .print
 
     call load_opr
-
 
 .print:
     ; print padding
@@ -436,20 +430,17 @@ load_opr:
 .reg:
     jmp .exit
 
-
     ; displacement 16-bit
 .disp16:
     call load_word
     mov [cs:inst_off],ax
     jmp .exit
 
-
     ; displacement 8-bit
 .disp8:
     call load_byte
     mov [cs:inst_off],ax
     jmp .exit
-
 
     ; FAR
 .far:
@@ -460,20 +451,17 @@ load_opr:
     mov [cs:inst_off],ax
     jmp .exit
 
-
     ; MEM
 .mem:
     call load_word
     mov [cs:inst_off],ax
     jmp .exit
 
-
     ; IMM16
 .imm16:
     call load_word
     mov [cs:inst_imm],ax
     jmp .exit
-
 
     ; IMM8
 .imm8:
@@ -635,7 +623,6 @@ print_opr:
     je .rm
     add bl,8
 
-
     ; R/M
 .rm:
     call print_p_reg
@@ -648,7 +635,6 @@ print_opr:
     pop si
 
     jmp .exit
-
 
     ; effective addressing
 .ea:
@@ -705,7 +691,6 @@ print_opr:
     call print_rb
     jmp .exit
 
-
     ; sreg
 .constreg:
     call print_p_reg
@@ -722,7 +707,6 @@ print_opr:
 
     jmp .exit
 
-
     ; const 1
 .const1:
     call print_p_imm
@@ -730,7 +714,6 @@ print_opr:
     mov al,'1'
     call print_chr
     jmp .exit
-
 
     ; const 3
 .const3:
@@ -740,7 +723,6 @@ print_opr:
     call print_chr
     jmp .exit
 
-
     ; immediate 8-bit
 .imm8:
     call print_p_imm
@@ -748,7 +730,6 @@ print_opr:
     mov ax,[cs:inst_imm]
     call print_hex
     jmp .exit
-
 
     ; short
 .short:
@@ -759,7 +740,6 @@ print_opr:
     call print_word
     jmp .exit
 
-
     ; immediate 16-bit
 .imm16:
     call print_p_imm
@@ -768,7 +748,6 @@ print_opr:
     call print_word
     jmp .exit
 
-
     ; near
 .near:
     mov ax,[cs:inst_imm]
@@ -776,7 +755,6 @@ print_opr:
     add ax,dx
     call print_word
     jmp .exit
-
 
     ; mem
 .mem:
@@ -787,7 +765,6 @@ print_opr:
 
     call print_rb
     jmp .exit
-
 
     ; FAR
 .far:
@@ -800,7 +777,6 @@ print_opr:
     mov ax,[cs:inst_imm]
     call print_word
     jmp .exit
-
 
     ; REG
 .reg:

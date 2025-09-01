@@ -1,12 +1,14 @@
 
 # Solo/86 Hardware
 
-This directory contains the specifications, instructions and any code for the Solo/86 hardware.
+This directory contains the specifications, instructions and any firmware for the Solo/86 hardware.
+
+![Solo/86 Hardware](hardware.jpg)
 
 
 ## Introduction
 
-The Solo/86 mainboard contains a CPU, RAM, ROM and a CPLD. The system relies heavily on the CPLD as this contains the core logic (that replaces a whole series of circuits on other computers). At a minimum, the Mainboard and UART expansion card will be required to boot the system to the Solo/86 Monitor.
+The Solo/86 mainboard contains a CPU, RAM, ROM and a CPLD. The system relies heavily on the CPLD as this contains the core logic (that replaces a whole series of chips on other computers). At a minimum, the Mainboard and UART expansion card will be required to boot the system to the Solo/86 Monitor.
 
 The Solo/86 is designed for real-mode operation and assumes only 1 MB of logical address space will be available. The platform has 1 MB of RAM, and 1 MB of ROM. Memory mapped peripherals can be connected to the expansion bus. The bottom half of the address space (0x00000->7FFFF) is mapped exclusively to RAM. This cannot be changed. However, the top half of the address space (0x80000->FFFFF) is broken into 4 x 128kB blocks. These can be mapped to ROM, RAM or an external peripheral.
 
@@ -16,11 +18,10 @@ The Solo/86 is designed for real-mode operation and assumes only 1 MB of logical
 The key components of the Solo/86 system are:
 
 - [Mainboard](/hardware/main/README.md) - Mainboard
-- [UART](/hardware/uart/README.md) - Terminal (Keyboard, Mouse and TELNET)
-- [Epoch](/hardware/epoch/README.md) - Clock and programmable timer
-- [Flash](/hardware/cf/README.md) - Compact Flash storage
+- [UART](/hardware/uart/README.md) - Terminal (DIsplay, Keyboard, Mouse and TELNET access)
 - [Console](/hardware/console/README.md) - "Control Panel"
-- [Panel](/hardware/panel/README.md) - "Control Panel" (everything on one card)
+- [Epoch](/hardware/epoch/README.md) - Clock and Programmable Interval Timer
+- [Flash](/hardware/cf/README.md) - Compact Flash storage
 
 
 ## What do I need to build Solo/86?

@@ -1,8 +1,7 @@
+
 # ROM
 
-Each Solo86 ROM consists of a signature, which outlines the technical detail
-of the ROM, followed by the ROM itself. The ROM itself always starts at the
-entry point 0x100.
+Each Solo86 ROM consists of a signature, which outlines the technical detail of the ROM, followed by the ROM itself. The ROM itself always starts at the entry point 0x100.
 
 
 # ROM signature
