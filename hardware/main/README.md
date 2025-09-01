@@ -3,8 +3,7 @@
 
 The Solo/86 mainboard contains the CPU, RAM and ROM.
 
-
-![Solo/86 Mainboard](board.jpg)
+<img src="board.jpg" alt="Solo/86 Mainboard" width="500">
 
 
 ## Building

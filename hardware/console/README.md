@@ -3,7 +3,7 @@
 
 The Solo/86 console is a simple expansion card that provides feedback in the form of 8 LEDs. It also contains 8 switches that can be used to control the boot process. Both the LEDs and switches can be used by your own software in whatever way pleases you.
 
-![Solo/86 Console](board.jpg)
+<img src="board.jpg" alt="Solo/86 Console" width="500">
 
 An alternative console, called the [Panel](/hardware/panel/README.md) is also available. This puts the LEDs and switches on the same card, for purists that don't want to mount their LEDs and switches in a different location.
 

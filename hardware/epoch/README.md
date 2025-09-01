@@ -1,7 +1,7 @@
 
 # Solo/86 Epoch
 
-![Solo/86 Epoch](board.jpg)
+<img src="board.jpg" alt="Solo/86 Epoch" width="500">
 
 
 ## Building

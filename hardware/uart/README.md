@@ -1,7 +1,7 @@
 
 # Solo/86 UART
 
-![Solo/86 UART](board.jpg)
+<img src="board.jpg" alt="Solo/86 UART" width="500">
 
 
 ## Building

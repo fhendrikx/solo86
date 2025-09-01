@@ -21,7 +21,7 @@ The key components of the Solo/86 system are:
 - [UART](/hardware/uart/README.md) - Terminal (DIsplay, Keyboard, Mouse and TELNET access)
 - [Console](/hardware/console/README.md) - "Control Panel"
 - [Epoch](/hardware/epoch/README.md) - Clock and Programmable Interval Timer
-- [Flash](/hardware/cf/README.md) - Compact Flash storage
+- [Flash](/hardware/flash/README.md) - Compact Flash storage
 
 
 ## What do I need to build Solo/86?
