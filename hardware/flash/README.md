@@ -1,7 +1,7 @@
 
 # Solo/86 Flash
 
-![Solo/86 Flash](board.jpg)
+<img src="board.jpg" alt="Solo/86 Flash" width="500">
 
 
 ## Building

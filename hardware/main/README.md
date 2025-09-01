@@ -43,8 +43,8 @@ TODO
 
 Each expansion card card should have a male slot soldered to it's front. When seated on the mainboard, all the cards should face the front of the mainboard (i.e. where the Solo86 words can be found). The only possible exception is the last slot on the mainboard, this may have a 90 degree angled male slot, allowing you to easily work on new or experimental expansion cards.
 
-![Card slot](card1.jpg)
+<img src="card1.jpg" alt="Solo/86 Mainboard Card Slot" width="500">
 
-![Card slot](card2.jpg)
+<img src="card2.jpg" alt="Solo/86 Mainboard Card Slot" width="500">
 
 
