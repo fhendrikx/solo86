@@ -263,26 +263,18 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
 
         // misc commands
         case 0x50:
-            m_nDrawMode = ClippingMode;
-        break;
-
-        case 0x51:
-            m_nDrawMode = WrapMode;
-        break;
-
-        case 0x52:
             Update();
         break;
 
-        case 0x53: // clear screen
+        case 0x51: // clear screen
             memset(GetBuffer(), 0, m_nFrameBufferSize);
         break;
 
-        case 0x54: // fill screen
+        case 0x52: // fill screen
             memset(GetBuffer(), pParamBuffer[0], m_nFrameBufferSize);
         break;
 
-        // 0x55 - 0x5F
+        // 0x53 - 0x5F
 
         // drawing commands, 8 bit
         case 0x60:
@@ -294,6 +286,16 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
                      pParamBuffer[2], pParamBuffer[3], pParamBuffer[4]);
         break;
 
+        case 0x62:
+            DrawRect(pParamBuffer[0], pParamBuffer[1],
+                     pParamBuffer[2], pParamBuffer[3], pParamBuffer[4]);
+        break;
+
+        case 0x63:
+            FillRect(pParamBuffer[0], pParamBuffer[1],
+                     pParamBuffer[2], pParamBuffer[3], pParamBuffer[4]);
+        break;
+
         // drawing commands, 16 bit
         case 0x80:
             DrawPixel(mk_u16(pParamBuffer[0], pParamBuffer[1]),
@@ -302,6 +304,20 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
 
         case 0x81:
             DrawLine(mk_u16(pParamBuffer[0], pParamBuffer[1]),
+                     mk_u16(pParamBuffer[2], pParamBuffer[3]),
+                     mk_u16(pParamBuffer[4], pParamBuffer[5]),
+                     mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
+        break;
+
+        case 0x82:
+            DrawRect(mk_u16(pParamBuffer[0], pParamBuffer[1]),
+                     mk_u16(pParamBuffer[2], pParamBuffer[3]),
+                     mk_u16(pParamBuffer[4], pParamBuffer[5]),
+                     mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
+        break;
+
+        case 0x83:
+            FillRect(mk_u16(pParamBuffer[0], pParamBuffer[1]),
                      mk_u16(pParamBuffer[2], pParamBuffer[3]),
                      mk_u16(pParamBuffer[4], pParamBuffer[5]),
                      mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
@@ -374,8 +390,6 @@ void CGraphics::SetResolution(TResolution Res, u16 width, u16 height) {
     }
 
     klog(LogNotice, "SetResolution %ux%u", m_nFrameBufferWidth, m_nFrameBufferHeight);
-
-    m_nDrawMode = ClippingMode;
 
     m_nFrameBufferSize = m_nFrameBufferWidth * m_nFrameBufferHeight;
 
@@ -452,25 +466,11 @@ void CGraphics::WaitForVerticalSync() {
 
 void CGraphics::DrawPixel(s16 x, s16 y, u8 c) {
 
-    switch(m_nDrawMode) {
+    if (x < 0 || x >= (s16)m_nFrameBufferWidth)
+        return;
 
-        case ClippingMode:
-
-            if (x < 0 || x >= (s16)m_nFrameBufferWidth)
-                return;
-
-            if (y < 0 || y >= (s16)m_nFrameBufferHeight)
-                return;
-
-        break;
-
-        case WrapMode:
-
-            x %= m_nFrameBufferWidth;
-            y %= m_nFrameBufferHeight;
-
-        break;
-    }
+    if (y < 0 || y >= (s16)m_nFrameBufferHeight)
+        return;
 
     GetBuffer()[x + (y * m_nFrameBufferWidth)] = c;
 }
@@ -515,6 +515,23 @@ void CGraphics::DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c) {
             y0 += ystep;
             err += dx;
         }
+    }
+
+}
+
+void CGraphics::DrawRect(s16 x, s16 y, s16 w, s16 h, u8 c) {
+
+    DrawLine(x, y, x + w - 1, y, c);
+    DrawLine(x, y + h - 1, x + w - 1, y + h - 1, c);
+    DrawLine(x, y, x, y + h - 1, c);
+    DrawLine(x + w - 1, y, x + w - 1, y + h - 1, c);
+
+}
+
+void CGraphics::FillRect(s16 x, s16 y, s16 w, s16 h, u8 c) {
+
+    for (s16 i = y; i < y + h; i++) {
+        DrawLine(x, i, x + w - 1, i, c);
     }
 
 }

@@ -13,8 +13,6 @@
 enum TResolution { Res256x192 = 0, Res512x384 = 1, Res1024x768 = 2, ResCustom = 3,
                    Res256x192DB = 4, Res512x384DB = 5, Res1024x768DB = 6, ResCustomDB = 7 };
 
-enum TDrawMode { ClippingMode = 0, WrapMode = 1 };
-
 class CGraphics {
 
     public:
@@ -42,6 +40,8 @@ class CGraphics {
     void WaitForVerticalSync();
     inline void DrawPixel(s16 x, s16 y, u8 c);
     void DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c);
+    void DrawRect(s16 x, s16 y, s16 w, s16 h, u8 c);
+    void FillRect(s16 x, s16 y, s16 w, s16 h, u8 c);
 
     CBcmFrameBuffer *m_pFrameBuffer;
 
@@ -56,7 +56,6 @@ class CGraphics {
 
     CSpinLock m_Lock;
 
-    enum TDrawMode m_nDrawMode;
     bool m_bDoubleBuffered;
 
     unsigned m_nFrameBufferWidth;
