@@ -4,6 +4,7 @@
 #define abs(a) ((a) > 0 ? (a) : -(a))
 
 #define mk_u16(low, high) (u16)(((high) << 8) | (low))
+#define mk_s16(low, high) (s16)(((high) << 8) | (low))
 
 // modified from Adafruit_GFX library
 #define _swap_s16(a, b) \
@@ -21,6 +22,7 @@ CGraphics::CGraphics() {
     m_pFrameBufferBackup = NULL;
     m_pFrameBufferActive = NULL;
     m_pFrameBufferStandby = NULL;
+    m_pFrameBufferPtr = NULL;
 
 }
 
@@ -42,6 +44,8 @@ bool CGraphics::Initialize() {
         klog(LogError, "Failed to create FrameBufferBackup");
         return false;
     }
+
+    m_pFrameBufferPtr = m_pFrameBufferBackup;
 
     SetResolution(Res256x192);
 
@@ -92,6 +96,9 @@ bool CGraphics::Activate(bool bLock) {
 
         memcpy(m_pFrameBufferActive, m_pFrameBufferBackup, m_nFrameBufferSize);
 
+        if (not m_bDoubleBuffered)
+            m_pFrameBufferPtr = m_pFrameBufferActive;
+
         if (bLock)
             m_Lock.Release();
 
@@ -127,6 +134,8 @@ bool CGraphics::Deactivate(bool bLock) {
         m_pFrameBufferActive = NULL;
         m_pFrameBufferStandby = NULL;
 
+        m_pFrameBufferPtr = m_pFrameBufferBackup;
+
         if (bLock)
             m_Lock.Release();
 
@@ -143,7 +152,7 @@ void CGraphics::MemWrite(u8 nColour) {
 
     unsigned nIndex = m_nMemWriteX + (m_nMemWriteY * m_nFrameBufferWidth);
 
-    GetBuffer()[nIndex] = nColour;
+    m_pFrameBufferPtr[nIndex] = nColour;
 
     m_nMemWriteX++;
     m_nMemWriteY += m_nMemWriteX / m_nFrameBufferWidth;
@@ -158,7 +167,7 @@ u8 CGraphics::MemRead() {
 
     unsigned nIndex = m_nMemReadX + (m_nMemReadY * m_nFrameBufferWidth);
 
-    u8 retval = GetBuffer()[nIndex];
+    u8 retval = m_pFrameBufferPtr[nIndex];
 
     m_nMemReadX++;
     m_nMemReadY += m_nMemReadX / m_nFrameBufferWidth;
@@ -168,20 +177,6 @@ u8 CGraphics::MemRead() {
     m_Lock.Release();
 
     return retval;
-
-}
-
-u8 *CGraphics::GetBuffer() {
-
-    if (m_pFrameBuffer == NULL or m_bDoubleBuffered) {
-
-        return m_pFrameBufferBackup;
-
-    } else {
-
-        return m_pFrameBufferActive;
-
-    }
 
 }
 
@@ -267,11 +262,11 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
         break;
 
         case 0x51: // clear screen
-            memset(GetBuffer(), 0, m_nFrameBufferSize);
+            memset(m_pFrameBufferPtr, 0, m_nFrameBufferSize);
         break;
 
         case 0x52: // fill screen
-            memset(GetBuffer(), pParamBuffer[0], m_nFrameBufferSize);
+            memset(m_pFrameBufferPtr, pParamBuffer[0], m_nFrameBufferSize);
         break;
 
         // 0x53 - 0x5F
@@ -298,29 +293,29 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
 
         // drawing commands, 16 bit
         case 0x80:
-            DrawPixel(mk_u16(pParamBuffer[0], pParamBuffer[1]),
-                      mk_u16(pParamBuffer[2], pParamBuffer[3]), pParamBuffer[4]);
+            DrawPixel(mk_s16(pParamBuffer[0], pParamBuffer[1]),
+                      mk_s16(pParamBuffer[2], pParamBuffer[3]), pParamBuffer[4]);
         break;
 
         case 0x81:
-            DrawLine(mk_u16(pParamBuffer[0], pParamBuffer[1]),
-                     mk_u16(pParamBuffer[2], pParamBuffer[3]),
-                     mk_u16(pParamBuffer[4], pParamBuffer[5]),
-                     mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
+            DrawLine(mk_s16(pParamBuffer[0], pParamBuffer[1]),
+                     mk_s16(pParamBuffer[2], pParamBuffer[3]),
+                     mk_s16(pParamBuffer[4], pParamBuffer[5]),
+                     mk_s16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
         break;
 
         case 0x82:
-            DrawRect(mk_u16(pParamBuffer[0], pParamBuffer[1]),
-                     mk_u16(pParamBuffer[2], pParamBuffer[3]),
-                     mk_u16(pParamBuffer[4], pParamBuffer[5]),
-                     mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
+            DrawRect(mk_s16(pParamBuffer[0], pParamBuffer[1]),
+                     mk_s16(pParamBuffer[2], pParamBuffer[3]),
+                     mk_s16(pParamBuffer[4], pParamBuffer[5]),
+                     mk_s16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
         break;
 
         case 0x83:
-            FillRect(mk_u16(pParamBuffer[0], pParamBuffer[1]),
-                     mk_u16(pParamBuffer[2], pParamBuffer[3]),
-                     mk_u16(pParamBuffer[4], pParamBuffer[5]),
-                     mk_u16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
+            FillRect(mk_s16(pParamBuffer[0], pParamBuffer[1]),
+                     mk_s16(pParamBuffer[2], pParamBuffer[3]),
+                     mk_s16(pParamBuffer[4], pParamBuffer[5]),
+                     mk_s16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
         break;
 
     }
@@ -466,19 +461,24 @@ void CGraphics::WaitForVerticalSync() {
 
 void CGraphics::DrawPixel(s16 x, s16 y, u8 c) {
 
-    if (x < 0 || x >= (s16)m_nFrameBufferWidth)
+    // if (x < 0 || (unsigned) x >= m_nFrameBufferWidth)
+    //     return;
+
+    // if (y < 0 || (unsigned) y >= m_nFrameBufferHeight)
+    //     return;
+
+    if ((unsigned) x >= m_nFrameBufferWidth)
         return;
 
-    if (y < 0 || y >= (s16)m_nFrameBufferHeight)
+    if ((unsigned) y >= m_nFrameBufferHeight)
         return;
 
-    GetBuffer()[x + (y * m_nFrameBufferWidth)] = c;
+    m_pFrameBufferPtr[(unsigned)x + ((unsigned)y * m_nFrameBufferWidth)] = c;
+
 }
 
 // modified from Adafruit_GFX library
 void CGraphics::DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c) {
-
-    // klog(LogNotice,"DrawLine %u %u %u %u %u", x0, y0, x1, y1, c);
 
     s16 steep = abs(y1 - y0) > abs(x1 - x0);
     if (steep) {
@@ -519,19 +519,83 @@ void CGraphics::DrawLine(s16 x0, s16 y0, s16 x1, s16 y1, u8 c) {
 
 }
 
+void CGraphics::DrawHLine(s16 x, s16 y, s16 len, u8 c) {
+
+    if (len <= 0)
+        return;
+
+    // ignore lines above or below the screen
+    if (y < 0 || y >= (s16)m_nFrameBufferHeight)
+        return;
+
+    s16 x_end = x + len;
+
+    // truncate the left side if it's off the screen
+    if (x < 0)
+        x = 0;
+
+    // truncate the right side if it's off the screen
+    if (x_end > (s16)m_nFrameBufferWidth)
+        x_end = (s16)m_nFrameBufferWidth;
+
+    // draw the line
+    for (s16 i = x; i < x_end; i++) {
+        DrawPixel(i, y, c);
+    }
+
+}
+
+void CGraphics::DrawVLine(s16 x, s16 y, s16 len, u8 c) {
+
+    if (len <= 0)
+        return;
+
+    // ignore lines off the sides of the screen
+    if (x < 0 || x >= (s16)m_nFrameBufferWidth)
+        return;
+
+    s16 y_end = y + len;
+
+    // truncate the top if it's off the screen
+    if (y < 0)
+        y = 0;
+
+    // truncate the bottom if it's off the screen
+    if (y_end > (s16)m_nFrameBufferHeight)
+        y_end = (s16)m_nFrameBufferHeight;
+
+    // daw the line
+    for (s16 i = y; i < y_end; i++) {
+        DrawPixel(x, i, c);
+    }
+
+}
+
 void CGraphics::DrawRect(s16 x, s16 y, s16 w, s16 h, u8 c) {
 
-    DrawLine(x, y, x + w - 1, y, c);
-    DrawLine(x, y + h - 1, x + w - 1, y + h - 1, c);
-    DrawLine(x, y, x, y + h - 1, c);
-    DrawLine(x + w - 1, y, x + w - 1, y + h - 1, c);
+    if (w <= 0)
+        return;
+
+    if (h <= 0)
+        return;
+
+    DrawHLine(x, y, w, c);
+    DrawHLine(x, y + h - 1, w, c);
+    DrawVLine(x, y, h, c);
+    DrawVLine(x + w - 1, y, h, c);
 
 }
 
 void CGraphics::FillRect(s16 x, s16 y, s16 w, s16 h, u8 c) {
 
+    if (w <= 0)
+        return;
+
+    if (h <= 0)
+        return;
+
     for (s16 i = y; i < y + h; i++) {
-        DrawLine(x, i, x + w - 1, i, c);
+        DrawHLine(x, i, w, c);
     }
 
 }
