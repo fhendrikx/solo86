@@ -52,18 +52,21 @@
 
 ### Misc
 
- - 0x50 Set Clipping Mode
- - 0x51 Set Wrap Mode
- - 0x52 Update display when using double buffering
- - 0x53 Clear screen
- - 0x54 Fill Screen (colour)
+ - 0x50 Update display when using double buffering
+ - 0x51 Clear screen
+ - 0x52 Fill Screen (colour)
 
 ### 0x60 -> 0x7F Drawing Commands 8 Bit
 
  - 0x60 Set Pixel (x, y, colour)
  - 0x61 Draw Line (x1, y1, x2, y2, colour)
+ - 0x62 Draw Rectangle (x, y, width, height, colour)
+ - 0x63 Full Rectangle (x, y, width, height, colour)
 
 ### 0x80 -> 0x9F Drawing Commands 16 Bit
 
  - 0x80 Set Pixel (x_low, x_high, y_low, y_high, colour)
  - 0x81 Draw line (x1_low, x1_high, y1_low, y1_high, x2_low, x2_high, y2_low, y2_high, colour)
+ - 0x82 Draw Rectangle (x_low, x_high, y_low, y_high, width_low, width_high, height_low, height_high, colour)
+ - 0x83 Fill Rectangle (x_low, x_high, y_low, y_high, width_low, width_high, height_low, height_high, colour)
+
