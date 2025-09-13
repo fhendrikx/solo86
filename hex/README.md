@@ -22,7 +22,7 @@ that e000 is mapped as RAM (otherwise the load will not do anything):
 
     telnet solo
 
-    MON$ r e000 01
+    MON$ R e000 01
 
 Then, the load can be started in the monitor:
 

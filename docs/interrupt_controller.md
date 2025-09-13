@@ -17,11 +17,13 @@ At power up all four IRQ's are disabled.
 
 ## IO Ports
 
-There are two I/O ports for communicating with the interrupt controller
+There are two I/O ports for communicating with the interrupt controller:
+
  - 0x18 Ctrl
  - 0x1A Data (EOI; end of interrupt)
 
 The IRQ's can be controlled by writing to the ctrl port (1 == enable, 0 == disable):
+
  - Bit 7-4 reserved
  - Bit 3 IRQ3
  - Bit 2 IRQ2

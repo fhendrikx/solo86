@@ -1,22 +1,12 @@
 
 # Solo/86 Panel
 
-![Solo/86 Panel](board.jpg)
+The Solo/86 panel is a simple expansion card that provides feedback in the form of 8 LEDs. It also contains 8 switches that can be used to control the boot process. Both the LEDs and switches can be used by your own software in whatever way pleases you.
+
+<img src="board.jpg" alt="Solo/86 Panel" width="500">
 
 
 ## Building
 
-Install the components on the board in this order:
-
-- Resistors R1, R2, R4, R5
-- Capacitor 100uF x4
-- Sockets
-- Trans x2
-- Headers
-- Socket for PI
-
-
-
-## Settings
-
+Please see the build instructions for the [Console](/hardware/console/README.md). These are essentially the same expansion card, but different physical expressions.
 

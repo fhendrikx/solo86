@@ -73,7 +73,7 @@ dbg_help            db 0Ah, '[ MON Help ]', 0Ah
                     db 'U SSSS:OOOO         - MEM UASM addr SSSS:OOOO', 0Ah
 
                     db 'I PP                - CPU INP port PP', 0Ah
-                    db 'O XX PP             - CPU OUT byte XX port PP', 0Ah
+                    db 'O PP XX             - CPU OUT port PP byte XX', 0Ah
                     db 'J SSSS:OOOO         - CPU JMP addr SSSS:OOOO', 0Ah
                     db 'Y SS                - CPU TMR state', 0Ah
                     db 'X                   - CPU HLT', 0Ah
