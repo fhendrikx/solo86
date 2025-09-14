@@ -1,0 +1,7 @@
+From: https://github.com/raspberrypi/firmware/releases
+Working: 1.20250305
+Broken: 1.20250326
+Broken: 1.20250430
+
+The broken versions miss the first couple seconds of activity on the bus.
+Its unclear why.
