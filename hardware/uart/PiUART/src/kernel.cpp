@@ -695,7 +695,7 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
         case UART_CTRL:
             // write UART control register
 
-            klog(LogNotice, "UART control write %u", data);
+            klog(LogError, "UART control write %u", data);
             m_bUartIntEnable = data & UART_INT_ENABLE;
 
         break;
@@ -779,11 +779,11 @@ inline void CKernel::GPIOPWaitBusy() {
 }
 
 inline void CKernel::GPIOInterruptRaise() {
-    write32(ARM_GPIO_GPCLR0, 1 << 18);
+    write32(ARM_GPIO_GPSET0, 1 << 18);
 }
 
 inline void CKernel::GPIOInterruptRelease() {
-    write32(ARM_GPIO_GPSET0, 1 << 18);
+    write32(ARM_GPIO_GPCLR0, 1 << 18);
 }
 
 inline void CKernel::GPIOBreakReset() {

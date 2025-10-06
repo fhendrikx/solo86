@@ -1,0 +1,168 @@
+Name     piuart ;
+PartNo   ATF22V10C ;
+Date     2025-10-05 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly  ;
+Location  ;
+Device   g22v10 ;
+
+PIN  1 = CLK;
+PIN  2 = A4;
+PIN  3 = A5;
+PIN  4 = A6;
+PIN  5 = A7;
+PIN  6 = !PWAIT_ASYNC;
+PIN  7 = !IOWR;
+PIN  8 = !IORD;
+PIN  9 = A0;
+PIN 10 = !RESET;
+PIN 11 = !BHE;
+// PIN 12 = GND;
+// PIN 13 = UNUSED;
+PIN 14 = PWAIT_METASTABLE;  /* 8 PTERMS  (1)  metastable version of PWAIT */
+PIN 15 = !PATTERN_EN;       /* 10 PTERMS (1)  output */
+PIN 16 = WAIT;              /* 12 PTERMS (5)  output */
+PIN 17 = PEVENT;            /* 14 PTERMS (3)  output */
+PIN 18 = S0;                /* 16 PTERMS (6)  state machine */
+PIN 19 = S1;                /* 16 PTERMS (5)  state machine */
+PIN 20 = S2;                /* 14 PTERMS (5)  state machine */
+PIN 21 = !PDATA_EN;         /* 12 PTERMS (4)  output */
+PIN 22 = !PDATA_DIR;        /* 10 PTERMS (1)  synchronous version of PWAIT */
+PIN 23 = PWAIT_SYNC;        /* 8 PTERMS  (1)  output */
+// PIN 24 = VCC;
+
+$DEFINE WAIT_FOR_EVENT_START  0
+$DEFINE WAIT_FOR_PI_READY     1
+$DEFINE DATA_ENABLE           2
+$DEFINE WAIT_FOR_PI_DONE      3
+$DEFINE WAIT_FOR_EVENT_END    4
+$DEFINE GLITCH1               5
+$DEFINE GLITCH2               6
+$DEFINE GLITCH3               7
+
+FIELD IOADDR = [A7..4];
+FIELD STATE  = [S2..0];
+
+/* valid I/O address */
+ADDRMATCH = IOADDR:[020..02F];
+// ADDRMATCH = IOADDR:[020..02F, 070..07F];
+
+/* only respond to 8 bit I/O requests */
+
+/* respond with our signature on the high data bus */
+PATTERN_EN = IORD & ADDRMATCH & A0 & BHE;
+
+/* event for the PI */
+EVENT = (IORD # IOWR) & ADDRMATCH & !A0 & !BHE;
+
+/*
+  74LVC245A
+  HIGH A -> B  IOWR or idle
+  LOW  B -> A  IORD
+  pin polarity inverted so it's HIGH on reset
+*/
+PDATA_DIR.D = IORD;
+PDATA_DIR.AR = RESET;
+PDATA_DIR.SP = 'b'0;
+
+/*
+    PWAIT is an asynchonous signal, that is, it can change at any time.
+    If this occurs just before the rising edge of the clock the latches
+    of the state machine can get an inconsistent view of PWAIT.
+
+    It's also possible for PWAIT to enter a metastable state.
+
+    Double flip-flop PWAIT to produce a synchonous signal that is safe to use.
+
+    PWAIT_ASYNC is inverted so the flip-flops output "not ready" on reset.
+*/
+PWAIT_METASTABLE.D = PWAIT_ASYNC;
+PWAIT_METASTABLE.AR = RESET;
+PWAIT_METASTABLE.SP = 'b'0;
+
+PWAIT_SYNC.D = PWAIT_METASTABLE;
+PWAIT_SYNC.AR = RESET;
+PWAIT_SYNC.SP = 'b'0;
+
+/*
+    The state-machine drives the following synchronous outputs: PEVENT, WAIT
+    The state-machine drives the following asynchronous outputs: PDATA_EN
+
+    PWAIT_SYNC  LOW == not ready, HIGH == ready
+
+    PEVENT should only be active after PDATA_EN so the data on the bus
+    is stable before the Pi tries to read it (hence the DATA_ENABLE state)
+
+    PDATA_EN should only be enabled during an event while the Pi is ready. If
+    enabled too soon the Pi may still be writing to the bus from a previous
+    event and collide with the 74LVC245A. 
+    
+    Ideally PDATA_DIR shouldn't change while PDATA_EN is active.
+
+    WAIT should be enabled as early as possible in theory, however
+    in practice 3 wait states are added to all I/O events so there's
+    plenty of time to assert it
+
+    Given lots of prior issues with glitches caused by timing mistakes I've
+    included the three unused states (glitch1-3) to catch any glitches and
+    cause the PiUART to freeze making debugging easier.
+
+*/
+
+SEQUENCE STATE {
+    PRESENT WAIT_FOR_EVENT_START
+        // synchronous
+        IF EVENT & !PWAIT_SYNC NEXT WAIT_FOR_PI_READY OUT WAIT;     // pi not ready
+        IF EVENT & PWAIT_SYNC NEXT DATA_ENABLE OUT WAIT;            // pi ready
+        DEFAULT NEXT WAIT_FOR_EVENT_START;
+
+    PRESENT WAIT_FOR_PI_READY
+        // synchronous
+        IF PWAIT_SYNC NEXT DATA_ENABLE OUT WAIT;                    // pi ready
+        DEFAULT NEXT WAIT_FOR_PI_READY OUT WAIT;
+
+    PRESENT DATA_ENABLE
+        // synchronous
+        NEXT WAIT_FOR_PI_DONE OUT WAIT OUT PEVENT;
+        // asynchronous
+        IF EVENT OUT PDATA_EN;
+
+    PRESENT WAIT_FOR_PI_DONE
+        // synchronous
+        IF !PWAIT_SYNC NEXT WAIT_FOR_EVENT_END OUT PEVENT;          // pi ack event
+        DEFAULT NEXT WAIT_FOR_PI_DONE OUT WAIT OUT PEVENT;
+        // asynchronous
+        IF EVENT OUT PDATA_EN;
+
+    PRESENT WAIT_FOR_EVENT_END
+        // synchronous
+        IF !EVENT NEXT WAIT_FOR_EVENT_START;
+        DEFAULT NEXT WAIT_FOR_EVENT_END OUT PEVENT;
+        // asynchronous
+        IF EVENT OUT PDATA_EN;
+
+    PRESENT GLITCH1
+        // synchronous
+        DEFAULT NEXT GLITCH1;
+    
+    PRESENT GLITCH2
+        // synchronous
+        DEFAULT NEXT GLITCH2;
+
+    PRESENT GLITCH3
+        // synchronous
+        DEFAULT NEXT GLITCH3;
+}
+
+STATE.AR = RESET;
+STATE.SP = 'b'0;
+
+WAIT.AR = RESET;
+WAIT.SP = 'b'0;
+
+PEVENT.AR = RESET;
+PEVENT.SP = 'b'0;
+
+
