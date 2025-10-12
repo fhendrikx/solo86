@@ -156,6 +156,16 @@ architecture rtl of Control286 is
   signal irq2_isr             : STD_LOGIC;
   signal irq3_isr             : STD_LOGIC;
 
+  -- irq input synchroniser to avoid metastable signals
+  signal irq0_meta            : STD_LOGIC;
+  signal irq0_sync            : STD_LOGIC;
+  signal irq1_meta            : STD_LOGIC;
+  signal irq1_sync            : STD_LOGIC;
+  signal irq2_meta            : STD_LOGIC;
+  signal irq2_sync            : STD_LOGIC;
+  signal irq3_meta            : STD_LOGIC;
+  signal irq3_sync            : STD_LOGIC;
+
   signal irq_ctrl_write       : STD_LOGIC;
 
   signal wait_states          : INTEGER range 0 to 3;
@@ -176,14 +186,43 @@ architecture rtl of Control286 is
 
 begin
 
+  --
   -- interrupt outputs
+  --
+
   o_nmi <= '0';
 
-  o_intr <= '1' when (irq0_latch = '1' and irq0_isr = '0') or
-                     (irq1_latch = '1' and irq0_isr = '0' and irq1_isr = '0') or
-                     (irq2_latch = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0') or
-                     (irq3_latch = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0' and irq3_isr = '0')
-            else '0';
+  -- o_intr <= '1' when (irq0_sync = '1' and irq0_isr = '0') or
+  --                    (irq1_sync = '1' and irq0_isr = '0' and irq1_isr = '0') or
+  --                    (irq2_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0') or
+  --                    (irq3_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0' and irq3_isr = '0')
+  --           else '0';
+
+  proc_intr: process(i_reset_n, i_clk) is
+  begin
+
+    if i_reset_n = '0' then
+
+      o_intr <= '0';
+
+    elsif falling_edge(i_clk) then
+
+      if (irq0_sync = '1' and irq0_isr = '0') or
+         (irq1_sync = '1' and irq0_isr = '0' and irq1_isr = '0') or
+         (irq2_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0') or
+         (irq3_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0' and irq3_isr = '0') then
+
+        o_intr <= '1';
+
+      else
+
+        o_intr <= '0';
+
+      end if;
+
+    end if;
+
+  end process;
 
   --
   -- edge triggered interrupt latches
@@ -244,6 +283,78 @@ begin
     elsif rising_edge(i_irq3) then
 
       irq3_latch <= '1';
+
+    end if;
+
+  end process;
+
+  --
+  -- IRQ input synchroniser
+  --
+
+  proc_irq0_synchroniser: process(i_reset_n, i_clk, irq0_clear, irq0_mask) is
+  begin
+
+    if i_reset_n = '0' or irq0_clear = '1' or irq0_mask = '0' then
+
+      irq0_meta <= '0';
+      irq0_sync <= '0';
+
+    elsif falling_edge(i_clk) then
+
+      irq0_meta <= irq0_latch;
+      irq0_sync <= irq0_meta;
+
+    end if;
+
+  end process;
+
+  proc_irq1_synchroniser: process(i_reset_n, i_clk, irq1_clear, irq1_mask) is
+  begin
+
+    if i_reset_n = '0' or irq1_clear = '1' or irq1_mask = '0' then
+
+      irq1_meta <= '0';
+      irq1_sync <= '0';
+
+    elsif falling_edge(i_clk) then
+
+      irq1_meta <= irq1_latch;
+      irq1_sync <= irq1_meta;
+
+    end if;
+
+  end process;
+
+  proc_irq2_synchroniser: process(i_reset_n, i_clk, irq2_clear, irq2_mask) is
+  begin
+
+    if i_reset_n = '0' or irq2_clear = '1' or irq2_mask = '0' then
+
+      irq2_meta <= '0';
+      irq2_sync <= '0';
+
+    elsif falling_edge(i_clk) then
+
+      irq2_meta <= irq2_latch;
+      irq2_sync <= irq2_meta;
+
+    end if;
+
+  end process;
+
+  proc_irq3_synchroniser: process(i_reset_n, i_clk, irq3_clear, irq3_mask) is
+  begin
+
+    if i_reset_n = '0' or irq3_clear = '1' or irq3_mask = '0' then
+
+      irq3_meta <= '0';
+      irq3_sync <= '0';
+
+    elsif falling_edge(i_clk) then
+
+      irq3_meta <= irq3_latch;
+      irq3_sync <= irq3_meta;
 
     end if;
 
@@ -547,25 +658,25 @@ begin
             -- only output the interrupt vector on the second ack cycle
             if inta_cycle = '0' then
 
-              if irq0_latch = '1' then
+              if irq0_sync = '1' then
 
                 io_data <= "00100000"; -- 0x20
                 irq0_clear <= '1';
                 irq0_isr <= '1';
 
-              elsif irq1_latch = '1' then
+              elsif irq1_sync = '1' then
 
                 io_data <= "00100001"; -- 0x21
                 irq1_clear <= '1';
                 irq1_isr <= '1';
 
-              elsif irq2_latch = '1' then
+              elsif irq2_sync = '1' then
 
                 io_data <= "00100010"; -- 0x22
                 irq2_clear <= '1';
                 irq2_isr <= '1';
 
-              elsif irq3_latch = '1' then
+              elsif irq3_sync = '1' then
 
                 io_data <= "00100011"; -- 0x23
                 irq3_clear <= '1';
@@ -622,10 +733,10 @@ begin
               -- if i_addr_low(7 downto 1) = irq_eoi_addr then
               --   -- internal peripherals don't need any wait states
               --   wait_states <= 0;
-              --   io_data(7) <= irq3_latch;
-              --   io_data(6) <= irq2_latch;
-              --   io_data(5) <= irq1_latch;
-              --   io_data(4) <= irq0_latch;
+              --   io_data(7) <= irq3_sync;
+              --   io_data(6) <= irq2_sync;
+              --   io_data(5) <= irq1_sync;
+              --   io_data(4) <= irq0_sync;
               --   io_data(3) <= irq3_isr;
               --   io_data(2) <= irq2_isr;
               --   io_data(1) <= irq1_isr;
@@ -710,6 +821,8 @@ begin
             -- read from ROM
             if rom_enable = '1' then
               o_rom_oe_n <= '0';
+              -- ROM is marginal @ 20Mhz, one wait state to be safe
+              wait_states <= 1;
             end if;
 
             -- read from RAM
@@ -733,6 +846,9 @@ begin
 
             -- write to ROM
             if rom_enable = '1' then
+
+              -- ROM is marginal @ 20Mhz, one wait state to be safe
+              wait_states <= 1;
 
               if i_rom_wr_en = '1' then
 
@@ -807,6 +923,12 @@ begin
               -- no reason to wait, set the ready signal
 
             o_ready_n <= '0';
+
+            -- finish the I/O write cycle one clock (25ns) early to allow more hold time
+            -- before the CPU changes the value on the data bus
+            -- this is potentially useful for the 82C54 (PIT) which requires a 25ns hold time
+            -- at the end of the write cycle
+            o_iowr_n <= '1';
 
           else
             -- wait this TC cycle
