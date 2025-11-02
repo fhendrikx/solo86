@@ -40,8 +40,9 @@ void CTCPTelnetTask::Run() {
     // TELNET_FLAG_NVT_EOL => translate new line sequences
     // \r\0 -> \r
     // \r\n -> \n
-    //m_pTelnet = telnet_init(my_telopts, TelnetEventCB, TELNET_FLAG_NVT_EOL, this);
-    m_pTelnet = telnet_init(my_telopts, TelnetEventCB, 0, this);
+    // ELKS seems to require \r and linux telnet seems to send \r\0 by default
+    m_pTelnet = telnet_init(my_telopts, TelnetEventCB, TELNET_FLAG_NVT_EOL, this);
+    // m_pTelnet = telnet_init(my_telopts, TelnetEventCB, 0, this);
 
     // tell the client not to do local echo, it'll be handled by whatever is out the UART
     telnet_negotiate(m_pTelnet, TELNET_DO, TELNET_TELOPT_ECHO);

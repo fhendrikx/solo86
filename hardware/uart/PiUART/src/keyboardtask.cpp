@@ -78,7 +78,12 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
             klog(LogDebug, "KeyPress: %02x", *pString);
         }
 
-        s_pThis->m_pKeyBuf->AddSafe(*pString);
+        // ELKS seems to require \r
+        if (*pString == '\n') {
+            s_pThis->m_pKeyBuf->AddSafe('\r');
+        } else {
+            s_pThis->m_pKeyBuf->AddSafe(*pString);
+        }
 
         pString++;
     }
