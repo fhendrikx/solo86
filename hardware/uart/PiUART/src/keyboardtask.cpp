@@ -72,18 +72,20 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
 
     while (*pString) {
 
-        if (*pString >= 0x20 and *pString < 0x7f) {
-            klog(LogDebug, "KeyPress: %02x '%c'", *pString, *pString);
+        char c = *pString;
+
+        if (c >= 0x20 and c < 0x7f) {
+            klog(LogDebug, "KeyPress: %02x '%c'", c, c);
         } else {
-            klog(LogDebug, "KeyPress: %02x", *pString);
+            klog(LogDebug, "KeyPress: %02x", c);
         }
 
         // ELKS seems to require \r
-        if (*pString == '\n') {
-            s_pThis->m_pKeyBuf->AddSafe('\r');
-        } else {
-            s_pThis->m_pKeyBuf->AddSafe(*pString);
+        if (c == '\n') {
+            c = '\r';
         }
+
+        s_pThis->m_pKeyBuf->AddSafe(c);
 
         pString++;
     }

@@ -109,13 +109,14 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
                 klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
             }
 
-            // fix carriage return
-            //if (c == '\r')
-            //    c = '\n';
-
             // fix backspace
             // if (c == 0x7f)
             //     c = 0x8; // ascii backspace
+
+            // ELKS seems to require \r
+            if (c == '\n') {
+                c = '\r';
+            }
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
