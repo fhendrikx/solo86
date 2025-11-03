@@ -534,7 +534,7 @@ void CKernel::Main() {
     klog(LogNotice, "Deferred init complete");
 
     // launch the task that looks after the USB keyboard
-    new CKeyboardTask(&m_USBHCI, &m_ToSerial, this);
+    new CKeyboardTask(&m_USBHCI, &m_ToSerial, this, &m_CharConv);
 
     klog(LogNotice, "WPA waiting for connection");
 
@@ -557,8 +557,8 @@ void CKernel::Main() {
     m_LCD.Write((const char *)IPString, IPString.GetLength());
 
     // start TCP listeners
-    CTCPListenerTask *TelnetListener = new CTCPListenerTask(&m_Net, TELNET_PORT, &m_ToSerial, telnet);
-    CTCPListenerTask *RawListener = new CTCPListenerTask(&m_Net, RAW_PORT, &m_ToSerial, raw);
+    CTCPListenerTask *TelnetListener = new CTCPListenerTask(&m_Net, TELNET_PORT, &m_ToSerial, telnet, &m_CharConv);
+    CTCPListenerTask *RawListener = new CTCPListenerTask(&m_Net, RAW_PORT, &m_ToSerial, raw, NULL);
 
     u8 Buffer[FRAME_BUFFER_SIZE];
     int nBytesSent;
@@ -697,6 +697,8 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
             klog(LogError, "UART control write %u", data);
             m_bUartIntEnable = data & UART_INT_ENABLE;
+            m_CharConv.SetCRLF(data & UART_CRLF);
+            m_CharConv.SetDelBS(data & UART_DEL_BS);
 
         break;
 

@@ -7,7 +7,7 @@ LOGMODULE("keyboardtask");
 
 CKeyboardTask *CKeyboardTask::s_pThis = NULL;
 
-CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKernel *pKernel) {
+CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKernel *pKernel, CCharConv *pCharConv) {
 
     SetName("keyboardtask");
 
@@ -15,6 +15,7 @@ CKeyboardTask::CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKer
     m_pKeyboard = NULL;
     m_pKeyBuf = pKeyBuf;
     m_pKernel = pKernel;
+    m_pCharConv = pCharConv;
     s_pThis = this;
 }
 
@@ -80,10 +81,8 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
             klog(LogDebug, "KeyPress: %02x", c);
         }
 
-        // ELKS seems to require \r
-        if (c == '\n') {
-            c = '\r';
-        }
+        // convert CR/LF, and DEL/^H, etc
+        c = s_pThis->m_pCharConv->Convert(c);
 
         s_pThis->m_pKeyBuf->AddSafe(c);
 

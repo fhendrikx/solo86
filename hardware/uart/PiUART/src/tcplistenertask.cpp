@@ -3,7 +3,7 @@
 #include <circle/sched/scheduler.h>
 #include <circle/net/in.h>
 
-CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u8> *pToSerial, TCPMode TMode) {
+CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u8> *pToSerial, TCPMode TMode, CCharConv *pCharConv) {
 
     m_Name.Format("tcplistenertask-%u", nListenPort);
     From = m_Name;
@@ -16,6 +16,7 @@ CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBu
     m_pTelnetTask = NULL;
     m_pRawTask = NULL;
     m_TMode = TMode;
+    m_pCharConv = pCharConv;
 
 }
 
@@ -88,7 +89,7 @@ void CTCPListenerTask::Run() {
         }
 
         if (m_TMode == telnet)
-            m_pTelnetTask = new CTCPTelnetTask(pConnection, m_pToSerial);
+            m_pTelnetTask = new CTCPTelnetTask(pConnection, m_pToSerial, m_pCharConv);
 
         if (m_TMode == raw)
             m_pRawTask = new CTCPRawTask(pConnection, m_pToSerial);

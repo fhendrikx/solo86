@@ -24,6 +24,7 @@
 #include <wlan/bcm4343.h>
 #include <wlan/hostap/wpa_supplicant/wpasupplicant.h>
 
+#include "charconv.h"
 #include "common.h"
 #include "cp437.h"
 #include "fonts.h"
@@ -74,6 +75,8 @@
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
+#define UART_CRLF       0x2 // 0 == CR, 1 == LF
+#define UART_DEL_BS     0x4 // 0 == DEL, 1 == BS
 
 /*
   VC_CTRL READ:
@@ -206,6 +209,8 @@ private:
     // UART
     bool m_bUartIntEnable;
     bool m_bUartIntActive;
+
+    CCharConv m_CharConv;
 
     // ring buffers
     CRingBuf<u8> m_ToSerial; // data for the UART to output

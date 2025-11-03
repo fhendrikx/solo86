@@ -11,7 +11,7 @@
 
 class CKeyboardTask : public CTask {
 public:
-    CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKernel *pKernel);
+    CKeyboardTask(CUSBHCIDevice *pUSBHCI, CRingBuf<u8> *pKeyBuf, CKernel *pKernel, CCharConv *pCharConv);
     ~CKeyboardTask();
     void Run();
     
@@ -25,6 +25,7 @@ private:
     CUSBKeyboardDevice * volatile m_pKeyboard;
     CRingBuf<u8> *m_pKeyBuf;
     CKernel *m_pKernel;
+    CCharConv *m_pCharConv;
 
     static CKeyboardTask *s_pThis;
 };

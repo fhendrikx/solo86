@@ -6,6 +6,7 @@
 #include <circle/net/socket.h>
 #include <circle/net/ipaddress.h>
 
+#include "charconv.h"
 #include "common.h"
 #include "ringbuf.h"
 #include "libtelnet.h"
@@ -13,7 +14,7 @@
 class CTCPTelnetTask : public CTask {
 public:
 
-    CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial);
+    CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial, CCharConv *pCharConv);
     ~CTCPTelnetTask();
 
     void Run();
@@ -27,6 +28,7 @@ private:
     CSocket *m_pSocket;
     CRingBuf<u8> *m_pToSerial;
     telnet_t *m_pTelnet;
+    CCharConv *m_pCharConv;
 
     // define local instance of From rather than use LOGMODULE
     // so each instantiation of the class has a unique log source

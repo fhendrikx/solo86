@@ -12,7 +12,7 @@ static const telnet_telopt_t my_telopts[] = {
     { -1, 0, 0 }
 };
 
-CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
+CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial, CCharConv *pCharConv) {
 
     m_Name.Format("tcptelnettask-%x", pSocket);
     From = m_Name;
@@ -20,6 +20,7 @@ CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
 
     m_pSocket = pSocket;
     m_pToSerial = pToSerial;
+    m_pCharConv = pCharConv;
     m_pTelnet = NULL;
 
 }
@@ -109,14 +110,8 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
                 klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
             }
 
-            // fix backspace
-            // if (c == 0x7f)
-            //     c = 0x8; // ascii backspace
-
-            // ELKS seems to require \r
-            if (c == '\n') {
-                c = '\r';
-            }
+            // convert CR/LF, and DEL/^H, etc
+            c = me->m_pCharConv->Convert(c);
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
