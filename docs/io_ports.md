@@ -66,6 +66,38 @@
  - 30h LED Data Switch state (read)
  - 31h LED Signature 0xAA (read)
 
+### Compact Flash module
+
+ - 40h -> 5Fh
+ - TODO fill in compact flash ports
+
+### 16550 UART module
+
+ - 60h -> 6Fh  16550 port A
+
+ - 60h Receiver buffer (read), transmitter holding register (write)
+ - 62h Interrupt enable register
+ - 64h Interrupt identification register (read), FIFO control register (write)
+ - 66h Line control register
+ - 68h Modem control register
+ - 6Ah Line status register
+ - 6Ch Modem status register
+ - 6Eh Scratch register
+
+ - 061, 063, 065, 067, 069, 06B, 06D, 06Fh UART Signature 0xAA (read)
+
+ - 70h -> 7Fh  16550 port B
+
+ - 70h Receiver buffer (read), transmitter holding register (write)
+ - 72h Interrupt enable register
+ - 74h Interrupt identification register (read), FIFO control register (write)
+ - 76h Line control register
+ - 78h Modem control register
+ - 7Ah Line status register
+ - 7Ch Modem status register
+ - 7Eh Scratch register
+
+ - 071, 073, 075, 077, 079, 07B, 07D, 07Fh UART Signature 0xAA (read)
 
 ### 80h - AFh reserved; Testing
 
