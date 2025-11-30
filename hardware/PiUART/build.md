@@ -1,7 +1,7 @@
 
 sudo apt install cmake python3 build-essential gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
 
-$ cd solo86/hardware/uart/PiUART
+$ cd solo86/hardware/PiUART
 
 # grab Circle from github. We need the git version so the WLAN modules will build
 $ git submodule init
