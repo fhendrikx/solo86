@@ -1,5 +1,5 @@
 [submodule "PiUART/circle-git"]
-	path = hardware/uart/PiUART/circle-git
+	path = hardware/PiUART/circle-git
 	url = https://github.com/rsta2/circle.git
 [submodule "PiUART/src/scalable-font2"]
 	path = hardware/uart/PiUART/src/scalable-font2
