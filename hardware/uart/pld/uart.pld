@@ -1,0 +1,65 @@
+Name     uart ;
+PartNo   ATF16V8C ;
+Date     2025-11-29 ;
+Revision 01 ;
+Designer Dylan ;
+Company   ;
+Assembly None ;
+Location  ;
+Device   g16v8 ;
+
+PIN 1  = A4;
+PIN 2  = A5;
+PIN 3  = A6;
+PIN 4  = A7;
+PIN 5  = !BHE;
+PIN 6  = A0;
+PIN 7  = !IOWR;
+PIN 8  = !IORD;
+PIN 9  = INTB;
+// PIN 10 = GND;
+PIN 11 = INTA;
+PIN 12 = IRQ;
+// PIN 13 = UNUSED;
+// PIN 14 = UNUSED;
+PIN 15 = !UART_CS;
+PIN 16 = CHSEL;
+// PIN 17 = UNUSED;
+// PIN 18 = UNUSED;
+PIN 19 = !PATTERN_EN;
+// PIN 20 = VCC;
+
+/*
+
+    The following could be simplified by assuming that channel A and B are
+    contiguous. Then CHSEL would simply be !A4.
+
+    However, the logic is separated out so it's easy to change the channel
+    addressing independently should the need arise in the future.
+
+*/
+
+/* I/O address */
+FIELD IOADDR = [A7..4];
+
+/* valid I/O address */
+ADDRMATCH_A = IOADDR:['h'60];
+ADDRMATCH_B = IOADDR:['h'70];
+
+/*
+
+    CHSEL
+    0 == Channel B
+    1 == Channel A
+
+    CHSEL is treated like an address line which means is must be stable before
+    UART_CS is asserted (setup time is 7ns - td5, td8 in datasheet) which in
+    turn means that CHSEL shouldn't depend on IORD or IOWR.
+
+*/
+
+/* output functions */
+IRQ = INTA # INTB;
+UART_CS = (ADDRMATCH_A # ADDRMATCH_B) & (IORD # IOWR) & !A0;
+CHSEL = ADDRMATCH_A;
+PATTERN_EN = (ADDRMATCH_A # ADDRMATCH_B) & IORD & BHE;
