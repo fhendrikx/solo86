@@ -40,6 +40,18 @@ sys_init:
     xor al,al
     out VC_CTRL,al
 
+    ; nasty hack, init 16C550
+    ; DLAB = 1
+    mov al, 080h
+    out 066h, al
+    ; set divisor = 1, 115200
+    mov al, 01
+    out 060h, al
+    mov al, 00
+    out 062h, al
+    ; DLAB = 0, 8N1
+    mov al, 03
+    out 066h, al
 
     ; expansion detection
 

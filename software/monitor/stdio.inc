@@ -11,6 +11,7 @@
 ;-------------------------------------------------------------------------
 print_chr:
     out COM_DATA,al
+    out 060h, al
     ret
 
 
@@ -38,11 +39,13 @@ print_hex:
     jg .letter
     add al,30h              ; '0'
     out COM_DATA,al
+    out 060h, al
     ret
 
 .letter:
     add al,37h              ; 'A' - 10
     out COM_DATA,al
+    out 060h, al
     ret
 
 
@@ -86,6 +89,7 @@ print_str:
     jz .exit
 
     out COM_DATA,al
+    out 060h,al
     jmp .loop
 
 .exit:
@@ -224,6 +228,7 @@ read_ready:
 read_chr:
     call raw_chr
     out COM_DATA,al
+    out 060h, al
     ret
 
 
@@ -239,6 +244,7 @@ read_chr:
 read_hex:
     call raw_hex
     out COM_DATA,al
+    out 060h, al
     ret
 
 
@@ -275,6 +281,7 @@ read_str:
     inc cl
     stosb
     out COM_DATA,al
+    out 060h, al
 
     cmp al,0Ah              ; are we done?
     je  .exit
@@ -289,10 +296,13 @@ read_str:
 
     mov al,08h
     out COM_DATA,al         ; print DEL
+    out 060h, al
     mov al,20h
     out COM_DATA,al         ; over-write with space
+    out 060h, al
     mov al,08h
     out COM_DATA,al         ; print DEL
+    out 060h, al
     jmp .loop
 
 .cr:
