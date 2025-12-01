@@ -11,6 +11,14 @@
 ;-------------------------------------------------------------------------
 print_chr:
     out COM_DATA,al
+    push ax
+
+.wait_for_empty:
+    in al, 06Ah
+    and al, 020h ; check if transmit buffer is empty
+    jz .wait_for_empty
+
+    pop ax
     out 060h, al
     ret
 
@@ -38,14 +46,12 @@ print_hex:
     cmp al,9
     jg .letter
     add al,30h              ; '0'
-    out COM_DATA,al
-    out 060h, al
+    call print_chr
     ret
 
 .letter:
     add al,37h              ; 'A' - 10
-    out COM_DATA,al
-    out 060h, al
+    call print_chr
     ret
 
 
@@ -88,8 +94,7 @@ print_str:
     cmp al,0                ; are we done?
     jz .exit
 
-    out COM_DATA,al
-    out 060h,al
+    call print_chr
     jmp .loop
 
 .exit:
@@ -227,8 +232,7 @@ read_ready:
 ;-------------------------------------------------------------------------
 read_chr:
     call raw_chr
-    out COM_DATA,al
-    out 060h, al
+    call print_chr
     ret
 
 
@@ -243,8 +247,7 @@ read_chr:
 ;-------------------------------------------------------------------------
 read_hex:
     call raw_hex
-    out COM_DATA,al
-    out 060h, al
+    call print_chr
     ret
 
 
@@ -280,8 +283,7 @@ read_str:
 .next:
     inc cl
     stosb
-    out COM_DATA,al
-    out 060h, al
+    call print_chr
 
     cmp al,0Ah              ; are we done?
     je  .exit
@@ -295,14 +297,11 @@ read_str:
     dec di
 
     mov al,08h
-    out COM_DATA,al         ; print DEL
-    out 060h, al
+    call print_chr          ; print DEL
     mov al,20h
-    out COM_DATA,al         ; over-write with space
-    out 060h, al
+    call print_chr          ; over-write with space
     mov al,08h
-    out COM_DATA,al         ; print DEL
-    out 060h, al
+    call print_chr          ; print DEL
     jmp .loop
 
 .cr:

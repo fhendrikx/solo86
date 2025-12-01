@@ -41,6 +41,9 @@ sys_init:
     out VC_CTRL,al
 
     ; nasty hack, init 16C550
+    ; enable FIFO
+    mov al, 0C7h
+    out 064h, al
     ; DLAB = 1
     mov al, 080h
     out 066h, al
@@ -52,6 +55,9 @@ sys_init:
     ; DLAB = 0, 8N1
     mov al, 03
     out 066h, al
+    ; enable autoflow control, DTR
+    mov al, 023h
+    out 068h, al
 
     ; expansion detection
 
