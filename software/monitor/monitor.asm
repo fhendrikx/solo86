@@ -103,14 +103,8 @@ relocate:
 
     ; startup sound
 
-    ; check if the panel is installed
-    mov ax,[ cs:hardware ]
-    test ax,PNL_PRESENT
-    je .no_sound
-
-    ; check if switch 0 is on
-    in al,PNL_DATA
-    test al,00000001b
+    mov al,[ cs:pnl_beep ]
+    test al,01h
     jz .no_sound
 
     call beep_now

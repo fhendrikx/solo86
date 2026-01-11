@@ -26,39 +26,6 @@ sys_init:
     mov al,0Fh
     out BNK_ROW_3,al
 
-
-    ; COM port
-
-    ; disable interrupts
-    xor al,al
-    out COM_CTRL,al
-
-
-    ; VIDEO mode
-
-    ; set console video mode
-    xor al,al
-    out VC_CTRL,al
-
-    ; nasty hack, init 16C550
-    ; enable FIFO
-    mov al, 0C7h
-    out 064h, al
-    ; DLAB = 1
-    mov al, 080h
-    out 066h, al
-    ; set divisor = 1, 115200
-    mov al, 01
-    out 060h, al
-    mov al, 00
-    out 062h, al
-    ; DLAB = 0, 8N1
-    mov al, 03
-    out 066h, al
-    ; enable autoflow control, DTR
-    mov al, 023h
-    out 068h, al
-
     ; expansion detection
 
     xor ax,ax
@@ -74,9 +41,123 @@ sys_init:
     mov dx,COM_DETECT
     call exp_detect
 
+    mov bx,UART_PRESENT
+    mov dx,UART_DETECT
+    call exp_detect
+
+    mov bx,ATA_PRESENT
+    mov dx,ATA_DETECT
+
     mov bx,PNL_PRESENT
     mov dx,PNL_DETECT
     call exp_detect
+
+    ; panel switches
+
+    ; check if the panel is installed
+    mov ax,[ cs:hardware ]
+    test ax,PNL_PRESENT
+    je .no_pnl
+
+    ; set pnl_beep
+    in al,PNL_DATA
+    and al,00000001b
+    mov [ cs:pnl_beep ],al
+
+    ; set pnl_rom_app
+    in al,PNL_DATA
+    and al,00001110b
+    shr al,1
+    mov [ cs:pnl_rom_app ],al
+
+    ; set pnl_auto
+    in al,PNL_DATA
+    and al,00010000b
+    shr al,4
+    mov [ cs:pnl_auto ],al
+
+    ; set pnl_baud
+    in al,PNL_DATA
+    and al,01100000b
+    shr al,5
+    mov [ cs:pnl_baud ],al
+
+    ; set pnl_con
+    in al,PNL_DATA
+    and al,10000000b
+    shr al,7
+    mov [ cs:pnl_con ],al
+
+.no_pnl:
+
+    ; COM port
+
+    ; check if the PiUART is installed
+    mov ax,[ cs:hardware ]
+    test ax,COM_PRESENT
+    je .no_com
+
+    ; disable interrupts
+    xor al,al
+    out COM_CTRL,al
+
+    ; VIDEO mode
+
+    ; set console video mode
+    xor al,al
+    out VC_CTRL,al
+
+.no_com:
+
+    ; 16C550 UART
+
+    ; check if the UART is installed
+    mov ax,[ cs:hardware ]
+    test ax,UART_PRESENT
+    je .no_uart
+
+    ; enable FIFO
+    mov al,0C7h
+    out UART_A_FCR,al
+
+    ; DLAB = 1
+    mov al,080h
+    out UART_A_LCR,al
+
+    ; set divisor
+    mov ax,cs
+    mov ds,ax
+    mov bx,uart_divisor_table_lsb
+    mov al,[ cs:pnl_baud ]
+    xlatb
+    out UART_A_DLL,al
+    mov al,00
+    out UART_A_DLM,al
+
+    ; DLAB = 0, 8N1
+    mov al,03
+    out UART_A_LCR,al
+
+    ; check if CTS is set
+    ; assume CTS being set means we can use autoflow control
+    in al,UART_A_MSR
+    test al,00010000b   ; CTS bit
+    jz .no_rtscts
+
+    ; enable autoflow control, DTR, RTS
+    mov al,023h
+    out UART_A_MCR,al
+    jmp .done_mcr
+
+.no_rtscts:
+    ; enable DTR, RTS
+    mov al,03h
+    out UART_A_MCR,al
+
+.done_mcr
+
+
+.no_uart
 
     pop es
     pop ds

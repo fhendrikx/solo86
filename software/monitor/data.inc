@@ -3,8 +3,21 @@
 ; data
 ;======================================================================
 
-; hardware detected (01=BNK,02=PIT,04=RES,08=RES,RTC=10,COM=20,RES=40,PNL=80)
+; hardware detected (01=BNK,02=PIT,04=RTC,08=COM,10=UART,20=ATA,40=,80=PNL)
 hardware:                   dw 00h
+
+; switches
+pnl_beep                    db 00h
+pnl_rom_app                 db 00h
+pnl_auto                    db 00h
+pnl_baud                    db 00h
+pnl_con                     db 00h
+
+uart_divisor_table_lsb:
+    db 1    ; 115200
+    db 3    ; 38400
+    db 12   ; 9600
+    db 96   ; 1200
 
 ; IRQ counters
 irq0_cnt:                   dw 00h

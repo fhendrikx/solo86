@@ -10,16 +10,25 @@
 ;   Prints character
 ;-------------------------------------------------------------------------
 print_chr:
-    out COM_DATA,al
+
     push ax
 
+    ; check if we're writing to COM or UART
+    mov al,[ cs:pnl_con ]
+    test al,1
+    jnz .wait_for_empty
+
+    pop ax
+    out COM_DATA,al
+    ret
+
 .wait_for_empty:
-    in al, 06Ah
-    and al, 020h ; check if transmit buffer is empty
+    in al,UART_A_LSR
+    and al,020h     ; check if transmit buffer is empty
     jz .wait_for_empty
 
     pop ax
-    out 060h, al
+    out UART_A_DATA,al
     ret
 
 
