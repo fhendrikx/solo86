@@ -127,11 +127,14 @@ sys_init:
     ; set divisor
     mov ax,cs
     mov ds,ax
-    mov bx,uart_divisor_table_lsb
-    mov al,[ cs:pnl_baud ]
-    xlatb
+    mov bx,uart_divisor_table
+    xor ax,ax                       ; clear AX
+    mov al,[ cs:pnl_baud ]          ; load the switch front panel baud rate
+    shl al,1                        ; multiple by two as the lookup table is 2 bytes per entry
+    add bx,ax                       ; calculate the table offset
+    mov ax,[bx]
     out UART_A_DLL,al
-    mov al,00
+    xchg al,ah
     out UART_A_DLM,al
 
     ; DLAB = 0, 8N1
@@ -154,10 +157,9 @@ sys_init:
     mov al,03h
     out UART_A_MCR,al
 
-.done_mcr
+.done_mcr:
 
-
-.no_uart
+.no_uart:
 
     pop es
     pop ds

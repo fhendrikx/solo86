@@ -13,11 +13,11 @@ pnl_auto                    db 00h
 pnl_baud                    db 00h
 pnl_con                     db 00h
 
-uart_divisor_table_lsb:
-    db 1    ; 115200
-    db 3    ; 38400
-    db 12   ; 9600
-    db 96   ; 1200
+uart_divisor_table:
+    dw 1    ; 115200
+    dw 3    ; 38400
+    dw 12   ; 9600
+    dw 96   ; 1200
 
 ; IRQ counters
 irq0_cnt:                   dw 00h
