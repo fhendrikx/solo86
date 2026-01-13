@@ -124,6 +124,7 @@ print_str:
 ;-------------------------------------------------------------------------
 raw_ready:
     in al,COM_CTRL          ; any bytes?
+    and al,01               ; only consider bit 0
     ret
 
 
@@ -137,7 +138,7 @@ raw_ready:
 ;   Blocking read of 1 character
 ;-------------------------------------------------------------------------
 raw_chr:
-    in al,COM_CTRL          ; any characters?
+    call raw_ready          ; any characters?
     cmp al,0
     jz raw_chr
     in al,COM_DATA          ; read character
@@ -163,11 +164,7 @@ raw_hex:
     ret
 
 .nibble:
-    in al,COM_CTRL          ; any characters?
-    cmp al,0
-    jz .nibble
-
-    in al,COM_DATA          ; read character
+    call raw_chr            ; read character
     cmp al,41h
     jae .letter
     sub al,30h              ; '0'
@@ -193,16 +190,13 @@ raw_str:
     cld
 
 .loop:
-    in al,COM_CTRL          ; any characters?
-    cmp al,0
-    jz .loop
-
-    in al,COM_DATA          ; read character
+    call raw_chr            ; read character
     stosb
     cmp al,0Ah              ; are we done?
     jne .loop
 
 .exit:
+    ; FIXME: DX is a pointer to the end of the string, not the length
     mov dx,di               ; return length in dx
     mov al,0                ; terminator
     stosb
@@ -226,7 +220,7 @@ raw_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 read_ready:
-    in al,COM_CTRL          ; any bytes?
+    call raw_ready
     ret
 
 
@@ -255,10 +249,24 @@ read_chr:
 ;   Blocking read of 2 hex characters
 ;-------------------------------------------------------------------------
 read_hex:
-    call raw_hex
-    call print_chr
+    call .nibble
+    mov ah,al
+    shl ah,4
+
+    call .nibble
+    or al,ah
     ret
 
+.nibble:
+    call read_chr            ; read character
+    cmp al,41h
+    jae .letter
+    sub al,30h              ; '0'
+    ret
+
+.letter:
+    sub al,37h              ; 'A' - 10
+    ret
 
 ;=========================================================================
 ; read_str
@@ -277,11 +285,7 @@ read_str:
     cld
 
 .loop:
-    in al,COM_CTRL          ; any characters?
-    cmp al,0
-    jz .loop
-
-    in al,COM_DATA          ; read character
+    call raw_chr            ; read character
     cmp al,00h
     je  .loop
     cmp al,0Dh              ; telnet
@@ -318,6 +322,7 @@ read_str:
     jmp .next
 
 .exit:
+    ; FIXME: DX is a pointer to the end of the string, not the length
     mov dx,di               ; return length in dx
     mov al,0                ; terminator
     stosb
