@@ -125,17 +125,13 @@ sys_init:
     out UART_A_LCR,al
 
     ; set divisor
-    mov ax,cs
-    mov ds,ax
-    mov bx,uart_divisor_table
-    xor ax,ax                       ; clear AX
-    mov al,[ cs:pnl_baud ]          ; load the switch front panel baud rate
-    shl al,1                        ; multiple by two as the lookup table is 2 bytes per entry
-    add bx,ax                       ; calculate the table offset
-    mov ax,[bx]
-    out UART_A_DLL,al
+    xor bx,bx                               ; clear BX
+    mov bl,[ cs:pnl_baud ]                  ; load the switch front panel baud rate
+    shl bl,1                                ; multiple by two as the lookup table is 2 bytes per entry
+    mov ax,[ cs:bx + uart_divisor_table ]   ; lookup divisor
+    out UART_A_DLL,al                       ; output low byte
     xchg al,ah
-    out UART_A_DLM,al
+    out UART_A_DLM,al                       ; output high byte
 
     ; DLAB = 0, 8N1
     mov al,03
