@@ -16,17 +16,20 @@ print_chr:
     ; check if we're writing to COM or UART
     mov al,[ cs:pnl_con ]
     test al,1
-    jnz .wait_for_empty
+    jnz .uart
 
+    ; write to COM (PiUART)
     pop ax
     out COM_DATA,al
     ret
 
-.wait_for_empty:
+.uart:
+    ; wait for the transmit buffer to be empty
     in al,UART_A_LSR
-    and al,020h     ; check if transmit buffer is empty
-    jz .wait_for_empty
+    and al,020h
+    jz .uart
 
+    ; write to the UART
     pop ax
     out UART_A_DATA,al
     ret
@@ -123,10 +126,22 @@ print_str:
 ;   Any bytes waiting?
 ;-------------------------------------------------------------------------
 raw_ready:
-    in al,COM_CTRL          ; any bytes?
+
+    ; check if we're using COM or UART
+    mov al,[ cs:pnl_con ]
+    test al,1
+    jnz .uart
+
+    ; check for bytes available from COM (PiUART)
+    in al,COM_CTRL
     and al,01               ; only consider bit 0
     ret
 
+.uart:
+    ; check for bytes available from UART
+    in al,UART_A_LSR
+    and al,01               ; only consider bit 0
+    ret
 
 ;=========================================================================
 ; raw_chr
@@ -141,7 +156,20 @@ raw_chr:
     call raw_ready          ; any characters?
     cmp al,0
     jz raw_chr
+
+    ; check if we're using COM or UART
+    mov al,[ cs:pnl_con ]
+    test al,1
+    jnz .uart
+
+    ; read from COM (PiUART)
     in al,COM_DATA          ; read character
+    ret
+
+.uart:
+
+    ; read from UART
+    in al,UART_A_DATA       ; read character
     ret
 
 
