@@ -62,7 +62,7 @@
  - 0x60 Set Pixel (x, y, colour)
  - 0x61 Draw Line (x1, y1, x2, y2, colour)
  - 0x62 Draw Rectangle (x, y, width, height, colour)
- - 0x63 Full Rectangle (x, y, width, height, colour)
+ - 0x63 Fill Rectangle (x, y, width, height, colour)
 
 ### 0x80 -> 0x9F Drawing Commands 16 Bit
 
