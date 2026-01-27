@@ -11,7 +11,7 @@ Keep in mind the 286 has a 16 bit bus with the following limitations:
  - odd numbered 16 bit READ/WRITE are not permitted
 
 In practice this means 8 bit peripherals connected to D0-D7 can only use the even numbered addresses so each block of 16 ports is really only 8 usable addresses.
-We typically use the odd addresses to connect an signature (usually 0xAA) to help identify if a module is present.
+We typically use the odd addresses to connect a signature (usually 0xAA) to help identify if a module is present.
 
 
 ### Epoch module (PIT)
