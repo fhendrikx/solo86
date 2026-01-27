@@ -1,6 +1,19 @@
 
 # IO Ports
 
+We're using I/O address space in blocks of 16, e.g. 00->0F, 01->1F, etc.
+Each module gets one (or more) blocks as needed.
+
+Keep in mind the 286 has a 16 bit bus with the following limitations:
+ - even numbered 8 bit READ/WRITE always uses D0-D7
+ - odd numbered 8 bit READ/WRITE always uses D8-D15
+ - even numbered 16 bit READ/WRITE always uses D0-D15
+ - odd numbered 16 bit READ/WRITE are not permitted
+
+In practice this means 8 bit peripherals connected to D0-D7 can only use the even numbered addresses so each block of 16 ports is really only 8 usable addresses.
+We typically use the odd addresses to connect an signature (usually 0xAA) to help identify if a module is present.
+
+
 ### Epoch module (PIT)
 
  - 00h PIT Counter 0 register (read/write)
