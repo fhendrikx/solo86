@@ -1,8 +1,6 @@
 
 # IO Ports
 
-## 00h - 7Fh reserved; Solo/86 System
-
 ### Epoch module (PIT)
 
  - 00h PIT Counter 0 register (read/write)
@@ -59,17 +57,17 @@
  - 2Eh VC Reserved
  - 2Fh UART Signature 0xAA (read) (alias)
 
+### PiUART module (UART/8250 emulation)
 
-### Console/Panel module
+ - 30h -> 3Fh
+ - TODO
 
- - 30h LED Ctrl (write)
- - 30h LED Data Switch state (read)
- - 31h LED Signature 0xAA (read)
 
 ### Compact Flash module
 
  - 40h -> 5Fh
  - TODO fill in compact flash ports
+
 
 ### 16550 UART module
 
@@ -99,12 +97,13 @@
 
  - 071, 073, 075, 077, 079, 07B, 07D, 07Fh UART Signature 0xAA (read)
 
-### 80h - AFh reserved; Testing
 
- - 80h IO Slow Down
+### Console/Panel module
 
+Note, ELKS sometimes reads from I/O port 80h to create a short delay.
+This will read the switch state which is harmless.
 
-### B0h - FFh available; Expansion Boards
-
- - available
+ - 80h LED Ctrl (write)
+ - 80h LED Data Switch state (read)
+ - 81h LED Signature 0xAA (read)
 

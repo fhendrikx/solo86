@@ -94,6 +94,6 @@ UART_A_DLM      equ 62h ; DLAB = 1, divisor latch MSB
 
 ; PANEL I/O
 PNL_PRESENT     equ 80h
-PNL_CTRL        equ 30h
-PNL_DATA        equ 30h
-PNL_DETECT      equ 31h
+PNL_CTRL        equ 80h
+PNL_DATA        equ 80h
+PNL_DETECT      equ 81h
