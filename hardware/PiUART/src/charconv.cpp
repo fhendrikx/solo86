@@ -30,6 +30,7 @@ char CCharConv::Convert(char c) {
     // ELKS requires \r
     // CP/M requires ???
     // MONITOR converts \r -> \n
+    // Tiny Basic requires \n
 
     // false == \r, true == \n
     if (m_bCRLF) {
