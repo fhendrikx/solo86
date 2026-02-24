@@ -28,10 +28,12 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
       m_WLAN(FIRMWARE_PATH),
       m_Net(0, 0, 0, 0, hostname, NetDeviceTypeWLAN),
       m_WPASupplicant(CONFIG_FILE),
-      m_ToSerial(RING_BUF_SIZE),
-      m_FromSerial(RING_BUF_SIZE),
+      m_ToSerial_UART1(RING_BUF_SIZE),
+      m_FromSerial_UART1(RING_BUF_SIZE),
       m_ToTerminal(RING_BUF_SIZE),
-      m_ToNetwork(RING_BUF_SIZE)
+      m_ToNetwork(RING_BUF_SIZE),
+      m_ToSerial_UART2(RING_BUF_SIZE),
+      m_FromSerial_UART2(RING_BUF_SIZE)
 {
 
     m_nScreenWidth = m_KernelOptions.GetWidth();
@@ -458,7 +460,7 @@ void CKernel::GPIO() {
     while (true) {
 
         // raise an interrupt if necessary
-        if (m_bUartIntEnable and not m_bUartIntActive and m_ToSerial.GetCount() > 0) {
+        if (m_bUartIntEnable and not m_bUartIntActive and m_ToSerial_UART1.GetCount() > 0) {
 
             m_bUartIntActive = true;
             GPIOInterruptRaise();
@@ -525,7 +527,7 @@ void CKernel::Main() {
     */
 
     // launch the task that moves serial data from the GPIO to the terminal and network
-    new CSerialTask(&m_FromSerial, &m_ToTerminal, &m_ToNetwork);
+    new CSerialTask(&m_FromSerial_UART1, &m_ToTerminal, &m_ToNetwork);
 
     // finish the rest of the initialisation
     if (!DeferredInitialize())
@@ -534,7 +536,7 @@ void CKernel::Main() {
     klog(LogNotice, "Deferred init complete");
 
     // launch the task that looks after the USB keyboard
-    new CKeyboardTask(&m_USBHCI, &m_ToSerial, this, &m_CharConv);
+    new CKeyboardTask(&m_USBHCI, &m_ToSerial_UART1, this, &m_CharConv);
 
     klog(LogNotice, "WPA waiting for connection");
 
@@ -557,13 +559,16 @@ void CKernel::Main() {
     m_LCD.Write((const char *)IPString, IPString.GetLength());
 
     // start TCP listeners
-    CTCPListenerTask *TelnetListener = new CTCPListenerTask(&m_Net, TELNET_PORT, &m_ToSerial, telnet, &m_CharConv);
-    CTCPListenerTask *RawListener = new CTCPListenerTask(&m_Net, RAW_PORT, &m_ToSerial, raw, NULL);
+    CTCPListenerTask *TelnetListener_UART1 = new CTCPListenerTask(&m_Net, TELNET_PORT, &m_ToSerial_UART1, telnet, &m_CharConv);
+    CTCPListenerTask *RawListener_UART1 = new CTCPListenerTask(&m_Net, RAW_PORT, &m_ToSerial_UART1, raw, NULL);
+    CTCPListenerTask *TelnetListener_UART2 = new CTCPListenerTask(&m_Net, ALT_TELNET_PORT, &m_ToSerial_UART2, telnet, NULL);
+    CTCPListenerTask *RawListener_UART2 = new CTCPListenerTask(&m_Net, ALT_RAW_PORT, &m_ToSerial_UART2, raw, NULL);
 
     u8 Buffer[FRAME_BUFFER_SIZE];
     int nBytesSent;
     int nBytesWaiting;
-    unsigned nNetworkDelayClockTicks = 0;
+    unsigned nNetworkDelayClockTicks_UART1 = 0;
+    unsigned nNetworkDelayClockTicks_UART2 = 0;
 
     /*
       The network stack sends data as soon as it's written.
@@ -575,25 +580,27 @@ void CKernel::Main() {
     // main loop
     while(true) {
 
-        nBytesWaiting = m_ToNetwork.GetCount();
         unsigned nNow = CTimer::GetClockTicks();
+
+        // UART1
+        nBytesWaiting = m_ToNetwork.GetCount();
 
         if (nBytesWaiting > 0) {
 
-            if (nNetworkDelayClockTicks == 0)
-                nNetworkDelayClockTicks = nNow;
+            if (nNetworkDelayClockTicks_UART1 == 0)
+                nNetworkDelayClockTicks_UART1 = nNow;
 
             if (nBytesWaiting >= NETWORK_DELAY_BYTES or
-                (nNow - nNetworkDelayClockTicks) >= NETWORK_DELAY_US) {
+                (nNow - nNetworkDelayClockTicks_UART1) >= NETWORK_DELAY_US) {
 
-                if (RawListener->IsConnected()) {
+                if (RawListener_UART1->IsConnected()) {
 
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
 
-                    RawListener->Write(Buffer, nBytesSent);
-                    nNetworkDelayClockTicks = 0;
+                    RawListener_UART1->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks_UART1 = 0;
 
-                    klog(LogDebug, "Sent raw bytes %d", nBytesSent);
+                    klog(LogDebug, "UART1 Sent raw bytes %d", nBytesSent);
                     /*
                       for (int i = 0; i < nBytesSent; i++) {
                       u8 c = Buffer[i];
@@ -601,14 +608,54 @@ void CKernel::Main() {
                       }
                     */
 
-                } else if (TelnetListener->IsConnected()) {
+                } else if (TelnetListener_UART1->IsConnected()) {
 
                     nBytesSent = m_ToNetwork.Remove(Buffer, FRAME_BUFFER_SIZE);
 
-                    TelnetListener->Write(Buffer, nBytesSent);
-                    nNetworkDelayClockTicks = 0;
+                    TelnetListener_UART1->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks_UART1 = 0;
 
-                    klog(LogDebug, "Sent telnet bytes %d", nBytesSent);
+                    klog(LogDebug, "UART1 Sent telnet bytes %d", nBytesSent);
+                }
+
+            }
+
+        }
+
+        // UART2
+        nBytesWaiting = m_FromSerial_UART2.GetCount();
+
+        if (nBytesWaiting > 0) {
+
+            if (nNetworkDelayClockTicks_UART2 == 0)
+                nNetworkDelayClockTicks_UART2 = nNow;
+
+            if (nBytesWaiting >= NETWORK_DELAY_BYTES or
+                (nNow - nNetworkDelayClockTicks_UART2) >= NETWORK_DELAY_US) {
+
+                if (RawListener_UART2->IsConnected()) {
+
+                    nBytesSent = m_FromSerial_UART2.Remove(Buffer, FRAME_BUFFER_SIZE);
+
+                    RawListener_UART2->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks_UART2 = 0;
+
+                    klog(LogDebug, "UART2 Sent raw bytes %d", nBytesSent);
+                    /*
+                      for (int i = 0; i < nBytesSent; i++) {
+                      u8 c = Buffer[i];
+                      klog(LogDebug, "Sent byte: 0x%x", c);
+                      }
+                    */
+
+                } else if (TelnetListener_UART2->IsConnected()) {
+
+                    nBytesSent = m_FromSerial_UART2.Remove(Buffer, FRAME_BUFFER_SIZE);
+
+                    TelnetListener_UART2->Write(Buffer, nBytesSent);
+                    nNetworkDelayClockTicks_UART2 = 0;
+
+                    klog(LogDebug, "UART2 Sent telnet bytes %d", nBytesSent);
                 }
 
             }
@@ -632,24 +679,40 @@ inline u32 CKernel::BusIORead(u32 address) {
 
     switch(address) {
 
-        case UART_CTRL:
+        case UART1_CTRL:
             // read UART control register
 
             // return 0x1 if there are bytes waiting
-            data = m_ToSerial.GetCount() > 0;
+            data = m_ToSerial_UART1.GetCount() > 0;
 
         break;
 
-        case UART_DATA:
+        case UART1_DATA:
             // read UART data register
 
             data = 0;
-            m_ToSerial.Remove((u8 *)&data);
+            m_ToSerial_UART1.Remove((u8 *)&data);
 
             if (m_bUartIntActive) {
                 m_bUartIntActive = false;
                 GPIOInterruptRelease();
             }
+
+        break;
+
+        case UART2_CTRL:
+            // read UART control register
+
+            // return 0x1 if there are bytes waiting
+            data = m_ToSerial_UART2.GetCount() > 0;
+
+        break;
+
+        case UART2_DATA:
+            // read UART data register
+
+            data = 0;
+            m_ToSerial_UART2.Remove((u8 *)&data);
 
         break;
 
@@ -692,19 +755,32 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
     switch(address) {
 
-        case UART_CTRL:
-            // write UART control register
+        case UART1_CTRL:
+            // write UART1 control register
 
-            klog(LogError, "UART control write %u", data);
+            klog(LogError, "UART1 control write %u", data);
             m_bUartIntEnable = data & UART_INT_ENABLE;
             m_CharConv.SetCRLF(data & UART_CRLF);
             m_CharConv.SetDelBS(data & UART_DEL_BS);
 
         break;
 
-        case UART_DATA:
-            // write UART data register
-            m_FromSerial.Add(data);
+        case UART1_DATA:
+            // write UART1 data register
+            m_FromSerial_UART1.Add(data);
+
+        break;
+
+        case UART2_CTRL:
+            // write UART control register
+
+            klog(LogError, "UART2 control write %u", data);
+
+        break;
+
+        case UART2_DATA:
+            // write UART2 data register
+            m_FromSerial_UART2.Add(data);
 
         break;
 

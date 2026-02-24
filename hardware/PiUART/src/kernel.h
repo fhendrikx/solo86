@@ -62,10 +62,10 @@
 #define ARM_GPIO_GPFSEL2        (ARM_GPIO_BASE + 0x08)
 
 // UART registers
-#define UART_CTRL 0     // 0x20
-#define UART_DATA 1     // 0x22
-// RESERVED 2           // 0x24
-// RESERVED 3           // 0x26
+#define UART1_CTRL 0    // 0x20
+#define UART1_DATA 1    // 0x22
+#define UART2_CTRL 2    // 0x24
+#define UART2_DATA 3    // 0x26
 
 // Video Control registers
 #define VC_CTRL   4     // 0x28
@@ -213,11 +213,13 @@ private:
     CCharConv m_CharConv;
 
     // ring buffers
-    CRingBuf<u8> m_ToSerial; // data for the UART to output
-    CRingBuf<u8> m_FromSerial; // data received by the UART
+    CRingBuf<u8> m_ToSerial_UART1; // data for the UART to output
+    CRingBuf<u8> m_FromSerial_UART1; // data received by the UART
     CRingBuf<u8> m_ToTerminal; // data for the terminal to display
     CRingBuf<u8> m_ToNetwork; // data for the network to send
 
+    CRingBuf<u8> m_ToSerial_UART2; // data for the UART to output
+    CRingBuf<u8> m_FromSerial_UART2; // data received by the UART
     u8 m_nTestPort;
 
 };

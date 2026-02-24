@@ -11,6 +11,8 @@
 
 #define TELNET_PORT 23
 #define RAW_PORT 24
+#define ALT_TELNET_PORT 2323
+#define ALT_RAW_PORT 2424
 
 enum TCPMode { telnet, raw };
 
