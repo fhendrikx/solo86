@@ -50,25 +50,19 @@ We typically use the odd addresses to connect a signature (usually 0xAA) to help
 
 ### PiUART module (COM)
 
- - 20h UART Ctrl
- - 21h UART Signature 0xAA (read)
- - 22h UART Data
- - 23h UART Signature 0xAA (read) (alias)
- - 24h UART Reserved
- - 25h UART Signature 0xAA (read) (alias)
- - 26h UART Reserved
- - 27h UART Signature 0xAA (read) (alias)
+ - 20h UART1 Ctrl
+ - 22h UART1 Data
+ - 24h UART2 Ctrl
+ - 26h UART2 Data
+ - 21h, 23h, 25h, 27h PiUART Signature 0xAA (read)
 
 ### PiUART module (Video)
 
  - 28h VC Ctrl
- - 29h UART Signature 0xAA (read) (alias)
  - 2Ah VC Parameters
- - 2Bh UART Signature 0xAA (read) (alias)
  - 2Ch VC Data
- - 2Dh UART Signature 0xAA (read) (alias)
  - 2Eh VC Reserved
- - 2Fh UART Signature 0xAA (read) (alias)
+ - 29h, 2Bh, 2Dh, 2Fh PiUART Signature 0xAA (read)
 
 ### PiUART module (UART/8250 emulation)
 
