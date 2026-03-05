@@ -1,8 +1,10 @@
 #include "terminalwrapper.h"
+#include <circle/windowdisplay.h>
 
 LOGMODULE("termwrap");
 
-CTerminalWrapper::CTerminalWrapper(const char *pName, unsigned nWidth, unsigned nHeight, const TFont &rFont) :
+CTerminalWrapper::CTerminalWrapper(const char *pName, unsigned nWidth, unsigned nHeight,
+    unsigned nCols, unsigned nRows, unsigned nBorderColour, const TFont &rFont) :
     CDisplay (CDisplay::I8),
     m_pName(pName),
     m_TerminalFont(rFont) {
@@ -14,8 +16,17 @@ CTerminalWrapper::CTerminalWrapper(const char *pName, unsigned nWidth, unsigned 
     m_nFrameBufferHeight = nHeight;
     m_nFrameBufferSize = nWidth * nHeight;
 
-    m_pFrameBufferBackup = NULL;
+    m_nCols = nCols;
+    m_nRows = nRows;
 
+    if (nBorderColour <= 31) {
+        m_nBorderColour = nBorderColour;
+    } else {
+        m_nBorderColour = 0;
+        klog(LogWarning, "[%s] Invalid Border Colour %u", m_pName, nBorderColour);
+    }
+
+    m_pFrameBufferBackup = NULL;
 }
 
 CTerminalWrapper::~CTerminalWrapper() {
@@ -33,7 +44,56 @@ CTerminalWrapper::~CTerminalWrapper() {
 
 bool CTerminalWrapper::Initialize() {
 
-    m_pTerminal = new CTerminalDevice(this, 0, m_TerminalFont);
+    // initialise the framebuffer backup
+    m_pFrameBufferBackup = new u8[m_nFrameBufferSize];
+
+    if (m_pFrameBufferBackup == NULL) {
+        klog(LogError, "[%s] Failed to create FrameBufferBackup", m_pName);
+        return false;
+    }
+
+    // fill with the border colour
+    memset(m_pFrameBufferBackup, 255, m_nFrameBufferSize);
+
+    // setup the display
+    CDisplay *pWindow = this;
+
+    unsigned nMaxCols = m_nFrameBufferWidth / m_TerminalFont.width;
+    unsigned nMaxRows = m_nFrameBufferHeight / (m_TerminalFont.height + m_TerminalFont.extra_height);
+
+    if (m_nCols > 0 and m_nRows > 0 and m_nCols < nMaxCols and m_nRows < nMaxRows) {
+
+        klog(LogNotice, "[%s] Forcing terminal size %ux%u", m_pName, m_nCols, m_nRows);
+
+        CDisplay::TArea Area;
+
+        unsigned nBorderWidth = (m_nFrameBufferWidth - (m_TerminalFont.width * m_nCols)) / 2;
+        unsigned nBorderHeight = (m_nFrameBufferHeight - ((m_TerminalFont.height + m_TerminalFont.extra_height) * m_nRows)) / 2;
+
+        Area.x1 = nBorderWidth;
+        Area.x2 = m_nFrameBufferWidth - nBorderWidth - 1;
+        Area.y1 = nBorderHeight;
+        Area.y2 = m_nFrameBufferHeight - nBorderHeight - 1;
+
+        klog(LogNotice, "[%s] Window (%u,%u) (%u,%u)", m_pName, Area.x1, Area.y1, Area.x2, Area.y2);
+
+        pWindow = new CWindowDisplay (this, Area);
+        if (pWindow == NULL) {
+            klog(LogError, "[%s] CWindowDisplay creation failed", m_pName);
+            return false;
+        }
+
+        // fill the text area with black
+        for (unsigned y = Area.y1; y <= Area.y2; y++) {
+            for (unsigned x = Area.x1; x <= Area.x2; x++) {
+                m_pFrameBufferBackup[x + y * m_nFrameBufferWidth] = 0;
+            }
+        }
+
+    }
+
+    // setup the terminal device
+    m_pTerminal = new CTerminalDevice(pWindow, 0, m_TerminalFont);
 
     if (m_pTerminal == NULL || !m_pTerminal->Initialize()) {
         klog(LogError, "[%s] TerminalDevice init failed", m_pName);
@@ -42,15 +102,6 @@ bool CTerminalWrapper::Initialize() {
 
     m_pTerminal->Update(0);
     m_pTerminal->SetCursorBlock(true);
-
-    m_pFrameBufferBackup = new u8[m_nFrameBufferSize];
-
-    if (m_pFrameBufferBackup == NULL) {
-        klog(LogError, "[%s] Failed to create FrameBufferBackup", m_pName);
-        return false;
-    }
-
-    memset(m_pFrameBufferBackup, 0, m_nFrameBufferSize);
 
     return true;
 
@@ -84,6 +135,9 @@ bool CTerminalWrapper::Activate() {
         m_pFrameBuffer->SetPalette (BRIGHT_MAGENTA_COLOR, BRIGHT_MAGENTA_COLOR16);
         m_pFrameBuffer->SetPalette (BRIGHT_CYAN_COLOR, BRIGHT_CYAN_COLOR16);
         m_pFrameBuffer->SetPalette (BRIGHT_WHITE_COLOR, BRIGHT_WHITE_COLOR16);
+
+        // border colour
+        m_pFrameBuffer->SetPalette(255, COLOR16(m_nBorderColour, m_nBorderColour, m_nBorderColour));
 
         if (!m_pFrameBuffer->Initialize()) {
             // framebuffer object is unusable, bomb out

@@ -13,7 +13,8 @@ class CTerminalWrapper : public CDisplay {
 
     public:
 
-    CTerminalWrapper(const char *pName, unsigned nWidth, unsigned nHeight, const TFont &rFont = DEFAULT_FONT);
+    CTerminalWrapper(const char *pName, unsigned nWidth, unsigned nHeight, unsigned nCols, unsigned nRows,
+        unsigned nBorderColour, const TFont &rFont = DEFAULT_FONT);
     ~CTerminalWrapper();
 
     bool Initialize();
@@ -50,6 +51,10 @@ class CTerminalWrapper : public CDisplay {
     unsigned m_nFrameBufferWidth;
     unsigned m_nFrameBufferHeight;
     unsigned m_nFrameBufferSize;
+
+    unsigned m_nCols;
+    unsigned m_nRows;
+    unsigned m_nBorderColour;
     
     const TFont m_TerminalFont;
 

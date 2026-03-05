@@ -224,6 +224,7 @@ void CKernel::Display() {
 
     //
     // figure out which fonts to use based on the screen resolution
+    // ensure at least 80x25 for the terminal display
     //
 
     const TFont *pTerminalFont;
@@ -253,13 +254,18 @@ void CKernel::Display() {
     // Setup the display objects
     //
 
-    m_pTerminal = new CTerminalWrapper("Terminal", m_nScreenWidth, m_nScreenHeight, *pTerminalFont);
+    unsigned nCols = m_KernelOptions.GetAppOptionDecimal("cols", 0);
+    unsigned nRows = m_KernelOptions.GetAppOptionDecimal("rows", 0);
+    unsigned nBorderColour = m_KernelOptions.GetAppOptionDecimal("border", 0);
+
+    m_pTerminal = new CTerminalWrapper("Terminal", m_nScreenWidth, m_nScreenHeight,
+        nCols, nRows, nBorderColour, *pTerminalFont);
     if (m_pTerminal == NULL || !m_pTerminal->Initialize()) {
         klog(LogPanic, "TerminalWrapper init failed");
         CMultiCoreSupport::HaltAll();
     }
 
-    m_pDebugLog = new CTerminalWrapper("DebugLog", m_nScreenWidth, m_nScreenHeight, TLogFont);
+    m_pDebugLog = new CTerminalWrapper("DebugLog", m_nScreenWidth, m_nScreenHeight, 0, 0, 0, TLogFont);
     if (m_pDebugLog == NULL || !m_pDebugLog->Initialize()) {
         klog(LogPanic, "TerminalWrapper init failed");
         CMultiCoreSupport::HaltAll();
