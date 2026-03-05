@@ -72,8 +72,17 @@ We typically use the odd addresses to connect a signature (usually 0xAA) to help
 
 ### Compact Flash module
 
- - 40h -> 5Fh
- - TODO fill in compact flash ports
+ - 40h ATA DATA
+ - 42h ATA Feature (write) or Error (read)
+ - 44h ATA Sector Count
+ - 46h ATA Sector Number  (LBA 0-7)
+ - 48h ATA Cylinder Low   (LBA 8-15)
+ - 4Ah ATA Cylinder High  (LBA 16-23)
+ - 4Ch ATA Device/Head    (LBA 24-27)
+ - 4Eh ATA Command (write) or Status (read)
+ - 5Ch ATA Device Control (write) or Alternative Status (read)
+ - 50h -> 5Ah (even), 5Eh Unused
+ - 41h -> 5Fh (odd numbers) signature 0xAA (8 bit read only)
 
 
 ### 16550 UART module
