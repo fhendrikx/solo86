@@ -62,10 +62,10 @@ entity Control286 is
 
     );
 
-  constant bank_ctrl_addr   : STD_LOGIC_VECTOR(7 downto 3) := "00010"; -- 0x10-17
-  constant irq_ctrl_addr    : STD_LOGIC_VECTOR(7 downto 1) := "0001100"; -- 0x18-19
-  constant irq_eoi_addr     : STD_LOGIC_VECTOR(7 downto 1) := "0001101"; -- 0x1A-1B
-  constant irq_eoi_addr_alt : STD_LOGIC_VECTOR(7 downto 1) := "1010000"; -- 0xA0-A1
+  constant bank_ctrl_addr     : STD_LOGIC_VECTOR(7 downto 3) := "00010";   -- 0x10-17
+  constant irq_ctrl_addr      : STD_LOGIC_VECTOR(7 downto 1) := "0001100"; -- 0x18-19
+  constant irq_eoi_addr       : STD_LOGIC_VECTOR(7 downto 1) := "0001101"; -- 0x1A-1B
+  constant irq_set_base_addr  : STD_LOGIC_VECTOR(7 downto 1) := "0001110"; -- 0x1C-1D
 
 end Control286;
 
@@ -168,6 +168,9 @@ architecture rtl of Control286 is
 
   signal irq_ctrl_write       : STD_LOGIC;
 
+  signal irq_base_write       : STD_LOGIC;
+  signal irq_base             : STD_LOGIC_VECTOR(7 downto 3);
+
   signal wait_states          : INTEGER range 0 to 3;
 
   type t_bank_table is array (0 to 3) of STD_LOGIC_VECTOR(3 downto 0);
@@ -192,11 +195,6 @@ begin
 
   o_nmi <= '0';
 
-  -- o_intr <= '1' when (irq0_sync = '1' and irq0_isr = '0') or
-  --                    (irq1_sync = '1' and irq0_isr = '0' and irq1_isr = '0') or
-  --                    (irq2_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0') or
-  --                    (irq3_sync = '1' and irq0_isr = '0' and irq1_isr = '0' and irq2_isr = '0' and irq3_isr = '0')
-  --           else '0';
 
   proc_intr: process(i_reset_n, i_clk) is
   begin
@@ -415,32 +413,6 @@ begin
 
   end process;
 
-  --
-  -- update the banking table
-  --
-
-  proc_bank_write: process(i_reset_n, bank_write) is
-    variable bank_index     : INTEGER;
-  begin
-
-    if i_reset_n = '0' then
-
-      for i in 0 to 3 loop
-        bank_table(i) <= "0000";
-      end loop;
-
-    elsif falling_edge(bank_write) then
-      -- update the bank table on the falling edge to ensure io_data is stable
-      -- use the latched version of i_addr_low as its starting to change on
-      -- the falling edge
-
-      bank_index := to_integer(unsigned(i_addr_low_latch(2 downto 1)));
-      bank_table(bank_index) <= io_data(3 downto 0);
-
-    end if;
-
-  end process;
-
 
   --
   -- The main state machine for controlling the 286 bus
@@ -476,6 +448,7 @@ begin
 
       bank_write <= '0';
       irq_ctrl_write <= '0';
+      irq_base_write <= '0';
       inta_cycle <= '0';
 
       irq0_mask <= '0';
@@ -492,6 +465,12 @@ begin
       irq1_isr <= '0';
       irq2_isr <= '0';
       irq3_isr <= '0';
+
+      irq_base <= "00100"; -- 0x20
+
+      for i in 0 to 3 loop
+        bank_table(i) <= "0000";
+      end loop;
 
       -- initial output pin state
       o_warning <= '0';
@@ -524,6 +503,7 @@ begin
 
           bank_write <= '0';
           irq_ctrl_write <= '0';
+          irq_base_write <= '0';
 
           irq0_clear <= '0';
           irq1_clear <= '0';
@@ -615,6 +595,7 @@ begin
 
           bank_write <= '0';
           irq_ctrl_write <= '0';
+          irq_base_write <= '0';
 
           irq0_clear <= '0';
           irq1_clear <= '0';
@@ -660,25 +641,29 @@ begin
 
               if irq0_sync = '1' then
 
-                io_data <= "00100000"; -- 0x20
+                io_data(7 downto 3) <= irq_base;
+                io_data(2 downto 0) <= "000";
                 irq0_clear <= '1';
                 irq0_isr <= '1';
 
               elsif irq1_sync = '1' then
 
-                io_data <= "00100001"; -- 0x21
+                io_data(7 downto 3) <= irq_base;
+                io_data(2 downto 0) <= "001";
                 irq1_clear <= '1';
                 irq1_isr <= '1';
 
               elsif irq2_sync = '1' then
 
-                io_data <= "00100010"; -- 0x22
+                io_data(7 downto 3) <= irq_base;
+                io_data(2 downto 0) <= "010";
                 irq2_clear <= '1';
                 irq2_isr <= '1';
 
               elsif irq3_sync = '1' then
 
-                io_data <= "00100011"; -- 0x23
+                io_data(7 downto 3) <= irq_base;
+                io_data(2 downto 0) <= "011";
                 irq3_clear <= '1';
                 irq3_isr <= '1';
 
@@ -728,6 +713,17 @@ begin
                 io_data(1) <= irq1_mask;
                 io_data(0) <= irq0_mask;
               end if;
+
+              -- needs 4 extra macrocells
+              -- irq base
+              -- if i_addr_low(7 downto 1) = irq_set_base_addr then
+              --   -- internal peripherals don't need any wait states
+              --   wait_states <= 0;
+
+              --   -- output the irq base vector
+              --   io_data(7 downto 3) <= irq_base;
+              --   io_data(2 downto 0) <= "000";
+              -- end if;
 
               -- debugging
               -- if i_addr_low(7 downto 1) = irq_eoi_addr then
@@ -787,8 +783,16 @@ begin
                 irq_ctrl_write <= '1';
               end if;
 
+              -- set irq base addr
+              if i_addr_low(7 downto 1) = irq_set_base_addr then
+                -- internal peripherals don't need any wait states
+                wait_states <= 0;
+                -- signal irq base write process
+                irq_base_write <= '1';
+              end if;
+
               -- irq eoi
-              if i_addr_low(7 downto 1) = irq_eoi_addr or i_addr_low(7 downto 1) = irq_eoi_addr_alt then
+              if i_addr_low(7 downto 1) = irq_eoi_addr then
                 -- internal peripherals don't need any wait states
                 wait_states <= 0;
 
@@ -815,7 +819,7 @@ begin
           elsif i_m_io = '1' and i_s1_n = '0' and i_s0_n = '1' then
             -- Mem Read
 
-            -- no wait states required for our memory @ 20Mhz
+            -- no wait states required for our RAM @ 20Mhz
             wait_states <= 0;
 
             -- read from ROM
@@ -841,7 +845,7 @@ begin
           elsif i_m_io = '1' and i_s1_n = '1' and i_s0_n = '0' then
             -- Mem Write
 
-            -- no wait states required for our memory @ 20Mhz
+            -- no wait states required for our RAM @ 20Mhz
             wait_states <= 0;
 
             -- write to ROM
@@ -909,8 +913,6 @@ begin
 
           ctrl_state <= TC2;
 
-          bank_write <= '0';
-
           irq0_clear <= '0';
           irq1_clear <= '0';
           irq2_clear <= '0';
@@ -948,8 +950,6 @@ begin
           -- last phase in the TC cycle. Either we're done or we'll repeat
           -- because of wait states
 
-          bank_write <= '0';
-
           irq0_clear <= '0';
           irq1_clear <= '0';
           irq2_clear <= '0';
@@ -984,7 +984,21 @@ begin
 
             io_data <= "ZZZZZZZZ";
 
+            bank_write <= '0';
             irq_ctrl_write <= '0';
+            irq_base_write <= '0';
+
+            --
+            -- I/O Writes to internal peripherals
+            --
+
+            -- update the banking table
+            if bank_write = '1' then
+
+              bank_index := to_integer(unsigned(i_addr_low_latch(2 downto 1)));
+              bank_table(bank_index) <= io_data(3 downto 0);
+
+            end if;
 
             -- irq write event
             if irq_ctrl_write = '1' then
@@ -1009,6 +1023,13 @@ begin
               if io_data(3) = '0' then
                 irq3_isr <= '0';
               end if;
+
+            end if;
+
+            -- irq set base event
+            if irq_base_write = '1' then
+
+              irq_base <= io_data(7 downto 3);
 
             end if;
 
