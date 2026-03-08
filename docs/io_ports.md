@@ -46,6 +46,7 @@ We typically use the odd addresses to connect a signature (usually 0xAA) to help
 
  - 18h INT Ctrl
  - 1Ah INT Data (EOI; end of interrupt)
+ - 1Ch INT Base (Set base vector)
 
 
 ### PiUART module (COM)

@@ -1,26 +1,28 @@
 
 # Interrupt Controller
 
-A basic interrupt controller is embedded in the mainboard CPLD. Given the limited resources of the CPLD the interrupt controller is designed to be a no frills device. To support fully fledged OS, such as ELKS, with only minimal changes to the code, the interrupt controller mimics some of the features of an Intel 8259A:
+A basic interrupt controller is embedded in the mainboard CPLD. Given the limited resources of the CPLD the interrupt controller is designed to be a no frills device. To support a fully fledged OS, such as ELKS, with only minimal changes to the code, the interrupt controller mimics some of the features of an Intel 8259A:
 
  - Four positive edge triggered hardware interrupts (IRQ0 -> IRQ3)
  - Each IRQ can be enabled/disabled individually
  - 8259A fully nested mode
  - IRQ priority (IRQ0 highest -> IRQ3 lowest)
- - Generates vectors 0x20 -> 0x23 (IRQ0 -> IRQ3)
+ - Configurable vector base address
+ - Generates vectors BASE + 0x00 -> 0x03 (IRQ0 -> IRQ3) where BASE defaults to 0x20
 
 
 ## Power-on State
 
 At power up all four IRQ's are disabled.
-
+The BASE vector is set to 0x20
 
 ## IO Ports
 
-There are two I/O ports for communicating with the interrupt controller:
+There are three I/O ports for communicating with the interrupt controller:
 
  - 0x18 Ctrl
  - 0x1A Data (EOI; end of interrupt)
+ - 0x1C Base (Set base vector)
 
 The IRQ's can be controlled by writing to the ctrl port (1 == enable, 0 == disable):
 
@@ -34,6 +36,16 @@ Reading from the ctrl port returns the current status of the IRQ's (enabled/disa
 
 When an IRQ is disabled the hardware interrupt line is ignored and any previously unacknowledged interrupts are lost. When an IRQ is enabled it must see a positive edge on the hardware line before it will raise an interrupt with the CPU. Any further positive edges are ignored until the interrupt has been acknowledged.
 
+The base address can be set by writing to the base port.
+
+ - Bit 7-3 new base address
+ - Bit 2-0 ignored
+
+When the CPU request the interrupt vector it's constructed as follows:
+
+ - Bit 7-3 base address
+ - Bit 2 = 0
+ - Bit 1-0 = IRQ number (e.g. 0, 1, 2, or 3)
 
 ## Nested Mode
 
