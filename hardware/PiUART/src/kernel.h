@@ -75,8 +75,9 @@
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
-#define UART_CRLF       0x2 // 0 == CR, 1 == LF
-#define UART_DEL_BS     0x4 // 0 == DEL, 1 == BS
+#define UART_CRLF       0x2   // 0 == CR, 1 == LF
+#define UART_DEL_BS     0x4   // 0 == DEL, 1 == BS
+#define UART_DONT_USE   0x20  // MSDOS writes an EOI to the PiUART ctrl port, so don't use bit 5
 
 /*
   VC_CTRL READ:

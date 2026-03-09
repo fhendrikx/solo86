@@ -764,10 +764,16 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
         case UART1_CTRL:
             // write UART1 control register
 
-            klog(LogError, "UART1 control write %u", data);
-            m_bUartIntEnable = data & UART_INT_ENABLE;
-            m_CharConv.SetCRLF(data & UART_CRLF);
-            m_CharConv.SetDelBS(data & UART_DEL_BS);
+            if (data == 0x20) {
+                // MS-DOS writes an EOI (0x20 to port 0x20) on start-up which clashes with
+                // the UART1_CTRL port, so ignore it and don't use bit 5
+                klog(LogWarning, "UART1 ignoring EOI");
+            } else {
+                klog(LogWarning, "UART1 control write %u", data);
+                m_bUartIntEnable = data & UART_INT_ENABLE;
+                m_CharConv.SetCRLF(data & UART_CRLF);
+                m_CharConv.SetDelBS(data & UART_DEL_BS);
+            }
 
         break;
 
@@ -778,9 +784,9 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
         break;
 
         case UART2_CTRL:
-            // write UART control register
+            // write UART2 control register
 
-            klog(LogError, "UART2 control write %u", data);
+            klog(LogWarning, "UART2 control write %u", data);
 
         break;
 
@@ -803,7 +809,7 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
         default:
 
-            // DEBUGING, signal to scope we've seen an unexpected write
+            // DEBUGGING, signal to scope we've seen an unexpected write
             // GPIOInterruptRaise();
             // GPIOInterruptRelease();
 
