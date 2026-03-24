@@ -214,13 +214,14 @@ private:
     CCharConv m_CharConv;
 
     // ring buffers
-    CRingBuf<u8> m_ToSerial_UART1; // data for the UART to output
-    CRingBuf<u8> m_FromSerial_UART1; // data received by the UART
-    CRingBuf<u8> m_ToTerminal; // data for the terminal to display
-    CRingBuf<u8> m_ToNetwork; // data for the network to send
+    CRingBuf<u8> m_ToSerial_UART1;    // data for the UART to output
+    CRingBuf<u8> m_FromSerial_UART1;  // data received by the UART
+    CRingBuf<u8> m_ToTerminal;        // data for the terminal to display
+    CRingBuf<u8> m_ToNetwork;         // data for the network to send
 
-    CRingBuf<u8> m_ToSerial_UART2; // data for the UART to output
-    CRingBuf<u8> m_FromSerial_UART2; // data received by the UART
+    CRingBuf<u8> m_ToSerial_UART2;    // data for the UART to output
+    CRingBuf<u8> m_FromSerial_UART2;  // data received by the UART
+
     u8 m_nTestPort;
 
 };
