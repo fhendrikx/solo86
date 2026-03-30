@@ -10,6 +10,8 @@ Welcome to Solo/86.
 
 This repository contains the tools and source code required to build the Solo/86 platform.
 
+PLEASE NOTE: the work in this repository is on-going and should not be considered final.
+
 
 # What is Solo/86?
 
@@ -19,7 +21,7 @@ An expandable computer built on the Intel IA16 architecture. The computer utilis
 
 As we wanted a simple and clean architecture, the Solo/86 platform is not compatible with IBM XT and AT-style machines, although there are similarities.
 
-We utilise through-hole components where possible, as this meets our personal __retro__ requirements.
+At the hardware level we utilise through-hole components where possible, as this meets our personal __retro__ requirements.
 
 
 # Getting Started
