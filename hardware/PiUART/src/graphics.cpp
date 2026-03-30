@@ -16,13 +16,17 @@
 
 LOGMODULE("graphics");
 
-CGraphics::CGraphics() {
+CGraphics::CGraphics(CRingBuf<u8> *pToNetwork) {
 
     m_pFrameBuffer = NULL;
     m_pFrameBufferBackup = NULL;
     m_pFrameBufferActive = NULL;
     m_pFrameBufferStandby = NULL;
     m_pFrameBufferPtr = NULL;
+
+    m_pToNetwork = pToNetwork;
+
+    m_nVGAEmuIndex = 0;
 
 }
 
@@ -33,6 +37,9 @@ CGraphics::~CGraphics() {
 
     if (m_pFrameBufferBackup != NULL)
         delete m_pFrameBufferBackup;
+
+    if (m_pVGAEmuBuffer != NULL)
+        delete m_pVGAEmuBuffer;
 
 }
 
@@ -46,6 +53,13 @@ bool CGraphics::Initialize() {
     }
 
     m_pFrameBufferPtr = m_pFrameBufferBackup;
+
+    m_pVGAEmuBuffer = new u8[GRAPHICS_VGAEMU_SIZE];
+
+    if (m_pVGAEmuBuffer == NULL) {
+        klog(LogError, "Failed to create VGAEmuBuffer");
+        return false;
+    }
 
     SetResolution(Res256x192);
 
@@ -177,6 +191,14 @@ u8 CGraphics::MemRead() {
     m_Lock.Release();
 
     return retval;
+
+}
+
+void CGraphics::VGAEmuWrite(u8 nVal) {
+
+    if (m_nVGAEmuIndex < GRAPHICS_VGAEMU_SIZE) {
+        m_pVGAEmuBuffer[m_nVGAEmuIndex++] = nVal;
+    }
 
 }
 
@@ -318,6 +340,15 @@ void CGraphics::Command(u8 nCmd, u8 *pParamBuffer, unsigned nParamBufferLength) 
                      mk_s16(pParamBuffer[6], pParamBuffer[7]), pParamBuffer[8]);
         break;
 
+        // VGAEmu commands
+        case 0xA0: // start of video push
+            m_nVGAEmuIndex = 0;
+        break;
+
+        case 0xA1: // end of video push
+            VGAEmuUpdate();
+        break;
+
     }
 
 }
@@ -456,6 +487,22 @@ void CGraphics::WaitForVerticalSync() {
     CBcmPropertyTags Tags;
     TPropertyTagSimple Dummy;
     Tags.GetTag (PROPTAG_WAIT_FOR_VSYNC, &Dummy, sizeof Dummy);
+
+}
+
+void CGraphics::VGAEmuUpdate() {
+
+    // hide cursor, move cursor to top left
+    m_pToNetwork->AddSafe((u8 *)"\e[?25l\e[H", 9);
+
+    for (unsigned i = 0; i < GRAPHICS_VGAEMU_SIZE; i+=2) {
+        u8 c = m_pVGAEmuBuffer[i];
+        if (c < 0x20)
+            c = 0x20;
+        m_pToNetwork->Add(c);
+    }
+
+    Update();
 
 }
 

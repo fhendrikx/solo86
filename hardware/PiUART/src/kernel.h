@@ -68,10 +68,10 @@
 #define UART2_DATA 3    // 0x26
 
 // Video Control registers
-#define VC_CTRL   4     // 0x28
-#define VC_PARAM  5     // 0x2A
-#define VC_DATA   6     // 0x2C
-// RESERVED 7           // 0x2E
+#define VC_CTRL    4    // 0x28
+#define VC_PARAM   5    // 0x2A
+#define VC_DATA    6    // 0x2C
+#define VC_VGAEMU  7    // 0x2E
 
 // UART bitmaps
 #define UART_INT_ENABLE 0x1
@@ -183,7 +183,7 @@ private:
 
     CRingBuf<u16> m_ToDisplay; // commands and data for the display
 
-    enum TDisplayMode m_nDisplayMode;
+    volatile TDisplayMode m_nDisplayMode;
     volatile TDisplayMode m_nNextDisplayMode;
 
     CTerminalWrapper *m_pTerminal;

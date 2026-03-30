@@ -87,15 +87,6 @@ bool CKernel::Initialize() {
         klog(LogNotice, "USBHCI init complete");
     }
 
-    // create Graphics before we start multi-core in case GPIO tries to read video memory
-    m_pGraphics = new CGraphics();
-    if (!m_pGraphics->Initialize()) {
-        klog(LogError, "Graphics init failed");
-        return false;
-    } else {
-        klog(LogNotice, "Graphics init complete");
-    }
-
     // all other initialisation is deferred and handled by the MAIN core
 
     return CMultiCoreSupport::Initialize();
@@ -271,6 +262,14 @@ void CKernel::Display() {
         CMultiCoreSupport::HaltAll();
     }
 
+    m_pGraphics = new CGraphics(&m_ToNetwork);
+    if (!m_pGraphics->Initialize()) {
+        klog(LogError, "Graphics init failed");
+        CMultiCoreSupport::HaltAll();
+    } else {
+        klog(LogNotice, "Graphics init complete");
+    }
+
     #ifdef NDEBUG
     const char *NoDebugMsg = "Debugging disabled\n";
     m_pDebugLog->Write(NoDebugMsg, strlen(NoDebugMsg));
@@ -438,7 +437,12 @@ void CKernel::Display() {
                     m_pGraphics->MemWrite(value);
                 break;
 
+                case VC_VGAEMU:
+                    m_pGraphics->VGAEmuWrite(value);
+                break;
+
                 default:
+                    // Shouldn't be able to get here
                     klog(LogWarning, "Unknown Type");
                 break;
 
@@ -681,7 +685,7 @@ void CKernel::Main() {
 
 inline u32 CKernel::BusIORead(u32 address) {
 
-    u32 data;
+    u32 data = 0;
 
     switch(address) {
 
@@ -696,7 +700,6 @@ inline u32 CKernel::BusIORead(u32 address) {
         case UART1_DATA:
             // read UART data register
 
-            data = 0;
             m_ToSerial_UART1.Remove((u8 *)&data);
 
             if (m_bUartIntActive) {
@@ -717,16 +720,13 @@ inline u32 CKernel::BusIORead(u32 address) {
         case UART2_DATA:
             // read UART data register
 
-            data = 0;
             m_ToSerial_UART2.Remove((u8 *)&data);
 
         break;
 
         case VC_CTRL:
 
-            data = 0;
-
-            if (m_bDisplayBusy || m_ToDisplay.GetCount() > 0) {
+            if (m_nDisplayMode == Uninitialised || m_bDisplayBusy || m_ToDisplay.GetCount() > 0) {
                 data |= VC_CTRL_BUSY;
             }
 
@@ -734,17 +734,32 @@ inline u32 CKernel::BusIORead(u32 address) {
 
         case VC_PARAM:
 
-            data = 0;
+            // return zero
 
         break;
 
         case VC_DATA:
 
-            data = m_pGraphics->MemRead();
+            // the user should read VC_CTRL and check the system isn't busy before
+            // trying to read memory.
+            // this ensures the display core has finished initialisation and no
+            // outstanding commands are waiting to be executed that might modify memory.
+
+            // m_pGraphics may be null if the display hasn't been initialised yet.
+            if (m_nDisplayMode != Uninitialised)
+                data = m_pGraphics->MemRead();
+
+        break;
+
+        case VC_VGAEMU:
+
+            // return zero
 
         break;
 
         default:
+
+            // Shouldn't be able to reach here
 
             klog(LogWarning, "IO_READ Address: 0x%x", address);
             data = m_nTestPort;
@@ -799,15 +814,18 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
         case VC_CTRL:
         case VC_PARAM:
         case VC_DATA:
+        case VC_VGAEMU:
 
-            // use AddSafe otherwise data may be lost from the ring buffer
-            // lost data can result in commands with the wrong parameters
+            // use AddSafe otherwise data may be lost from the ring buffer.
+            // lost data could result in commands with the wrong parameters
             // or missing commands
             m_ToDisplay.AddSafe((address << 8) | data);
 
         break;
 
         default:
+
+            // Shouldn't be able to reach here
 
             // DEBUGGING, signal to scope we've seen an unexpected write
             // GPIOInterruptRaise();
