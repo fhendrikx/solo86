@@ -9,6 +9,25 @@
 
 const char hostname[] = "PiUART";
 
+const u8 VGAEmuColourMap[] = {
+    30, // 0 -> black
+    34, // 1 -> blue
+    32, // 2 -> green
+    36, // 3 -> cyan
+    31, // 4 -> red
+    35, // 5 -> magenta
+    33, // 6 -> yellow
+    37, // 7 -> white
+    90, // 8 -> bright black (gray)
+    94, // 9 -> bright blue
+    92, // 10 -> bright green
+    96, // 11 -> bright cyan
+    91, // 12 -> bright red
+    95, // 13 -> bright magenta
+    93, // 14 -> bright yellow
+    97  // 15 -> bright white
+};
+
 LOGMODULE("kernel");
 
 CKernel::CKernel(CMemorySystem *pMemorySystem)
@@ -50,6 +69,14 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_bUartIntActive = false;
 
     m_nTestPort = 0;
+
+    m_pVGAEmuBufferCurr = NULL;
+    m_pVGAEmuBufferPrev = NULL;
+
+    m_nVGAEmuIndex = 0;
+    m_nVGAEmuCursorX = 0;
+    m_nVGAEmuCursorY = 0;
+    m_nVGAEmuCount = 0;
 
 }
 
@@ -262,7 +289,7 @@ void CKernel::Display() {
         CMultiCoreSupport::HaltAll();
     }
 
-    m_pGraphics = new CGraphics(&m_ToNetwork);
+    m_pGraphics = new CGraphics();
     if (!m_pGraphics->Initialize()) {
         klog(LogError, "Graphics init failed");
         CMultiCoreSupport::HaltAll();
@@ -270,10 +297,31 @@ void CKernel::Display() {
         klog(LogNotice, "Graphics init complete");
     }
 
+    // VGAEmu data structures
+    m_pVGAEmuBufferCurr = new u8[VGAEMU_BUF_SIZE];
+
+    if (m_pVGAEmuBufferCurr == NULL) {
+        klog(LogError, "Failed to create VGAEmuBufferCurr");
+        CMultiCoreSupport::HaltAll();
+    }
+
+    memset(m_pVGAEmuBufferCurr, 0, VGAEMU_BUF_SIZE);
+
+    m_pVGAEmuBufferPrev = new u8[VGAEMU_BUF_SIZE];
+
+    if (m_pVGAEmuBufferPrev == NULL) {
+        klog(LogError, "Failed to create VGAEmuBufferPrev");
+        CMultiCoreSupport::HaltAll();
+    }
+
+    memset(m_pVGAEmuBufferPrev, 0xFF, VGAEMU_BUF_SIZE);
+
     #ifdef NDEBUG
     const char *NoDebugMsg = "Debugging disabled\n";
     m_pDebugLog->Write(NoDebugMsg, strlen(NoDebugMsg));
     #endif
+
+    // remaining data structures
 
     u8 TermBuffer[TERM_BUF_SIZE];
     u8 ParamBuffer[PARAM_BUF_SIZE];
@@ -410,6 +458,23 @@ void CKernel::Display() {
                             // reset graphics (can't delete, GPIO read)
                         // break;
 
+                        case 0x30:
+                            VGAEmuInit();
+                        break;
+
+                        case 0x31:
+                            VGAEmuStart();
+                        break;
+
+                        case 0x32:
+                            VGAEmuUpdate();
+                        break;
+
+                        case 0x33:
+                            VGAEmuSetCursor(ParamBuffer[0], ParamBuffer[1]);
+                            nParamBufferIndex = 0;
+                        break;
+
                         default:
 
                             if (value >= 0x40) {
@@ -438,7 +503,7 @@ void CKernel::Display() {
                 break;
 
                 case VC_VGAEMU:
-                    m_pGraphics->VGAEmuWrite(value);
+                    VGAEmuWrite(value);
                 break;
 
                 default:
@@ -932,4 +997,139 @@ inline void CKernel::GPIODataOutput(u32 data) {
 // set data pins to input mode
 inline void CKernel::GPIODataInput() {
     write32(ARM_GPIO_GPFSEL2, 0x8000000); // GPIO 20-28 input, GPIO 29 output
+}
+
+
+// VGAEmu Functions
+inline void CKernel::VGAEmuWrite(u8 nVal) {
+
+    if (m_nVGAEmuIndex < VGAEMU_BUF_SIZE) {
+        m_pVGAEmuBufferCurr[m_nVGAEmuIndex++] = nVal;
+    }
+
+}
+
+void CKernel::VGAEmuInit() {
+
+    // disable scrolling ("autopage")
+    // this appears to be a Circle only feature so only send to the terminal
+    m_ToTerminal.Add("\ed+");
+
+    // TODO any other ANSI/reset commands?
+
+    m_nVGAEmuIndex = 0;
+    m_nVGAEmuCursorX = 0;
+    m_nVGAEmuCursorY = 0;
+    m_nVGAEmuCount = 0;
+
+}
+
+void CKernel::VGAEmuStart() {
+
+    m_nVGAEmuIndex = 0;
+
+}
+
+void CKernel::VGAEmuUpdate() {
+
+    // hide cursor
+    m_ToNetwork.Add("\e[?25l");
+    m_ToTerminal.Add("\e[?25l");
+
+    // check each row for changes
+    u8 *curr = m_pVGAEmuBufferCurr;
+    u8 *prev = m_pVGAEmuBufferPrev;
+
+    for (unsigned y = 0; y < 25; y++) {
+
+        // check if the row has changed
+        if (memcmp(curr, prev, 160) != 0) {
+            VGAEmuUpdateRow(curr, y);
+        }
+
+        curr += 160;
+        prev += 160;
+
+    }
+
+    // blink the cursor
+    if (m_nVGAEmuCount > 8) {
+
+        // set cursor position, starting from 1
+        // unhide cursor
+        CString cursor;
+        cursor.Format("\e[%u;%uH\e[?25h", m_nVGAEmuCursorX + 1, m_nVGAEmuCursorY + 1);
+        m_ToNetwork.Add(cursor);
+        m_ToTerminal.Add(cursor);
+
+    }
+
+    ++m_nVGAEmuCount %= 18;
+
+    // switch buffers ready for the next update
+    u8 *tmp = m_pVGAEmuBufferCurr;
+    m_pVGAEmuBufferCurr = m_pVGAEmuBufferPrev;
+    m_pVGAEmuBufferPrev = tmp;
+
+}
+
+void CKernel::VGAEmuSetCursor(u8 nX, u8 nY) {
+
+    m_nVGAEmuCursorX = nX;
+    m_nVGAEmuCursorY = nY;
+
+}
+
+inline void CKernel::VGAEmuUpdateRow(u8 *pRow, u8 nRowNum) {
+
+    // move cursor to start of row
+    CString movec;
+    movec.Format("\e[%u;1H", nRowNum+1);
+    m_ToNetwork.Add(movec);
+    m_ToTerminal.Add(movec);
+
+    // ensure we always output the colour for the first char in the row
+    u8 last_attr = ~pRow[1];
+
+    // print all the chars in the row
+    for (unsigned x = 0; x < 160; x+=2) {
+
+        u8 attr = pRow[x+1];
+
+        if (attr != last_attr) {
+
+            VGAEmuUpdateColour(attr);
+            last_attr = attr;
+
+        }
+
+        u8 c = pRow[x];
+
+        if (c & 0x80) {
+            u8 *cptr = (u8 *)cp437_conv[c & 0x7f];
+            while(*cptr) {
+                m_ToNetwork.Add(*cptr++);
+            }
+            m_ToTerminal.Add(c);
+        } else {
+            if (c < 0x20)
+                c = 0x20;
+            m_ToNetwork.Add(c);
+            m_ToTerminal.Add(c);
+        }
+
+    }
+
+}
+
+inline void CKernel::VGAEmuUpdateColour(u8 nAttr) {
+
+    u8 foreground = VGAEmuColourMap[nAttr & 0xF];
+    u8 background = VGAEmuColourMap[(nAttr >> 4) & 0xF] + 10;
+
+    CString colour;
+    colour.Format("\e[%um\e[%um", foreground, background);
+    m_ToNetwork.Add(colour);
+    m_ToTerminal.Add(colour);
+
 }

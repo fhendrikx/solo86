@@ -36,8 +36,10 @@ public:
 
     inline int Add(T e);
     int Add(T *e, int nLen);
+    int Add(const char *str); // not sure this will work if T isn't char/u8
     void AddSafe(T e);
     void AddSafe(T *e, int nLen);
+    void AddSafe(const char *str); // not sure this will work if T isn't char/u8
     inline int Remove(T *e);
     int Remove(T *e, int nSize);
     inline int GetCount();
@@ -134,6 +136,34 @@ void CRingBuf<T>::AddSafe(T *e, int nLen) {
 
     for (int i = 0; i < nLen; i++)
         AddSafe(e[i]);
+
+    return;
+
+}
+
+// not sure this will work if T isn't char/u8
+template <class T>
+int CRingBuf<T>::Add(const char *str) {
+
+    int nWritten = 0;
+
+    while(*str) {
+        nWritten += Add((T)*str++);
+    }
+
+    return nWritten;
+
+}
+
+// not sure this will work if T isn't char/u8
+template <class T>
+void CRingBuf<T>::AddSafe(const char *str) {
+
+    int nWritten = 0;
+
+    while(*str) {
+        AddSafe((T)*str++);
+    }
 
     return;
 

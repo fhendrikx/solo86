@@ -108,6 +108,8 @@
 
 #define NUM_DISPLAY_MODES 3
 
+#define VGAEMU_BUF_SIZE 80 * 25 * 2
+
 enum TDisplayMode { Uninitialised = -1, TerminalMode = 0, GraphicsMode = 1, DebugLogMode = 2 };
 
 class CKernel : public CMultiCoreSupport {
@@ -140,6 +142,14 @@ private:
     inline void GPIOBreakReset();
     inline void GPIODataOutput(u32 data);
     inline void GPIODataInput();
+
+    inline void VGAEmuWrite(u8 nVal);
+    void VGAEmuInit();
+    void VGAEmuStart();
+    void VGAEmuUpdate();
+    void VGAEmuSetCursor(u8 nX, u8 nY);
+    inline void VGAEmuUpdateRow(u8 *pRow, u8 nRowNum);
+    inline void VGAEmuUpdateColour(u8 nAttr);
 
     // Kernel Options, gives access to command line options ("cmdline.txt")
     CKernelOptions m_KernelOptions;
@@ -223,6 +233,15 @@ private:
     CRingBuf<u8> m_FromSerial_UART2;  // data received by the UART
 
     u8 m_nTestPort;
+
+    // 80 x 25 VGA buffer (char + attr)
+    u8 *m_pVGAEmuBufferCurr;
+    u8 *m_pVGAEmuBufferPrev;
+
+    unsigned m_nVGAEmuIndex;
+    unsigned m_nVGAEmuCursorX;
+    unsigned m_nVGAEmuCursorY;
+    unsigned m_nVGAEmuCount;
 
 };
 
