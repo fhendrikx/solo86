@@ -999,8 +999,27 @@ inline void CKernel::GPIODataInput() {
     write32(ARM_GPIO_GPFSEL2, 0x8000000); // GPIO 20-28 input, GPIO 29 output
 }
 
-
+//
 // VGAEmu Functions
+//
+
+/*
+    The VGAEmu commands are running on the Display core.
+    The GPIO core can write to the FromSerial ring buffer.
+    The SerialTask process is running on the main core moving data from FromSerial to
+    ToTerminal and ToNetwork.
+    The ringbuffers lock each add/remove, but only one element at a time.
+    This means interleaved writes are possible.
+
+    We're using a number of ANSI escape sequences that need to be intact, that is,
+    not have another write mix other chars into the stream.
+
+    So in practice this means that we should be using the VGAEmu code *OR* regular
+    UART writes, not mixing the two otherwise interleaving is possible.
+
+    There are no locks or process cooperation to prevent this.
+*/
+
 inline void CKernel::VGAEmuWrite(u8 nVal) {
 
     if (m_nVGAEmuIndex < VGAEMU_BUF_SIZE) {
