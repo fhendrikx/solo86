@@ -14,7 +14,7 @@
 class CTCPTelnetTask : public CTask {
 public:
 
-    CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial, CCharConv *pCharConv);
+    CTCPTelnetTask(CSocket *pSocket, CRingBuf<u16> *pToSerial, CCharConv *pCharConv);
     ~CTCPTelnetTask();
 
     void Run();
@@ -26,7 +26,7 @@ private:
     static void TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *arg);
     
     CSocket *m_pSocket;
-    CRingBuf<u8> *m_pToSerial;
+    CRingBuf<u16> *m_pToSerial;
     telnet_t *m_pTelnet;
     CCharConv *m_pCharConv;
 

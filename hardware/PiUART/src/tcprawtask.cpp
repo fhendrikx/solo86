@@ -3,7 +3,7 @@
 #include <circle/sched/scheduler.h>
 #include <circle/net/in.h>
 
-CTCPRawTask::CTCPRawTask(CSocket *pSocket, CRingBuf<u8> *pToSerial) {
+CTCPRawTask::CTCPRawTask(CSocket *pSocket, CRingBuf<u16> *pToSerial) {
 
     m_Name.Format("tcprawtask-%x", pSocket);
     From = m_Name;
@@ -29,18 +29,18 @@ void CTCPRawTask::Run() {
 
         klog(LogDebug, "Got bytes %d", nBytesReceived);
 
-        /*
         for (int i = 0; i < nBytesReceived; i++) {
             u8 c = Buffer[i];
-            if ((c >= 32) and (c < 127)) {
-                klog(LogDebug, "Got byte [%d]: 0x%x [%c]", i, c, c);
-            } else {
-                klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
-            }
-        }
-        */
 
-        m_pToSerial->AddSafe(Buffer, nBytesReceived);
+            // if ((c >= 32) and (c < 127)) {
+            //     klog(LogDebug, "Got byte [%d]: 0x%x [%c]", i, c, c);
+            // } else {
+            //     klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
+            // }
+
+            m_pToSerial->AddSafe(c); // note the implicit conversion to u16
+        }
+
 
     }
 

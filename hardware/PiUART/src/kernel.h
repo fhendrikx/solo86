@@ -74,10 +74,15 @@
 #define VC_VGAEMU  7    // 0x2E
 
 // UART bitmaps
-#define UART_INT_ENABLE 0x1
-#define UART_CRLF       0x2   // 0 == CR, 1 == LF
-#define UART_DEL_BS     0x4   // 0 == DEL, 1 == BS
-#define UART_DONT_USE   0x20  // MSDOS writes an EOI to the PiUART ctrl port, so don't use bit 5
+#define UART_INT        0x01    // 0 == Int disabled, 1 == Raise UART1 interrupt
+#define UART_CRLF       0x02    // 0 == CR, 1 == LF
+#define UART_DEL_BS     0x04    // 0 == DEL, 1 == BS
+#define UART_ESC        0x08    // 0 == No escape sequences, 1 == Generate escape sequences
+#define UART_KEYB_INT   0x10    // 0 == Int disabled, 1 == Raise keyboard interrupt 
+#define UART_DONT_USE   0x20    // MSDOS writes an EOI to the PiUART ctrl port, so don't use bit 5
+// #define UART_           0x40
+// #define UART_           0x80
+
 
 /*
   VC_CTRL READ:
@@ -120,6 +125,9 @@ public:
     bool Initialize();
     void Run(unsigned nCore);
     void SetConsole(unsigned nConsoleMode);
+    u8 GetKeyboardFlags();
+    void SetKeyboardFlags(u8 nKeyboardFlags);
+    void RequestKeyboardInterrupt();
 
 private:
     // Cores
@@ -192,6 +200,7 @@ private:
     unsigned m_nScreenHeight;
 
     CRingBuf<u16> m_ToDisplay; // commands and data for the display
+    CRingBuf<u8> m_FromDisplay; // data from the display core
 
     volatile TDisplayMode m_nDisplayMode;
     volatile TDisplayMode m_nNextDisplayMode;
@@ -219,17 +228,20 @@ private:
 
     // UART
     bool m_bUartIntEnable;
-    bool m_bUartIntActive;
-
+    bool m_bKeybIntEnable;
+    bool m_bIntActive;
+    volatile bool m_bKeybInt;
+    volatile u8 m_nKeyboardFlags;
+    
     CCharConv m_CharConv;
 
     // ring buffers
-    CRingBuf<u8> m_ToSerial_UART1;    // data for the UART to output
+    CRingBuf<u16> m_ToSerial_UART1;    // data for the UART to output
     CRingBuf<u8> m_FromSerial_UART1;  // data received by the UART
     CRingBuf<u8> m_ToTerminal;        // data for the terminal to display
     CRingBuf<u8> m_ToNetwork;         // data for the network to send
 
-    CRingBuf<u8> m_ToSerial_UART2;    // data for the UART to output
+    CRingBuf<u16> m_ToSerial_UART2;    // data for the UART to output
     CRingBuf<u8> m_FromSerial_UART2;  // data received by the UART
 
     u8 m_nTestPort;

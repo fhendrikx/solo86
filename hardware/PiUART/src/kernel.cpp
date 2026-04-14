@@ -41,6 +41,7 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
       m_I2CLogger(&m_I2C),
 #endif
       m_ToDisplay(RING_BUF_SIZE),
+      m_FromDisplay(PARAM_BUF_SIZE),
       m_LCD(LCD_WIDTH, LCD_HEIGHT, &m_I2C, LCD_I2C_ADDR, false, false),
       m_USBHCI(&m_InterruptSystem, &m_Timer, true),
       m_EMMC(&m_InterruptSystem, &m_Timer),
@@ -66,7 +67,10 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_pGraphics = NULL;
 
     m_bUartIntEnable = false;
-    m_bUartIntActive = false;
+    m_bKeybIntEnable = false;
+    m_bIntActive = false;
+    m_bKeybInt = false;
+    m_nKeyboardFlags = 0;
 
     m_nTestPort = 0;
 
@@ -212,7 +216,26 @@ void CKernel::SetConsole(unsigned nConsoleMode) {
         klog(LogDebug, "SetConsole, ignoring %d", nConsoleMode);
     }
 
-    return;
+}
+
+u8 CKernel::GetKeyboardFlags() {
+
+    return m_nKeyboardFlags;
+
+}
+
+void CKernel::SetKeyboardFlags(u8 nKeyboardFlags) {
+
+    m_nKeyboardFlags = nKeyboardFlags;
+
+}
+
+void CKernel::RequestKeyboardInterrupt() {
+
+    m_bKeybInt = true;
+
+    klog(LogDebug, "RequestKeyboardInterrupt()");
+
 }
 
 //
@@ -333,7 +356,7 @@ void CKernel::Display() {
 
     while(true) {
 
-        // grab a copy of NextDisplayMode is it can't change while we're using it
+        // grab a copy of NextDisplayMode so it can't change while we're using it
         enum TDisplayMode nNextDisplayMode = m_nNextDisplayMode;
 
         if (nNextDisplayMode != m_nDisplayMode) {
@@ -447,16 +470,6 @@ void CKernel::Display() {
                             m_nNextDisplayMode = DebugLogMode;
                         break;
 
-                        // 0x03 -> 0x3F reserved
-
-                        // case 0x10:
-                            // RESET
-                            // empty m_ToDisplay
-                            // nParamBufferIndex = 0
-                            // clear terminal
-                            // clear debug log (?)
-                            // reset graphics (can't delete, GPIO read)
-                        // break;
 
                         case 0x30:
                             VGAEmuInit();
@@ -474,6 +487,7 @@ void CKernel::Display() {
                             VGAEmuSetCursor(ParamBuffer[0], ParamBuffer[1]);
                             nParamBufferIndex = 0;
                         break;
+
 
                         default:
 
@@ -535,11 +549,11 @@ void CKernel::GPIO() {
     while (true) {
 
         // raise an interrupt if necessary
-        if (m_bUartIntEnable and not m_bUartIntActive and m_ToSerial_UART1.GetCount() > 0) {
+        if ((m_bUartIntEnable and not m_bIntActive and m_ToSerial_UART1.GetCount() > 0) or
+            (m_bKeybIntEnable and not m_bIntActive and m_bKeybInt)) {
 
-            m_bUartIntActive = true;
             GPIOInterruptRaise();
-
+            klog(LogDebug, "GPIO Interrupt Raise %d %d", m_ToSerial_UART1.GetCount(), m_bKeybInt);
         }
 
         // check for an event
@@ -765,11 +779,11 @@ inline u32 CKernel::BusIORead(u32 address) {
         case UART1_DATA:
             // read UART data register
 
-            m_ToSerial_UART1.Remove((u8 *)&data);
+            m_ToSerial_UART1.Remove((u16 *)&data);
 
-            if (m_bUartIntActive) {
-                m_bUartIntActive = false;
+            if (m_bIntActive) {
                 GPIOInterruptRelease();
+                klog(LogDebug, "InterruptRelease UART1_DATA");
             }
 
         break;
@@ -785,7 +799,7 @@ inline u32 CKernel::BusIORead(u32 address) {
         case UART2_DATA:
             // read UART data register
 
-            m_ToSerial_UART2.Remove((u8 *)&data);
+            m_ToSerial_UART2.Remove((u16 *)&data);
 
         break;
 
@@ -799,7 +813,7 @@ inline u32 CKernel::BusIORead(u32 address) {
 
         case VC_PARAM:
 
-            // return zero
+            m_FromDisplay.Remove((u8 *)&data);
 
         break;
 
@@ -839,6 +853,8 @@ inline u32 CKernel::BusIORead(u32 address) {
 
 inline void CKernel::BusIOWrite(u32 address, u8 data) {
 
+    u16 s;
+
     switch(address) {
 
         case UART1_CTRL:
@@ -847,12 +863,20 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
             if (data == 0x20) {
                 // MS-DOS writes an EOI (0x20 to port 0x20) on start-up which clashes with
                 // the UART1_CTRL port, so ignore it and don't use bit 5
-                klog(LogWarning, "UART1 ignoring EOI");
+                klog(LogDebug, "UART1 ignoring EOI");
             } else {
-                klog(LogWarning, "UART1 control write %u", data);
-                m_bUartIntEnable = data & UART_INT_ENABLE;
+                klog(LogDebug, "UART1 control write 0x%x", data);
+                m_bUartIntEnable = data & UART_INT;
                 m_CharConv.SetCRLF(data & UART_CRLF);
                 m_CharConv.SetDelBS(data & UART_DEL_BS);
+                m_CharConv.SetEsc(data & UART_ESC);
+                m_bKeybIntEnable = data & UART_KEYB_INT;
+
+                // release the interrupt if we've just disabled interrupts
+                if (m_bIntActive and m_bUartIntEnable == false and m_bKeybIntEnable == false) {
+                    GPIOInterruptRelease();
+                    klog(LogDebug, "InterruptRelease UART1_CTRL");
+                }
             }
 
         break;
@@ -877,6 +901,44 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
         break;
 
         case VC_CTRL:
+
+            switch(data) {
+
+                case 0x20: // empty output buffer
+                    m_FromDisplay.Reset();
+                break;
+
+                case 0x21: // get keyboard flags
+                    m_FromDisplay.Add(m_nKeyboardFlags);
+                    m_bKeybInt = false;
+                    if (m_bIntActive) {
+                        GPIOInterruptRelease();
+                        klog(LogDebug, "InterruptRelease VC_CTRL keyboard flags");
+                    }
+                break;
+
+                case 0x22: // get keypress with scan code
+                    s = 0;
+                    m_ToSerial_UART1.Remove(&s);
+                    m_FromDisplay.Add(s >> 8);      // scan code
+                    m_FromDisplay.Add(s & 0xFF);    // ascii char
+                    if (m_bIntActive) {
+                        GPIOInterruptRelease();
+                        klog(LogDebug, "InterruptRelease VC_CTRL keyboard scan");
+                    }
+                break;
+
+                default:
+                    // use AddSafe otherwise data may be lost from the ring buffer.
+                    // lost data could result in commands with the wrong parameters
+                    // or missing commands
+                    m_ToDisplay.AddSafe((address << 8) | data);
+                break;
+
+            }
+        
+        break;
+
         case VC_PARAM:
         case VC_DATA:
         case VC_VGAEMU:
@@ -914,7 +976,7 @@ void CKernel::GPIOInit() {
     // set PWAIT output to 1 to indicate we're not ready yet
     GPIOPWaitBusy();
 
-    // set Interrupt HIGH
+    // set Interrupt LOW
     GPIOInterruptRelease();
 
     // set GPIO pin mode
@@ -952,11 +1014,13 @@ inline void CKernel::GPIOPWaitBusy() {
 }
 
 inline void CKernel::GPIOInterruptRaise() {
+    m_bIntActive = true;
     write32(ARM_GPIO_GPSET0, 1 << 18);
 }
 
 inline void CKernel::GPIOInterruptRelease() {
     write32(ARM_GPIO_GPCLR0, 1 << 18);
+    m_bIntActive = false;
 }
 
 inline void CKernel::GPIOBreakReset() {

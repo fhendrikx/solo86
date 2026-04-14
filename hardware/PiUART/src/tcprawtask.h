@@ -12,7 +12,7 @@
 class CTCPRawTask : public CTask {
 public:
 
-    CTCPRawTask(CSocket *pSocket, CRingBuf<u8> *pToSerial);
+    CTCPRawTask(CSocket *pSocket, CRingBuf<u16> *pToSerial);
     ~CTCPRawTask();
 
     void Run();
@@ -22,7 +22,7 @@ public:
 private:
 
     CSocket *m_pSocket;
-    CRingBuf<u8> *m_pToSerial;
+    CRingBuf<u16> *m_pToSerial;
 
     // define local instance of From rather than use LOGMODULE
     // so each instantiation of the class has a unique log source

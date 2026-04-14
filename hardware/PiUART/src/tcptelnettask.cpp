@@ -12,7 +12,7 @@ static const telnet_telopt_t my_telopts[] = {
     { -1, 0, 0 }
 };
 
-CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u8> *pToSerial, CCharConv *pCharConv) {
+CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u16> *pToSerial, CCharConv *pCharConv) {
 
     m_Name.Format("tcptelnettask-%x", pSocket);
     From = m_Name;
@@ -102,7 +102,7 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
         for (unsigned i = 0; i < ev->data.size; i++) {
 
-            u8 c = ev->data.buffer[i];
+            char c = ev->data.buffer[i];
 
             if ((c >= 0x20) and (c < 0x7f)) {
                 klog(LogDebug, "Got byte [%d]: 0x%x [%c]", i, c, c);
@@ -110,12 +110,16 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
                 klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
             }
 
+            // Linux telnet sends \r\0 (translated to \r, see above) for enter
+            // Linux telnet sends DEL for backspace
             // convert CR/LF, and DEL/^H, etc
             c = me->m_pCharConv->Convert(c);
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
-            me->m_pToSerial->AddSafe(c);
+            u16 s = me->m_pCharConv->ScanCode(c);
+
+            me->m_pToSerial->AddSafe(s);
 
         }
 

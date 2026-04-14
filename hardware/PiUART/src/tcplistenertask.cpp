@@ -3,7 +3,7 @@
 #include <circle/sched/scheduler.h>
 #include <circle/net/in.h>
 
-CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u8> *pToSerial, TCPMode TMode, CCharConv *pCharConv) {
+CTCPListenerTask::CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u16> *pToSerial, TCPMode TMode, CCharConv *pCharConv) {
 
     m_Name.Format("tcplistenertask-%u", nListenPort);
     From = m_Name;

@@ -31,7 +31,9 @@ public:
   To minimise latency the lock is only held for long enough to add or remove one
   element at a time.
 
-  If there are are multiple threads calling Add() or AddSafe() data may be interleved.
+  If there are are multiple threads calling Add() or AddSafe() data may be interleaved.
+
+  Reset() empties the buffer.
 */
 
     inline int Add(T e);
@@ -44,6 +46,7 @@ public:
     int Remove(T *e, int nSize);
     inline int GetCount();
     inline int GetFree();
+    void Reset();
 
 private:
 
@@ -207,6 +210,20 @@ inline int CRingBuf<T>::GetCount() {
 template <class T>
 inline int CRingBuf<T>::GetFree() {
     return m_nSize - m_nCount;
+}
+
+
+template <class T>
+void CRingBuf<T>::Reset() {
+
+    m_Lock.Acquire();
+
+    m_nReadPos = 0;
+    m_nWritePos = 0;
+    m_nCount = 0;
+
+    m_Lock.Release();
+
 }
 
 #endif
