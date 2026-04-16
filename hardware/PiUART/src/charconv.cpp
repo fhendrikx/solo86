@@ -143,6 +143,7 @@ CCharConv::CCharConv() {
 
     m_bCRLF = false;
     m_bDelBS = false;
+    m_bEsc = false;
 
 }
 
@@ -220,7 +221,7 @@ u16 CCharConv::ScanCode(char c) {
 
     u16 s = 0;
 
-    if (c <= 127) {
+    if ((c >= 0) and (c <= 127)) {
         s = scancodes[(u8) c];
     }
 

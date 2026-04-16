@@ -23,6 +23,9 @@ CTCPTelnetTask::CTCPTelnetTask(CSocket *pSocket, CRingBuf<u16> *pToSerial, CChar
     m_pCharConv = pCharConv;
     m_pTelnet = NULL;
 
+    m_nProcessState = StatePlain;
+    m_nDigitVal = 0;
+
 }
 
 CTCPTelnetTask::~CTCPTelnetTask() {
@@ -117,11 +120,16 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
             klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
 
-            u16 s = me->m_pCharConv->ScanCode(c);
-
-            me->m_pToSerial->AddSafe(s);
+            // nothing should be giving us chars with the high bit set
+            if ((c & 0x80) == 0x00) {
+                me->Process(c);
+            } else {
+                klog(LogWarning, "Ignoring bad char 0x%x", c);
+            }
 
         }
+
+        me->Process(0xFF); // signal to Process we're done
 
         break;
 
@@ -174,6 +182,269 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
 
         klog(LogDebug, "TelnetEventCB default type = %u", ev->type);
 
+        break;
+    }
+
+}
+
+void CTCPTelnetTask::Process(u8 c) {
+
+    klog(LogDebug, "Process 0x%x State %d", c, m_nProcessState);
+
+    u16 s = 0;
+
+    switch(m_nProcessState) {
+        case StatePlain:
+            switch(c) {
+                case 0xFF:
+                    // normal end of buffer
+                    m_nProcessState = StatePlain;
+                break;
+
+                case '\x1b':
+                    m_nProcessState = StateEscape;
+                break;
+
+                default:
+                    m_nProcessState = StatePlain;
+                    s = m_pCharConv->ScanCode(c);
+                    m_pToSerial->AddSafe(s);
+                break;
+            }
+        break;
+
+        case StateEscape:
+            switch(c) {
+                case 0xFF:
+                    // bare escape char
+                    m_nProcessState = StatePlain;
+                    s = m_pCharConv->ScanCode('\e');
+                    m_pToSerial->AddSafe(s);
+                break;
+
+                case '[':
+                    m_nProcessState = StateCSI;
+                    m_nDigitVal = 0;
+                break;
+
+                case 'O':
+                    m_nProcessState = StateSS3;
+                break;
+
+                default:
+                    if (c >= 'a' and c <= 'z') {
+                        // ALT a -> ALT z
+                        m_nProcessState = StatePlain;
+                        s = m_pCharConv->ScanCode(c);
+                        s &= 0xFF00; // remove the ascii value, leave the scan code
+                        m_pToSerial->AddSafe(s);
+                    } else {
+                        // unrecognised escape sequence
+                        m_nProcessState = StateError;
+                    }
+                break;
+            }
+        break;
+
+        // https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+        case StateCSI:
+            switch(c) {
+                case 0xFF:
+                    m_nProcessState = StatePlain;
+                    klog(LogDebug, "Process Error, premature end");
+                break;
+
+                case 'A':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x4800); // Up
+                break;
+
+                case 'B':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x5000); // Down
+                break;
+
+                case 'C':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x4D00); // Right
+                break;
+
+                case 'D':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x4B00); // Left
+                break;
+
+                case 'F':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x4F00); // End
+                break;
+
+                case 'H':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x4700); // Home
+                break;
+
+                case '~': // end of number sequence
+                    m_nProcessState = StatePlain;
+                    switch(m_nDigitVal) {
+                        case 1:
+                            m_pToSerial->AddSafe(0x4700); // Home
+                        break;
+
+                        case 3:
+                            m_pToSerial->AddSafe(0x5300); // Delete
+                        break;
+
+                        case 4:
+                            m_pToSerial->AddSafe(0x4F00); // End
+                        break;
+
+                        case 5:
+                            m_pToSerial->AddSafe(0x4900); // PgUp
+                        break;
+
+                        case 6:
+                            m_pToSerial->AddSafe(0x5100); // PgDown
+                        break;
+
+                        case 11:
+                            m_pToSerial->AddSafe(0x3B00); // F1
+                        break;
+
+                        case 12:
+                            m_pToSerial->AddSafe(0x3C00); // F2
+                        break;
+
+                        case 13:
+                            m_pToSerial->AddSafe(0x3D00); // F3
+                        break;
+
+                        case 14:
+                            m_pToSerial->AddSafe(0x3E00); // F4
+                        break;
+
+                        case 15:
+                            m_pToSerial->AddSafe(0x3F00); // F5
+                        break;
+
+                        case 17:
+                            m_pToSerial->AddSafe(0x4000); // F6
+                        break;
+
+                        case 18:
+                            m_pToSerial->AddSafe(0x4100); // F7
+                        break;
+
+                        case 19:
+                            m_pToSerial->AddSafe(0x4200); // F8
+                        break;
+
+                        case 20:
+                            m_pToSerial->AddSafe(0x4300); // F9
+                        break;
+
+                        case 21:
+                            m_pToSerial->AddSafe(0x4400); // F10
+                        break;
+
+                        default:
+                            klog(LogDebug, "Process Error, bad number sequence");
+                        break;
+                    }
+                break;
+
+                default:
+                    if (c >= '0' and c <= '9') {
+                        m_nProcessState = StateCSI;
+                        m_nDigitVal *= 10;
+                        m_nDigitVal += c - '0';
+                    } else {
+                        // unrecognised escape sequence
+                        m_nProcessState = StateError;
+                    }
+                break;
+            }
+        break;
+
+        case StateSS3: // function key F1-F4
+            switch(c) {
+                case 0xFF:
+                    m_nProcessState = StatePlain;
+                    klog(LogNotice, "Process Error, premature end");
+                break;
+
+                case 'P':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x3B00); // F1
+                break;
+
+                case 'Q':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x3C00); // F2
+                break;
+
+                case 'R':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x3D00); // F3
+                break;
+
+                case 'S':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x3E00); // F4
+                break;
+
+                case '2':
+                    m_nProcessState = StateSS3Shift;
+                break;
+
+                default:
+                    // unrecognised escape sequence
+                    m_nProcessState = StateError;
+                break;
+            }
+        break;
+
+        case StateSS3Shift: // shift function key F1-F4
+            switch(c) {
+                case 0xFF:
+                    m_nProcessState = StatePlain;
+                    klog(LogDebug, "Process Error, premature end");
+                break;
+
+                case 'P':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x5400); // shift F1
+                break;
+
+                case 'Q':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x5500); // shift F2
+                break;
+
+                case 'R':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x5600); // shift F3
+                break;
+
+                case 'S':
+                    m_nProcessState = StatePlain;
+                    m_pToSerial->AddSafe(0x5700); // shift F4
+                break;
+
+                default:
+                    // unrecognised escape sequence
+                    m_nProcessState = StateError;
+                break;
+            }
+        break;
+
+        case StateError:
+            // unrecognised escape sequence
+            // wait for end of buffer
+            if (c == 0xFF) {
+                m_nProcessState = StatePlain;
+                klog(LogDebug, "Process Error, bad sequence");
+            }
         break;
     }
 

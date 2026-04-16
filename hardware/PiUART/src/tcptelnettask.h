@@ -11,6 +11,8 @@
 #include "ringbuf.h"
 #include "libtelnet.h"
 
+enum ProcessState { StatePlain, StateEscape, StateCSI, StateSS3, StateSS3Shift, StateError };
+
 class CTCPTelnetTask : public CTask {
 public:
 
@@ -22,6 +24,10 @@ public:
     void Write(const void *pBuffer, unsigned nLength);
 
 private:
+
+    void Process(u8 c);
+    ProcessState m_nProcessState;
+    int m_nDigitVal;
 
     static void TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *arg);
     

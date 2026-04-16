@@ -201,6 +201,9 @@ void CKeyboardTask::KeyRawHandler (unsigned char ucModifiers, const unsigned cha
                     case 0x4B:  // PageUp
                         s = 0x4900;
                     break;
+                    case 0x4C:  // Del
+                        s = 0x5300;
+                    break;
                     case 0x4D:  // End
                         s = 0x4F00;
                     break;
