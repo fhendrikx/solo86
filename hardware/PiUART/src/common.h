@@ -14,7 +14,7 @@
 #define ALT_TELNET_PORT 2323
 #define ALT_RAW_PORT 2424
 
-enum TCPMode { telnet, raw };
+enum TTCPMode { telnet, raw };
 
 // the system logger writes ALL messages to an internal log regardless of the loglevel
 // this is slow, too slow for timing critcal regions so we skip logging altogether

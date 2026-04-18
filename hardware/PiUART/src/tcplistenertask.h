@@ -14,7 +14,7 @@
 
 class CTCPListenerTask : public CTask {
 public:
-    CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u16> *pToSerial, TCPMode TMode, CCharConv *pCharConv);
+    CTCPListenerTask(CNetSubSystem *pNet, u16 nListenPort, CRingBuf<u16> *pToSerial, TTCPMode TMode, CCharConv *pCharConv);
     ~CTCPListenerTask();
 
     void Run();
@@ -29,7 +29,7 @@ private:
     CSocket *m_pListenSocket;
     CTCPTelnetTask *m_pTelnetTask;
     CTCPRawTask *m_pRawTask;
-    TCPMode m_TMode;
+    TTCPMode m_TMode;
     CCharConv *m_pCharConv;
 
     // define local instance of From rather than use LOGMODULE
