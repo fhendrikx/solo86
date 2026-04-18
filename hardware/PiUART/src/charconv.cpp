@@ -141,9 +141,7 @@ LOGMODULE("charconv");
 
 CCharConv::CCharConv() {
 
-    m_bCRLF = false;
-    m_bDelBS = false;
-    m_bEsc = false;
+    m_nOperatingMode = Monitor;
 
 }
 
@@ -151,66 +149,59 @@ CCharConv::~CCharConv() {
 
 }
 
-void CCharConv::SetCRLF(bool b) {
+void CCharConv::SetOperatingMode(TOperatingMode nOperatingMode) {
 
-    m_bCRLF = b;
-
-}
-
-void CCharConv::SetDelBS(bool b) {
-
-    m_bDelBS = b;
-
-}
-
-void CCharConv::SetEsc(bool b) {
-
-    m_bEsc = b;
+    m_nOperatingMode = nOperatingMode;
 
 }
 
 char CCharConv::Convert(char c) {
 
-    // ELKS requires \r
-    // CP/M requires ???
-    // MONITOR converts \r -> \n
-    // Tiny Basic requires \n
-    // MS DOS requires \r
+    // convert between \r and \n
+    switch(m_nOperatingMode) {
+        case Monitor: // MONITOR converts \r -> \n itself
+        case ELKS:
+        case DOS:
+        case CPM:
+            // replace new line with carriage return
+            if (c == '\n') {
+                c = '\r';
+            }
+            break;
 
-    // false == \r, true == \n
-    if (m_bCRLF) {
+        case TBasic:
+            // replace carriage return with new line
+            if (c == '\r') {
+                c = '\n';
+            }
+            break;
 
-        if (c == '\r') {
-            c = '\n';
-        }
-
-    } else {
-
-        if (c == '\n') {
-            c = '\r';
-        }
-
+        case RAW:
+            // do nothing
+        break;
     }
 
-    // ELKS seems happy with DEL or BS
-    // CP/M requires BS (^H)
-    // MONITOR requires DEL
-    // Tiny Basic requires ???
-    // MS DOS requires BS
+    // convert between DEL and BS (^H)
+    switch(m_nOperatingMode) {
+        case Monitor:
+        case ELKS:   // ELKS seems happy with DEL or BS
+        case TBasic:
+            // replace BS with DEL
+            if (c == 0x8) {
+                c = 0x7f;
+            }
+        break;
 
-    // false == DEL, true == BS
-    if (m_bDelBS) {
+        case DOS:
+        case CPM:
+            // replace DEL with BS
+            if (c == 0x7f) {
+                c = 0x8;
+            }
 
-        if (c == 0x7f) {
-            c = 0x8;
-        }
-
-    } else {
-
-        if (c == 0x8) {
-            c = 0x7f;
-        }
- 
+        case RAW:
+            // do nothing
+        break;
     }
 
     return c;

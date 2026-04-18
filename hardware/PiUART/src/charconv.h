@@ -8,18 +8,14 @@ public:
     CCharConv();
     ~CCharConv();
 
-    void SetCRLF(bool b);
-    void SetDelBS(bool b);
-    void SetEsc(bool b);
+    void SetOperatingMode(TOperatingMode nOperatingMode);
 
     // both network and keyboard data are 'char' (e.g. signed) so stick with that convention
     char Convert(char c);
     u16 ScanCode(char c);
 
 private:
-    bool m_bCRLF;
-    bool m_bDelBS;
-    bool m_bEsc;
+    TOperatingMode m_nOperatingMode;
 
 };
 

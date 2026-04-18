@@ -14,6 +14,7 @@
 #define ALT_TELNET_PORT 2323
 #define ALT_RAW_PORT 2424
 
+enum TOperatingMode { Monitor = 0, ELKS = 1, DOS = 2, TBasic = 3, CPM = 4, RAW = 7 };
 enum TTCPMode { telnet, raw };
 
 // the system logger writes ALL messages to an internal log regardless of the loglevel

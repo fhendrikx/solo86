@@ -73,16 +73,16 @@
 #define VC_DATA    6    // 0x2C
 #define VC_VGAEMU  7    // 0x2E
 
-// UART bitmaps
+// UART1_CTRL
+// bit 0         Interrupt enable
+// bit 1, 2, 3   Operating Mode, see enum TOperatingMode
+// bit 4         Unused
+// bit 5         MSDOS EOI, don't use
+// bit 6         Unused
+// bit 7         Unused
 #define UART_INT        0x01    // 0 == Int disabled, 1 == Raise UART1 interrupt
-#define UART_CRLF       0x02    // 0 == CR, 1 == LF
-#define UART_DEL_BS     0x04    // 0 == DEL, 1 == BS
-#define UART_ESC        0x08    // 0 == No escape sequences, 1 == Generate escape sequences
-#define UART_KEYB_INT   0x10    // 0 == Int disabled, 1 == Raise keyboard interrupt 
+#define UART_OPER_MODE  0x0E
 #define UART_DONT_USE   0x20    // MSDOS writes an EOI to the PiUART ctrl port, so don't use bit 5
-// #define UART_           0x40
-// #define UART_           0x80
-
 
 /*
   VC_CTRL READ:
@@ -228,10 +228,10 @@ private:
 
     // UART
     bool m_bUartIntEnable;
-    bool m_bKeybIntEnable;
     bool m_bIntActive;
     volatile bool m_bKeybInt;
     volatile u8 m_nKeyboardFlags;
+    TOperatingMode m_nOperatingMode;
     
     CCharConv m_CharConv;
 

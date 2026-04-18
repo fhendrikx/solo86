@@ -67,10 +67,10 @@ CKernel::CKernel(CMemorySystem *pMemorySystem)
     m_pGraphics = NULL;
 
     m_bUartIntEnable = false;
-    m_bKeybIntEnable = false;
     m_bIntActive = false;
     m_bKeybInt = false;
     m_nKeyboardFlags = 0;
+    m_nOperatingMode = Monitor;
 
     m_nTestPort = 0;
 
@@ -550,7 +550,7 @@ void CKernel::GPIO() {
 
         // raise an interrupt if necessary
         if ((m_bUartIntEnable and not m_bIntActive and m_ToSerial_UART1.GetCount() > 0) or
-            (m_bKeybIntEnable and not m_bIntActive and m_bKeybInt)) {
+            (m_bUartIntEnable and not m_bIntActive and m_nOperatingMode == DOS and m_bKeybInt)) {
 
             GPIOInterruptRaise();
             klog(LogDebug, "GPIO Interrupt Raise %d %d", m_ToSerial_UART1.GetCount(), m_bKeybInt);
@@ -866,14 +866,16 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
                 klog(LogDebug, "UART1 ignoring EOI");
             } else {
                 klog(LogDebug, "UART1 control write 0x%x", data);
+
                 m_bUartIntEnable = data & UART_INT;
-                m_CharConv.SetCRLF(data & UART_CRLF);
-                m_CharConv.SetDelBS(data & UART_DEL_BS);
-                m_CharConv.SetEsc(data & UART_ESC);
-                m_bKeybIntEnable = data & UART_KEYB_INT;
+                // klog(LogDebug, "Setting interrupt mode %d", m_bUartIntEnable);
+
+                m_nOperatingMode = (TOperatingMode)((data & UART_OPER_MODE) >> 1);
+                // klog(LogDebug, "Setting operating mode %d", m_nOperatingMode);
+                m_CharConv.SetOperatingMode(m_nOperatingMode);
 
                 // release the interrupt if we've just disabled interrupts
-                if (m_bIntActive and m_bUartIntEnable == false and m_bKeybIntEnable == false) {
+                if (m_bIntActive and m_bUartIntEnable == false) {
                     GPIOInterruptRelease();
                     klog(LogDebug, "InterruptRelease UART1_CTRL");
                 }
@@ -936,7 +938,7 @@ inline void CKernel::BusIOWrite(u32 address, u8 data) {
                 break;
 
             }
-        
+
         break;
 
         case VC_PARAM:

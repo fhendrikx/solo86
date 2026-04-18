@@ -45,6 +45,10 @@ init:
 
 relocate:
 
+    ; setup the PiUART
+    mov al, 0x02        ; disable interrupts, sets elks mode
+    out COM_CTRL, al
+
     ; setup memory banking
 
     ; map the ROMFS image into 0x8000->0xD000 (3 x 128k banks)
