@@ -46,7 +46,7 @@ init:
 relocate:
 
     ; setup the PiUART
-    mov al, 0x02        ; disable interrupts, sets elks mode
+    mov al, 0x02        ; disable interrupts, set elks mode
     out COM_CTRL, al
 
     ; setup memory banking
