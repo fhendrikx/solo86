@@ -72,12 +72,12 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
 
     assert(s_pThis != NULL);
 
-    u8 c = *pString;
+    char c = *pString;
 
     // only process plain chars (e.g. skip escaped strings)
     // the complex keystrokes will be done by the raw handler so we can
     // control the sequences generated
-    if (strlen(pString) == 1 and c <= 0x7f) {
+    if (strlen(pString) == 1 and (c & 0x80) == 0x00) {
 
         if (c >= 0x20 and c < 0x7f) {
             klog(LogNotice, "KeyPress: %02x '%c'", c, c);
@@ -94,7 +94,7 @@ void CKeyboardTask::KeyPressedHandler (const char *pString) {
 
         u16 s = s_pThis->m_pCharConv->ScanCode(c);
 
-        s_pThis->m_pKeyBuf->AddSafe(s);
+        s_pThis->m_pCharConv->AddSafe(s_pThis->m_pKeyBuf, s);
 
     }
 
@@ -287,7 +287,7 @@ void CKeyboardTask::KeyRawHandler (unsigned char ucModifiers, const unsigned cha
         }
 
         if (s) {
-            s_pThis->m_pKeyBuf->AddSafe(s);
+            s_pThis->m_pCharConv->AddSafe(s_pThis->m_pKeyBuf, s);
         }
 
     }

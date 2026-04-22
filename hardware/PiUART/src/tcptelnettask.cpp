@@ -113,23 +113,25 @@ void CTCPTelnetTask::TelnetEventCB(telnet_t *telnet, telnet_event_t *ev, void *a
                 klog(LogDebug, "Got byte [%d]: 0x%x", i, c);
             }
 
-            // Linux telnet sends \r\0 (translated to \r, see above) for enter
-            // Linux telnet sends DEL for backspace
-            // convert CR/LF, and DEL/^H, etc
-            c = me->m_pCharConv->Convert(c);
-
-            klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
-
             // nothing should be giving us chars with the high bit set
             if ((c & 0x80) == 0x00) {
+                // Linux telnet sends \r\0 (translated to \r, see above) for enter
+                // Linux telnet sends DEL for backspace
+                // convert CR/LF, and DEL/^H, etc
+                c = me->m_pCharConv->Convert(c);
+
+                klog(LogDebug, "Translated byte [%d]: 0x%x", i, c);
+                
+                // parse any escape sequences supplied over telnet and convert into scan codes
                 me->Parse(c);
+
             } else {
                 klog(LogWarning, "Ignoring bad char 0x%x", c);
             }
 
         }
 
-        me->Parse(0xFF); // signal to Process we're done
+        me->Parse(0xFF); // signal to Parse we're done
 
         break;
 
@@ -208,7 +210,6 @@ void CTCPTelnetTask::Parse(u8 c) {
                 default:
                     m_nParserState = StatePlain;
                     s = m_pCharConv->ScanCode(c);
-                    m_pToSerial->AddSafe(s);
                 break;
             }
         break;
@@ -219,7 +220,6 @@ void CTCPTelnetTask::Parse(u8 c) {
                     // bare escape char
                     m_nParserState = StatePlain;
                     s = m_pCharConv->ScanCode('\e');
-                    m_pToSerial->AddSafe(s);
                 break;
 
                 case '[':
@@ -237,7 +237,6 @@ void CTCPTelnetTask::Parse(u8 c) {
                         m_nParserState = StatePlain;
                         s = m_pCharConv->ScanCode(c);
                         s &= 0xFF00; // remove the ascii value, leave the scan code
-                        m_pToSerial->AddSafe(s);
                     } else {
                         // unrecognised escape sequence
                         m_nParserState = StateError;
@@ -256,95 +255,95 @@ void CTCPTelnetTask::Parse(u8 c) {
 
                 case 'A':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x4800); // Up
+                    s = 0x4800; // Up
                 break;
 
                 case 'B':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x5000); // Down
+                    s = 0x5000; // Down
                 break;
 
                 case 'C':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x4D00); // Right
+                    s = 0x4D00; // Right
                 break;
 
                 case 'D':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x4B00); // Left
+                    s = 0x4B00; // Left
                 break;
 
                 case 'F':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x4F00); // End
+                    s = 0x4F00; // End
                 break;
 
                 case 'H':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x4700); // Home
+                    s = 0x4700; // Home
                 break;
 
                 case '~': // end of number sequence
                     m_nParserState = StatePlain;
                     switch(m_nDigitVal) {
                         case 1:
-                            m_pToSerial->AddSafe(0x4700); // Home
+                            s = 0x4700; // Home
                         break;
 
                         case 3:
-                            m_pToSerial->AddSafe(0x5300); // Delete
+                            s = 0x5300; // Delete
                         break;
 
                         case 4:
-                            m_pToSerial->AddSafe(0x4F00); // End
+                            s = 0x4F00; // End
                         break;
 
                         case 5:
-                            m_pToSerial->AddSafe(0x4900); // PgUp
+                            s = 0x4900; // PgUp
                         break;
 
                         case 6:
-                            m_pToSerial->AddSafe(0x5100); // PgDown
+                            s = 0x5100; // PgDown
                         break;
 
                         case 11:
-                            m_pToSerial->AddSafe(0x3B00); // F1
+                            s = 0x3B00; // F1
                         break;
 
                         case 12:
-                            m_pToSerial->AddSafe(0x3C00); // F2
+                            s = 0x3C00; // F2
                         break;
 
                         case 13:
-                            m_pToSerial->AddSafe(0x3D00); // F3
+                            s = 0x3D00; // F3
                         break;
 
                         case 14:
-                            m_pToSerial->AddSafe(0x3E00); // F4
+                            s = 0x3E00; // F4
                         break;
 
                         case 15:
-                            m_pToSerial->AddSafe(0x3F00); // F5
+                            s = 0x3F00; // F5
                         break;
 
                         case 17:
-                            m_pToSerial->AddSafe(0x4000); // F6
+                            s = 0x4000; // F6
                         break;
 
                         case 18:
-                            m_pToSerial->AddSafe(0x4100); // F7
+                            s = 0x4100; // F7
                         break;
 
                         case 19:
-                            m_pToSerial->AddSafe(0x4200); // F8
+                            s = 0x4200; // F8
                         break;
 
                         case 20:
-                            m_pToSerial->AddSafe(0x4300); // F9
+                            s = 0x4300; // F9
                         break;
 
                         case 21:
-                            m_pToSerial->AddSafe(0x4400); // F10
+                            s = 0x4400; // F10
                         break;
 
                         default:
@@ -375,22 +374,22 @@ void CTCPTelnetTask::Parse(u8 c) {
 
                 case 'P':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x3B00); // F1
+                    s = 0x3B00; // F1
                 break;
 
                 case 'Q':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x3C00); // F2
+                    s = 0x3C00; // F2
                 break;
 
                 case 'R':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x3D00); // F3
+                    s = 0x3D00; // F3
                 break;
 
                 case 'S':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x3E00); // F4
+                    s = 0x3E00; // F4
                 break;
 
                 case '2':
@@ -413,22 +412,22 @@ void CTCPTelnetTask::Parse(u8 c) {
 
                 case 'P':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x5400); // shift F1
+                    s = 0x5400; // shift F1
                 break;
 
                 case 'Q':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x5500); // shift F2
+                    s = 0x5500; // shift F2
                 break;
 
                 case 'R':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x5600); // shift F3
+                    s = 0x5600; // shift F3
                 break;
 
                 case 'S':
                     m_nParserState = StatePlain;
-                    m_pToSerial->AddSafe(0x5700); // shift F4
+                    s = 0x5700; // shift F4
                 break;
 
                 default:
@@ -446,6 +445,10 @@ void CTCPTelnetTask::Parse(u8 c) {
                 klog(LogDebug, "Process Error, bad sequence");
             }
         break;
+    }
+
+    if (s) {
+        m_pCharConv->AddSafe(m_pToSerial, s);
     }
 
 }
